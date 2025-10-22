@@ -44,8 +44,10 @@ android {
 		coreLibraryDesugaringEnabled true
 	}
 
+	kotlinOptions { jvmTarget = JavaVersion.VERSION_17 }
 	buildFeatures {
 		viewBinding true
+		buildConfig true
 	}
 
 	defaultConfig.manifestPlaceholders = [
@@ -71,7 +73,6 @@ android {
 			crunchPngs false
 			minifyEnabled false
 			shrinkResources false
-			testCoverageEnabled false
 
 			buildConfigField "String", "DROPBOX_API_KEY", "\"" + getApiKey('DROPBOX_API_KEY_DEBUG') + "\""
 			buildConfigField "String", "PCLOUD_CLIENT_ID", "\"" + getApiKey('PCLOUD_CLIENT_ID_DEBUG') + "\""
@@ -80,6 +81,8 @@ android {
 
 			applicationIdSuffix ".debug"
 			versionNameSuffix '-DEBUG'
+			enableUnitTestCoverage false
+			enableAndroidTestCoverage false
 		}
 	}
 
@@ -104,6 +107,10 @@ android {
 			applicationIdSuffix ".lite"
 			resValue "string", "app_id", androidApplicationId + applicationIdSuffix
 		}
+
+		accrescent {
+			dimension "version"
+		}
 	}
 
 	sourceSets {
@@ -116,17 +123,21 @@ android {
 		}
 
 		fdroid {
-			java.srcDirs = ['src/main/java/', 'src/apiKey/java/', 'src/fdroid/java/', 'src/fdroidAndLite/java/']
+			java.srcDirs = ['src/main/java/', 'src/apiKey/java/', 'src/fdroid/java/', 'src/fdroidLiteAccrescent/java/']
 		}
 
 		lite {
-			java.srcDirs = ['src/main/java/', 'src/lite/java/', 'src/fdroidAndLite/java/']
+			java.srcDirs = ['src/main/java/', 'src/lite/java/', 'src/fdroidLiteAccrescent/java/']
+		}
+
+		accrescent {
+			java.srcDirs = ['src/main/java/', 'src/apiKey/java/', 'src/accrescent/java/', 'src/fdroidLiteAccrescent/java/']
 		}
 	}
 
 	packagingOptions {
 		resources {
-			excludes += ['META-INF/jersey-module-version', 'META-INF/NOTICE.md', 'META-INF/DEPENDENCIES', 'META-INF/INDEX.LIST']
+			excludes += ['META-INF/jersey-module-version', 'META-INF/NOTICE.md', 'META-INF/DEPENDENCIES', 'META-INF/INDEX.LIST', 'META-INF/**/MANIFEST.MF']
 		}
 	}
 
@@ -184,13 +195,17 @@ dependencies {
 	apkstoreImplementation dependencies.dropboxAndroid
 	fdroidImplementation dependencies.dropboxCore
 	fdroidImplementation dependencies.dropboxAndroid
+	accrescentImplementation dependencies.dropboxCore
+	accrescentImplementation dependencies.dropboxAndroid
 
 	playstoreImplementation dependencies.msgraphAuth
 	apkstoreImplementation dependencies.msgraphAuth
 	fdroidImplementation dependencies.msgraphAuth
+	accrescentImplementation dependencies.msgraphAuth
 	playstoreImplementation dependencies.msgraph
 	apkstoreImplementation dependencies.msgraph
 	fdroidImplementation dependencies.msgraph
+	accrescentImplementation dependencies.msgraph
 
 	playstoreImplementation(dependencies.googleApiServicesDrive) {
 		exclude module: 'guava-jdk5'

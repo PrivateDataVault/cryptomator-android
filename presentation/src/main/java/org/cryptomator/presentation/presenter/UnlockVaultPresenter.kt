@@ -13,6 +13,7 @@ import net.openid.appauth.AuthorizationServiceConfiguration
 import net.openid.appauth.ResponseTypeValues
 import org.cryptomator.data.cloud.crypto.CryptoConstants
 import org.cryptomator.domain.Cloud
+import org.cryptomator.domain.KeyLoadingStrategy
 import org.cryptomator.domain.UnverifiedHubVaultConfig
 import org.cryptomator.domain.UnverifiedVaultConfig
 import org.cryptomator.domain.Vault
@@ -142,7 +143,7 @@ class UnlockVaultPresenter @Inject constructor(
 	}
 
 	private fun onUnverifiedVaultConfigRetrieved(unverifiedVaultConfig: Optional<UnverifiedVaultConfig>, vault: Vault) {
-		if (!unverifiedVaultConfig.isPresent || unverifiedVaultConfig.get().keyId.scheme == CryptoConstants.MASTERKEY_SCHEME) {
+		if (!unverifiedVaultConfig.isPresent || unverifiedVaultConfig.get().keyLoadingStrategy() == KeyLoadingStrategy.MASTERKEY) {
 			when (intent.vaultAction()) {
 				UnlockVaultIntent.VaultAction.UNLOCK, UnlockVaultIntent.VaultAction.UNLOCK_FOR_BIOMETRIC_AUTH -> {
 					startedUsingPrepareUnlock = sharedPreferencesHandler.backgroundUnlockPreparation()
@@ -152,7 +153,7 @@ class UnlockVaultPresenter @Inject constructor(
 				UnlockVaultIntent.VaultAction.CHANGE_PASSWORD -> view?.showChangePasswordDialog(intent.vaultModel(), unverifiedVaultConfig.orNull())
 				else -> {}
 			}
-		} else if (unverifiedVaultConfig.isPresent && unverifiedVaultConfig.get().keyId.scheme.startsWith(CryptoConstants.HUB_SCHEME)) {
+		} else if (unverifiedVaultConfig.isPresent && unverifiedVaultConfig.get().keyLoadingStrategy() == KeyLoadingStrategy.HUB) {
 			when (intent.vaultAction()) {
 				UnlockVaultIntent.VaultAction.UNLOCK -> {
 					val unverifiedHubVaultConfig = unverifiedVaultConfig.get() as UnverifiedHubVaultConfig
@@ -197,29 +198,7 @@ class UnlockVaultPresenter @Inject constructor(
 			if (resp != null) {
 				hubAuthService?.performTokenRequest(resp.createTokenExchangeRequest()) { token, ex ->
 					token?.accessToken?.let {
-						unlockHubVaultUseCase
-							.withVault(vault)
-							.andUnverifiedVaultConfig(unverifiedHubVaultConfig)
-							.andAccessToken(it)
-							.run(object : DefaultResultHandler<Cloud>() {
-								override fun onSuccess(cloud: Cloud) {
-									finishWithResult(cloud)
-								}
-
-								override fun onError(e: Throwable) {
-									when (e) {
-										is HubDeviceSetupRequiredException -> view?.showCreateHubDeviceDialog(VaultModel(vault), unverifiedHubVaultConfig)
-										is HubUserSetupRequiredException -> view?.showHubUserSetupRequiredDialog(unverifiedHubVaultConfig)
-										is HubLicenseUpgradeRequiredException -> view?.showHubLicenseUpgradeRequiredDialog()
-										is HubVaultAccessForbiddenException -> view?.showHubVaultAccessForbiddenDialog()
-										is HubVaultIsArchivedException -> view?.showHubVaultIsArchivedDialog()
-										else -> {
-											super.onError(e)
-											finishWithResult(null)
-										}
-									}
-								}
-							})
+						unlockHubVault(vault, unverifiedHubVaultConfig, it)
 					} ?: showErrorAndFinish(HubAuthenticationFailedException(ex))
 				}
 			} else {
@@ -229,6 +208,32 @@ class UnlockVaultPresenter @Inject constructor(
 		} else {
 			showErrorAndFinish(HubAuthenticationFailedException())
 		}
+	}
+
+	private fun unlockHubVault(vault: Vault, unverifiedHubVaultConfig: UnverifiedHubVaultConfig, accessToken: String) {
+		unlockHubVaultUseCase
+			.withVault(vault)
+			.andUnverifiedVaultConfig(unverifiedHubVaultConfig)
+			.andAccessToken(accessToken)
+			.run(object : DefaultResultHandler<Cloud>() {
+				override fun onSuccess(cloud: Cloud) {
+					finishWithResult(cloud)
+				}
+
+				override fun onError(e: Throwable) {
+					when (e) {
+						is HubDeviceSetupRequiredException -> view?.showCreateHubDeviceDialog(VaultModel(vault), unverifiedHubVaultConfig)
+						is HubUserSetupRequiredException -> view?.showHubUserSetupRequiredDialog(unverifiedHubVaultConfig)
+						is HubLicenseUpgradeRequiredException -> view?.showHubLicenseUpgradeRequiredDialog()
+						is HubVaultAccessForbiddenException -> view?.showHubVaultAccessForbiddenDialog()
+						is HubVaultIsArchivedException -> view?.showHubVaultIsArchivedDialog()
+						else -> {
+							super.onError(e)
+							finishWithResult(null)
+						}
+					}
+				}
+			})
 	}
 
 	fun onCreateHubDeviceClick(vaultModel: VaultModel, unverifiedVaultConfig: UnverifiedHubVaultConfig, deviceName: String, setupCode: String) {
@@ -508,11 +513,18 @@ class UnlockVaultPresenter @Inject constructor(
 			})
 	}
 
-	@Callback
+	@Callback(dispatchResultOkOnly = false)
 	fun changePasswordAfterAuthentication(result: ActivityResult, vault: Vault, unverifiedVaultConfig: UnverifiedVaultConfig, oldPassword: String, newPassword: String) {
-		val cloud = result.getSingleResult(CloudModel::class.java).toCloud()
-		val vaultWithUpdatedCloud = Vault.aCopyOf(vault).withCloud(cloud).build()
-		onChangePasswordClick(VaultModel(vaultWithUpdatedCloud), unverifiedVaultConfig, oldPassword, newPassword)
+		if(result.isResultOk) {
+			val cloud = result.getSingleResult(CloudModel::class.java).toCloud()
+			val vaultWithUpdatedCloud = Vault.aCopyOf(vault).withCloud(cloud).build()
+			onChangePasswordClick(VaultModel(vaultWithUpdatedCloud), unverifiedVaultConfig, oldPassword, newPassword)
+		} else {
+			view?.closeDialog()
+			val error = result.getSingleResult(Throwable::class.java)
+			error?.let { showError(it) }
+			finishWithResult(null)
+		}
 	}
 
 	fun saveVaultAfterChangePasswordButFailedBiometricAuth(vault: Vault) {

@@ -67,7 +67,7 @@
 	<string name="screen_vault_list_change_password_successful">Паролата е сменена</string>
 	<!-- # screen: file browser -->
 	<string name="screen_file_browser_default_title">Хранилище</string>
-	<string name="screen_file_browser_add_existing_vault_extra_text">Изберете файл на главен ключ</string>
+	<string name="screen_file_browser_add_existing_vault_extra_text">Изберете \'masterkey\' или \'vault\' файл</string>
 	<string name="screen_file_browser_create_new_vault_button_text">Постави тук</string>
 	<string name="screen_file_browser_create_new_vault_extra_text">Име на хранилище: %1$s</string>
 	<plurals name="screen_file_browser_subtitle_move">
@@ -185,7 +185,6 @@
 	<string name="screen_settings_section_auto_photo_upload_including_videos">Качване на видео</string>
 	<string name="screen_settings_auto_photo_upload_title">Запазване на качваните файлове в&#8230;</string>
 	<string name="screen_settings_website_label">Страница на Криптоматор</string>
-	<string name="screen_settings_twitter_label">Следвайте ни в X</string>
 	<string name="screen_settings_facebook_label">Харесайте ни във Фейсбук</string>
 	<string name="screen_settings_section_legal">Правни въпроси</string>
 	<string name="screen_settings_licenses_label">Лицензи</string>
@@ -225,6 +224,7 @@
 	<string name="screen_cryptomator_variants_fdroid_add_repo">Добавяне</string>
 	<string name="screen_cryptomator_variants_website_title">Страница в интернет</string>
 	<string name="screen_cryptomator_variants_website_description">Съдържа собственически зависимости.</string>
+	<string name="screen_cryptomator_variants_installation_hint">Превключването от или към главното хранилище на пакети в F-Droid изисква чиста инсталация на приложението.</string>
 	<!-- # dialogs -->
 	<string name="dialog_button_cancel">Отказ</string>
 	<string name="dialog_enter_password_positive_button">Отключване</string>
@@ -236,6 +236,11 @@
 	<string name="dialog_microsoft_workaround_disclaimer_hint">Поради дефект в приложенията на Microsoft, файлът, който трябва да бъде редактиран, трябва да бъде споделен с тези приложения в публична папка на вашето устройство. След възобновяване на работата на Cryptomator, публично достъпният файл се изтрива отново, но Cryptomator не може да повлияе на случващото се с файла междувременно. Преди да включите тук се уверете, че сте наясно с това поведение. Това ще се прилага само за файлове на Microsoft.\n\nСлед включване Cryptomator ще се рестартира.</string>
 	<string name="dialog_app_is_obscured_info_neutral_button">Затваряне</string>
 	<string name="dialog_sym_link_back_button">Назад</string>
+	<string name="dialog_create_hub_device_name_hint">Изглежда, че това е първи достъп до Hub от това устройство. За да го разпознаете при разрешаване на достъпа, трябва да му дадете име.</string>
+	<string name="dialog_create_hub_device_setup_code_hint">Вашият ключ за профила е необходим при вход от нови приложения или мрежови четци. Може да бъде намерен в профила.</string>
+	<string name="dialog_hub_vault_access_forbidden_title">Отказан достъп</string>
+	<string name="dialog_hub_user_setup_required_hint">За да продължите завършете необходимите стъпки в потребителския профил в Hub.</string>
+	<string name="dialog_hub_user_setup_required_neutral_button">Към профила</string>
 	<!-- # error reports -->
 	<!-- # misc -->
 	<!-- ## file size helper -->

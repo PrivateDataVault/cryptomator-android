@@ -40,18 +40,13 @@ import timber.log.Timber;
 @Singleton
 public class HubRepositoryImpl implements HubRepository {
 
-	private final OkHttpClient httpClient;
-	private final HubDeviceCryptor hubDeviceCryptor;
+	private final Context context;
+	private OkHttpClient httpClient;
+	private HubDeviceCryptor hubDeviceCryptor;
 
 	@Inject
 	public HubRepositoryImpl(Context context) {
-		this.httpClient = new OkHttpClient.Builder() //
-				.addInterceptor(httpLoggingInterceptor(context)) //
-				.connectTimeout(NetworkTimeout.CONNECTION.getTimeout(), NetworkTimeout.CONNECTION.getUnit()) //
-				.readTimeout(NetworkTimeout.READ.getTimeout(), NetworkTimeout.READ.getUnit()) //
-				.writeTimeout(NetworkTimeout.WRITE.getTimeout(), NetworkTimeout.WRITE.getUnit()) //
-				.build();
-		this.hubDeviceCryptor = HubDeviceCryptor.getInstance();
+		this.context = context;
 	}
 
 	private Interceptor httpLoggingInterceptor(Context context) {
@@ -63,9 +58,10 @@ public class HubRepositoryImpl implements HubRepository {
 	public String getVaultKeyJwe(UnverifiedHubVaultConfig unverifiedHubVaultConfig, String accessToken) throws BackendException {
 		var request = new Request.Builder().get() //
 				.header("Authorization", "Bearer " + accessToken) //
+				.header("Hub-Device-ID", getHubDeviceCryptor().getDeviceId()) //
 				.url(unverifiedHubVaultConfig.getApiBaseUrl() + "vaults/" + unverifiedHubVaultConfig.vaultId() + "/access-token") //
 				.build();
-		try (var response = httpClient.newCall(request).execute()) {
+		try (var response = getHttpClient().newCall(request).execute()) {
 			switch (response.code()) {
 				case HttpURLConnection.HTTP_OK:
 					if (response.body() != null) {
@@ -95,12 +91,23 @@ public class HubRepositoryImpl implements HubRepository {
 				.header("Authorization", "Bearer " + accessToken) //
 				.url(unverifiedHubVaultConfig.getApiBaseUrl() + "users/me") //
 				.build();
-		try (var response = httpClient.newCall(request).execute()) {
-			if (response.isSuccessful() && response.body() != null) {
-				JSONObject jsonObject = new JSONObject(response.body().string());
-				return new UserDto(jsonObject.getString("id"), jsonObject.getString("name"), jsonObject.getString("publicKey"), jsonObject.getString("privateKey"), jsonObject.getString("setupCode"));
+		try (var response = getHttpClient().newCall(request).execute()) {
+			if (response.code() == HttpURLConnection.HTTP_OK) {
+				if (response.body() != null) {
+					JSONObject jsonObject = new JSONObject(response.body().string());
+					return new UserDto( //
+							jsonObject.getString("id"), //
+							jsonObject.getString("name"), //
+							jsonObject.getString("publicKey"), //
+							jsonObject.getString("privateKey"), //
+							jsonObject.getString("setupCode") //
+					);
+				} else {
+					throw new FatalBackendException("Failed to load user, response code good but no body");
+				}
+			} else {
+				throw new FatalBackendException("Failed to load user with response code " + response.code());
 			}
-			throw new FatalBackendException("Failed to load user, bad response code " + response.code());
 		} catch (IOException | JSONException e) {
 			throw new FatalBackendException("Failed to load user", e);
 		}
@@ -110,8 +117,8 @@ public class HubRepositoryImpl implements HubRepository {
 	public DeviceDto getDevice(UnverifiedHubVaultConfig unverifiedHubVaultConfig, String accessToken) throws BackendException {
 		var request = new Request.Builder().get() //
 				.header("Authorization", "Bearer " + accessToken) //
-				.url(unverifiedHubVaultConfig.getApiBaseUrl() + "devices/" + hubDeviceCryptor.getDeviceId()).build();
-		try (var response = httpClient.newCall(request).execute()) {
+				.url(unverifiedHubVaultConfig.getApiBaseUrl() + "devices/" + getHubDeviceCryptor().getDeviceId()).build();
+		try (var response = getHttpClient().newCall(request).execute()) {
 			switch (response.code()) {
 				case HttpURLConnection.HTTP_OK:
 					if (response.body() != null) {
@@ -132,12 +139,12 @@ public class HubRepositoryImpl implements HubRepository {
 
 	@Override
 	public void createDevice(UnverifiedHubVaultConfig unverifiedHubVaultConfig, String accessToken, String deviceName, String setupCode, String userPrivateKey) throws BackendException {
-		var deviceId = hubDeviceCryptor.getDeviceId();
-		var publicKey = BaseEncoding.base64().encode(hubDeviceCryptor.getDevicePublicKey().getEncoded());
-
+		var deviceId = getHubDeviceCryptor().getDeviceId();
+		var devicePublicKey = getHubDeviceCryptor().getDevicePublicKeyEncoded();
+		var publicKey = BaseEncoding.base64().encode(devicePublicKey);
 		JWEObject encryptedUserKey;
 		try {
-			encryptedUserKey = hubDeviceCryptor.encryptUserKey(JWEObject.parse(userPrivateKey), setupCode);
+			encryptedUserKey = getHubDeviceCryptor().reEncryptUserKey(JWEObject.parse(userPrivateKey), setupCode);
 		} catch (HubDeviceCryptor.InvalidJweKeyException e) {
 			throw new HubInvalidSetupCodeException(e);
 		} catch (ParseException e) {
@@ -160,7 +167,7 @@ public class HubRepositoryImpl implements HubRepository {
 				.header("Authorization", "Bearer " + accessToken) //
 				.url(unverifiedHubVaultConfig.getApiBaseUrl() + "devices/" + deviceId) //
 				.build();
-		try (var response = httpClient.newCall(request).execute()) {
+		try (var response = getHttpClient().newCall(request).execute()) {
 			switch (response.code()) {
 				case HttpURLConnection.HTTP_CREATED:
 					Timber.tag("HubRepositoryImpl").i("Device created");
@@ -180,18 +187,38 @@ public class HubRepositoryImpl implements HubRepository {
 		var request = new Request.Builder().get() //
 				.header("Authorization", "Bearer " + accessToken) //
 				.url(unverifiedHubVaultConfig.getApiBaseUrl() + "config").build();
-		try (var response = httpClient.newCall(request).execute()) {
-			if (response.isSuccessful()) {
+		try (var response = getHttpClient().newCall(request).execute()) {
+			if (response.code() == HttpURLConnection.HTTP_OK) {
 				if (response.body() != null) {
 					JSONObject jsonObject = new JSONObject(response.body().string());
 					return new ConfigDto(jsonObject.getInt("apiLevel"));
 				} else {
 					throw new FatalBackendException("Failed to load device, response code good but no body");
 				}
+			} else {
+				throw new FatalBackendException("Failed to load device with response code " + response.code());
 			}
-			throw new FatalBackendException("Failed to load device with response code " + response.code());
 		} catch (IOException | JSONException e) {
 			throw new FatalBackendException("Failed to load device", e);
 		}
+	}
+
+	private HubDeviceCryptor getHubDeviceCryptor() {
+		if (hubDeviceCryptor == null) {
+			hubDeviceCryptor = HubDeviceCryptor.getInstance();
+		}
+		return hubDeviceCryptor;
+	}
+
+	private OkHttpClient getHttpClient() {
+		if (httpClient == null) {
+			httpClient = new OkHttpClient.Builder() //
+					.addInterceptor(httpLoggingInterceptor(context)) //
+					.connectTimeout(NetworkTimeout.CONNECTION.getTimeout(), NetworkTimeout.CONNECTION.getUnit()) //
+					.readTimeout(NetworkTimeout.READ.getTimeout(), NetworkTimeout.READ.getUnit()) //
+					.writeTimeout(NetworkTimeout.WRITE.getTimeout(), NetworkTimeout.WRITE.getUnit()) //
+					.build();
+		}
+		return httpClient;
 	}
 }

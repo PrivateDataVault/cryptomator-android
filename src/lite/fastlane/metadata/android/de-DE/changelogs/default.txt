@@ -1,1 +1,1 @@
-- Migration von Cloud-Zugangs-Tokens und Tresor-Passwörtern zu AES 256bit GCM
+- App-Absturz auf kleinen Bildschirmen bei der Anzeige eines leeren Tresor-Hinweises behoben

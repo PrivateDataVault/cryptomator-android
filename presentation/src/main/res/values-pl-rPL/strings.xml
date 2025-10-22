@@ -35,6 +35,12 @@
 	<string name="error_no_such_bucket">Nie ma takiego bucketu</string>
 	<string name="error_masterkey_location_not_supported">Niestandardowa lokalizacja klucza głównego jest jeszcze nieobsługiwana</string>
 	<string name="error_interact_with_fdroid_but_fdroid_missing">Nie udało się połączyć z aplikacją F-Droid. Nie ma aplikacji?</string>
+	<string name="error_hub_vault_operation_not_supported">Operacja sejfu nie jest obsługiwana dla Huba</string>
+	<string name="error_hub_authentication_failed">Uwierzytelnianie w Hubie nie powiodło się</string>
+	<string name="error_hub_device_already_register_for_other_user">To urządzenie jest już zarejestrowane dla innego użytkownika. Spróbuj zmienić konto użytkownika lub użyć innego urządzenia.</string>
+	<string name="error_hub_invalid_setup_code">Klucz konta jest nieprawidłowy.</string>
+	<string name="error_hub_invalid_version">Nieobsługiwana wersja Hubu.</string>
+	<string name="error_hub_unlock_pre_31">Hub jest wspierany dla Androida 12 i wyższych.</string>
 	<!-- # clouds -->
 	<!-- ## cloud names -->
 	<string name="cloud_names_local_storage">Pamięć wewnętrzna</string>
@@ -49,17 +55,17 @@
 	<string name="snack_bar_action_title_search_previous">Poprzedni</string>
 	<string name="snack_bar_action_title_search_next">Następny</string>
 	<string name="snack_bar_action_title_sort">Sortuj</string>
-	<string name="snack_bar_action_title_sort_az">A - Z</string>
-	<string name="snack_bar_action_title_sort_za">Z - A</string>
-	<string name="snack_bar_action_title_sort_newest">Od najnowszych</string>
-	<string name="snack_bar_action_title_sort_oldest">Od najstarszych</string>
-	<string name="snack_bar_action_title_sort_biggest">Od największych</string>
-	<string name="snack_bar_action_title_sort_smallest">Od najmniejszych</string>
+	<string name="snack_bar_action_title_sort_az">A-Z</string>
+	<string name="snack_bar_action_title_sort_za">Z-A</string>
+	<string name="snack_bar_action_title_sort_newest">Najnowsze na początku</string>
+	<string name="snack_bar_action_title_sort_oldest">Najstarsze na początku</string>
+	<string name="snack_bar_action_title_sort_biggest">Największe na początku</string>
+	<string name="snack_bar_action_title_sort_smallest">Najmniejsze na początku</string>
 	<string name="snack_bar_cryptomator_variants_title">Zobacz więcej</string>
 	<string name="snack_bar_cryptomator_variants_hint">Brak chmury na liście?</string>
 	<!-- # screens -->
 	<!-- # screen: vault list -->
-	<string name="screen_vault_list_actions_title">Dodaj do Cryptomator</string>
+	<string name="screen_vault_list_actions_title">Dodaj do aplikacji Cryptomator</string>
 	<string name="screen_vault_list_action_create_new_vault">Utwórz nowy sejf</string>
 	<string name="screen_vault_list_action_add_existing_vault">Dodaj istniejący sejf</string>
 	<string name="screen_vault_list_vault_action_delete">Usuń</string>
@@ -67,7 +73,7 @@
 	<string name="screen_vault_list_change_password_successful">Hasło zostało pomyślnie zmienione</string>
 	<!-- # screen: file browser -->
 	<string name="screen_file_browser_default_title">Sejf</string>
-	<string name="screen_file_browser_add_existing_vault_extra_text">Wybierz plik klucza głównego</string>
+	<string name="screen_file_browser_add_existing_vault_extra_text">Wybierz klucz główny lub plik sejfu</string>
 	<string name="screen_file_browser_create_new_vault_button_text">Umieść tutaj</string>
 	<string name="screen_file_browser_create_new_vault_extra_text">Nazwa sejfu: %1$s</string>
 	<plurals name="screen_file_browser_subtitle_move">
@@ -187,7 +193,7 @@
 	<string name="screen_settings_section_auto_photo_upload_including_videos">Prześlij filmy</string>
 	<string name="screen_settings_auto_photo_upload_title">Zapisz automatycznie przesyłane pliki w&#8230;</string>
 	<string name="screen_settings_website_label">Cryptomator w Internecie</string>
-	<string name="screen_settings_twitter_label">Śledź nas na Twitterze</string>
+	<string name="screen_settings_mastodon_label">Obserwuj nas na Mastodonie</string>
 	<string name="screen_settings_facebook_label">Polub nas na Facebooku</string>
 	<string name="screen_settings_section_legal">Informacje prawne</string>
 	<string name="screen_settings_licenses_label">Licencje</string>
@@ -354,6 +360,23 @@
 	<string name="dialog_cbc_password_vaults_migration_title">Wymagana migracja hasła sejfu</string>
 	<string name="dialog_cbc_password_vaults_migration_hint">Z powodu ulepszenia zabezpieczeń, dla każdego sejfu zostaniesz dwukrotnie poproszony o weryfikację biometryczną celem ponownego zaszyfrowania haseł. Jest to konieczne, aby nadal chronić hasła za pomocą najnowszej technologii. Jeśli sobie tego nie życzysz, przechowywane hasła zostaną usunięte.</string>
 	<string name="dialog_cbc_password_vaults_migration_action">Migruj</string>
+	<string name="dialog_create_hub_device_title">Zarejestruj urządzenie Hub</string>
+	<string name="dialog_create_hub_device_name_label">Nazwa</string>
+	<string name="dialog_create_hub_device_name_hint">Wygląda że jest to pierwszy dostęp do Huba z tego urządzenia. Aby zidentyfikować go w celu autoryzacji dostępu, musisz nazwać to urządzenie.</string>
+	<string name="dialog_create_hub_device_name_empty">Nazwa nie może być pusta.</string>
+	<string name="dialog_create_hub_device_setup_code_label">Klucz konta</string>
+	<string name="dialog_create_hub_device_setup_code_hint">Twój Klucz Konta jest wymagany do zalogowania się z nowych aplikacji lub przeglądarek. Można go znaleźć w twoim profilu.</string>
+	<string name="dialog_create_hub_device_setup_code_empty">Klucz konta nie może być pusty.</string>
+	<string name="dialog_progress_creating_hub_device_setup">Tworzenie urządzenia&#8230;</string>
+	<string name="dialog_hub_vault_access_forbidden_title">Brak dostępu</string>
+	<string name="dialog_hub_vault_access_forbidden_hint">Twoje urządzenie nie zostało jeszcze upoważnione do dostępu do tego sejfu. Poproś właściciela sejfu o autoryzację.\"</string>
+	<string name="dialog_hub_license_upgrade_required_title">Sprawdź licencję Huba</string>
+	<string name="dialog_hub_license_upgrade_required_hint">Twoja instancja Cryptomator Hub ma nieprawidłową licencję. Poinformuj administratora Huba o uaktualnieniu lub odnowieniu licencji.\"</string>
+	<string name="dialog_hub_vault_archived_title">Zarchiwizowano sejf</string>
+	<string name="dialog_hub_vault_archived_hint">Ten sejf jest zarchiwizowany i nie może być odblokowany. Aby go odblokować, właściciel sejfu musi go odarchiwizować.</string>
+	<string name="dialog_hub_user_setup_required_title">Wymagana konfiguracja użytkownika</string>
+	<string name="dialog_hub_user_setup_required_hint">Aby kontynuować, wykonaj kroki wymagane w profilu użytkownika Hub.</string>
+	<string name="dialog_hub_user_setup_required_neutral_button">Przejdź do profilu</string>
 	<string name="permission_snackbar_auth_local_vault">Cryptomator potrzebuje dostępu do pamięci lokalnej, aby uzyskać dostęp do sejfu</string>
 	<string name="permission_snackbar_auth_auto_upload">Cryptomator potrzebuje dostępu do pamięci lokalnej, aby automatycznie przesyłać zdjęcia</string>
 	<string name="permission_snackbar_notifications">Cryptomator potrzebuje uprawnień do powiadomień, aby wyświetlić np. status sejfu</string>

@@ -35,6 +35,7 @@
 	<string name="error_no_such_bucket">Không có vùng lưu trữ như vậy</string>
 	<string name="error_masterkey_location_not_supported">Vị trí tùy chọn của Khoá Chính chưa được hỗ trợ</string>
 	<string name="error_interact_with_fdroid_but_fdroid_missing">Không giao tiếp được với ứng dụng F-Droid. Chưa cài đặt?</string>
+	<string name="error_hub_device_already_register_for_other_user">Thiết bị này đã được đăng ký cho người dùng khác. Hãy thử tài khoản khác hoặc sử dụng một thiết bị khác.</string>
 	<!-- # clouds -->
 	<!-- ## cloud names -->
 	<string name="cloud_names_local_storage">Bộ nhớ cục bộ</string>
@@ -67,7 +68,6 @@
 	<string name="screen_vault_list_change_password_successful">Thay đổi mật khẩu thành công</string>
 	<!-- # screen: file browser -->
 	<string name="screen_file_browser_default_title">Vault</string>
-	<string name="screen_file_browser_add_existing_vault_extra_text">Chọn tệp khoá chính</string>
 	<string name="screen_file_browser_create_new_vault_button_text">Đặt ở đây</string>
 	<string name="screen_file_browser_create_new_vault_extra_text">Tên vault: %1$s</string>
 	<plurals name="screen_file_browser_subtitle_move">
@@ -184,7 +184,6 @@
 	<string name="screen_settings_section_auto_photo_upload_including_videos">Tải lên video</string>
 	<string name="screen_settings_auto_photo_upload_title">Lưu tệp tải lên tự động vào&#8230;</string>
 	<string name="screen_settings_website_label">Cryptomator website</string>
-	<string name="screen_settings_twitter_label">Theo dõi trên Twitter</string>
 	<string name="screen_settings_facebook_label">Hãy like chúng tôi trên Facebook</string>
 	<string name="screen_settings_section_legal">Pháp lý</string>
 	<string name="screen_settings_licenses_label">Giấy phép</string>
@@ -345,6 +344,8 @@
 	<string name="dialog_no_more_images_to_display">Không còn hình ảnh để hiển thị&#8230;</string>
 	<string name="dialog_pcloud_credentials_updated_title">Đã cập nhật thông tin xác thực của \'%1$s\'</string>
 	<string name="dialog_pcloud_credentials_updated">Nếu bạn định thêm tài khoản pCloud mới, hãy nhấn vào url này <a href="https://www.pcloud.com">www.pcloud.com</a>, đăng xuất khỏi tài khoản hiện tại và nhấn lại vào \'+\' trong ứng dụng này để tạo kết nối đám mây mới.</string>
+	<string name="dialog_hub_vault_access_forbidden_title">Truy cập bị từ chối</string>
+	<string name="dialog_hub_user_setup_required_neutral_button">Xem hồ sơ</string>
 	<string name="permission_snackbar_auth_local_vault">Cryptomator cần quyền truy cập bộ nhớ để sử dụng vault cục bộ</string>
 	<string name="permission_snackbar_auth_auto_upload">Cryptomator cần quyền truy cập bộ nhớ để sử dụng tính năng tự động tải ảnh lên</string>
 	<string name="permission_snackbar_notifications">Cryptomator cần quyền thông báo để hiển thị trạng thái vault chẳng hạn</string>

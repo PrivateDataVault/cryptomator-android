@@ -67,7 +67,6 @@
 	<string name="screen_vault_list_change_password_successful">Lozinka je uspješno promijenjena</string>
 	<!-- # screen: file browser -->
 	<string name="screen_file_browser_default_title">Trezor</string>
-	<string name="screen_file_browser_add_existing_vault_extra_text">Odaberi datoteku glavnog ključa</string>
 	<string name="screen_file_browser_create_new_vault_button_text">Postavi ovdje</string>
 	<string name="screen_file_browser_create_new_vault_extra_text">Ime trezora: %1$s</string>
 	<plurals name="screen_file_browser_subtitle_move">
@@ -186,7 +185,6 @@
 	<string name="screen_settings_section_auto_photo_upload_including_videos">Prenesi video</string>
 	<string name="screen_settings_auto_photo_upload_title">Pohrani automatski prenesene datoteke u&#8230;</string>
 	<string name="screen_settings_website_label">Cryptomator web stranica</string>
-	<string name="screen_settings_twitter_label">Pratite nas na Twitteru</string>
 	<string name="screen_settings_facebook_label">Lajkajte nas na Facebooku</string>
 	<string name="screen_settings_section_legal">Pravno</string>
 	<string name="screen_settings_licenses_label">Licence</string>

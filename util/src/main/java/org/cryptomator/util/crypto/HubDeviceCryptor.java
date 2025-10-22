@@ -55,6 +55,9 @@ public class HubDeviceCryptor {
 	private final KeyStore keyStore;
 
 	HubDeviceCryptor(KeyStore keyStore) {
+		if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.S) {
+			throw new IllegalStateException("Hub unlock is only supported for devices using Android >= 12");
+		}
 		try {
 			this.keyStore = keyStore;
 			this.keyStore.load(null);
@@ -62,7 +65,7 @@ public class HubDeviceCryptor {
 				var keyPairGenerator = KeyPairGenerator.getInstance(KeyProperties.KEY_ALGORITHM_EC, DEFAULT_KEYSTORE_NAME);
 				var parameterSpec = new KeyGenParameterSpec //
 						.Builder(DEFAULT_KEY_ALIAS, KeyProperties.PURPOSE_DECRYPT | KeyProperties.PURPOSE_AGREE_KEY) //
-						.setAlgorithmParameterSpec(new ECGenParameterSpec("secp384r1")) //
+						.setAlgorithmParameterSpec(new ECGenParameterSpec(Curve.P_384.getStdName())) //
 						.setDigests(KeyProperties.DIGEST_SHA256) //
 						.setUserAuthenticationRequired(false) //
 						.build();
@@ -142,7 +145,11 @@ public class HubDeviceCryptor {
 
 	private static JWEObject encryptKey(Key key, ECPublicKey userKey) {
 		try {
-			var encodedVaultKey = Base64.getEncoder().encodeToString(key.getEncoded());
+			var encodedKey = key.getEncoded();
+			if (encodedKey == null) {
+				throw new RuntimeException("Encoded key is null");
+			}
+			var encodedVaultKey = Base64.getEncoder().encodeToString(encodedKey);
 			var keyGen = new ECKeyGenerator(Curve.P_384);
 			var ephemeralKeyPair = keyGen.generate();
 			var header = new JWEHeader.Builder(JWEAlgorithm.ECDH_ES, EncryptionMethod.A256GCM).ephemeralPublicKey(ephemeralKeyPair.toPublicJWK()).build();
@@ -168,7 +175,7 @@ public class HubDeviceCryptor {
 		}
 	}
 
-	public JWEObject encryptUserKey(JWEObject userKey, String setupCode) {
+	public JWEObject reEncryptUserKey(JWEObject userKey, String setupCode) {
 		var userPrivateKey = decryptUserKey(userKey, setupCode);
 		var devicePublicKey = getDevicePublicKey();
 		return encryptUserKey(userPrivateKey, devicePublicKey);
@@ -193,10 +200,18 @@ public class HubDeviceCryptor {
 		}
 	}
 
+	public byte[] getDevicePublicKeyEncoded() {
+		var devicePublicKey = getDevicePublicKey().getEncoded();
+		if (devicePublicKey == null) {
+			throw new RuntimeException("Encoded Hub device key is null");
+		}
+		return devicePublicKey;
+	}
+
 	public String getDeviceId() {
-		var devicePublicKey = getDevicePublicKey();
+		var devicePublicKey = getDevicePublicKeyEncoded();
 		try (var instance = MessageDigestSupplier.SHA256.instance()) {
-			var hashedKey = instance.get().digest(devicePublicKey.getEncoded());
+			var hashedKey = instance.get().digest(devicePublicKey);
 			return BaseEncoding.base16().encode(hashedKey);
 		}
 	}

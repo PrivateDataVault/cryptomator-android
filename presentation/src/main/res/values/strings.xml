@@ -49,6 +49,7 @@
 	<string name="error_hub_device_already_register_for_other_user">This device is already registered for a different user. Try to change the user account or use a different device.</string>
 	<string name="error_hub_invalid_setup_code">The Account Key is invalid.</string>
 	<string name="error_hub_invalid_version">Unsupported Hub version.</string>
+	<string name="error_hub_unlock_pre_31">Hub is only supported on Android 12 and above.</string>
 
 	<!-- # clouds -->
 
@@ -104,7 +105,7 @@
 	<string name="screen_file_browser_default_title">Vault</string>
 
 	<string name="screen_file_browser_subtitle_add_existing_vault" translatable="false">@string/screen_vault_list_action_add_existing_vault</string>
-	<string name="screen_file_browser_add_existing_vault_extra_text">Select masterkey file</string>
+	<string name="screen_file_browser_add_existing_vault_extra_text">Select masterkey or vault file</string>
 	<string name="screen_file_browser_subtitle_create_new_vault" translatable="false">@string/screen_vault_list_action_create_new_vault</string>
 	<string name="screen_file_browser_create_new_vault_button_text">Place here</string>
 	<string name="screen_file_browser_create_new_vault_extra_text">Vault name: %1$s</string>
@@ -266,11 +267,11 @@
 
 	<string name="screen_settings_section_social" translatable="false">@string/screen_webdav_settings_done_button_text</string>
 	<string name="screen_settings_website_label">Cryptomator website</string>
-	<string name="screen_settings_twitter_label">Follow us on Twitter</string>
+	<string name="screen_settings_mastodon_label">Follow us on Mastodon</string>
 	<string name="screen_settings_facebook_label">Like us on Facebook</string>
 	<string name="screen_settings_website_uri" translatable="false">https://cryptomator.org</string>
 	<string name="screen_settings_facebook_uri" translatable="false">https://facebook.com/Cryptomator</string>
-	<string name="screen_settings_twitter_uri" translatable="false">https://twitter.com/Cryptomator</string>
+	<string name="screen_settings_mastodon_uri" translatable="false">https://mastodon.online/@cryptomator</string>
 
 	<string name="screen_settings_section_legal">Legal</string>
 	<string name="screen_settings_licenses_label">Licenses</string>
@@ -296,7 +297,7 @@
 	<string name="screen_settings_keep_unlocked_while_editing_files_summary">Keep vaults unlocked while editing files</string>
 
 	<string name="screen_settings_cryptomator_variants_label" translatable="false">@string/screen_cryptomator_variants_title</string>
-	<string name="screen_settings_cryptomator_variants_summary" translatable="false">Show variants of this app</string>
+	<string name="screen_settings_cryptomator_variants_summary">Show variants of this app</string>
 
 	<!-- ## screen: cloud settings -->
 	<string name="screen_cloud_settings_title" translatable="false">@string/screen_settings_cloud_settings_label</string>

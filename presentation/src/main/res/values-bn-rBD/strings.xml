@@ -67,7 +67,6 @@
 	<string name="screen_vault_list_change_password_successful">পাসওয়ার্ড সফলভাবে পরিবর্তিত হয়েছে</string>
 	<!-- # screen: file browser -->
 	<string name="screen_file_browser_default_title">ভোল্ট</string>
-	<string name="screen_file_browser_add_existing_vault_extra_text">মাস্টার কী ফাইলটি নির্বাচন করুন</string>
 	<string name="screen_file_browser_create_new_vault_button_text">এখানে রাখুন</string>
 	<string name="screen_file_browser_create_new_vault_extra_text">ভোল্টের নাম: %1$s</string>
 	<plurals name="screen_file_browser_subtitle_move">
@@ -177,7 +176,6 @@
 	<string name="screen_settings_section_auto_photo_upload_including_videos">ভিডিও আপলোড করুন</string>
 	<string name="screen_settings_auto_photo_upload_title">&#8230; তে অটো আপলোড ফাইলগুলি সংরক্ষণ করুন</string>
 	<string name="screen_settings_website_label">ক্রিপ্টোমেটরের ওয়েবসাইট</string>
-	<string name="screen_settings_twitter_label">টুইটারে আমাদের অনুসরণ করুন</string>
 	<string name="screen_settings_facebook_label">ফেসবুকে আমাদের লাইক দিন</string>
 	<string name="screen_settings_section_legal">আইনি</string>
 	<string name="screen_settings_licenses_label">লাইসেন্স</string>

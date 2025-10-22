@@ -6,6 +6,7 @@ import org.cryptomator.cryptolib.api.InvalidPassphraseException
 import org.cryptomator.domain.di.PerView
 import org.cryptomator.domain.exception.CloudAlreadyExistsException
 import org.cryptomator.domain.exception.CloudNodeAlreadyExistsException
+import org.cryptomator.domain.exception.IllegalFileNameException
 import org.cryptomator.domain.exception.NetworkConnectionException
 import org.cryptomator.domain.exception.NoSuchBucketException
 import org.cryptomator.domain.exception.NoSuchCloudFileException
@@ -22,6 +23,7 @@ import org.cryptomator.domain.exception.license.LicenseNotValidException
 import org.cryptomator.domain.exception.license.NoLicenseAvailableException
 import org.cryptomator.domain.exception.update.GeneralUpdateErrorException
 import org.cryptomator.domain.exception.update.HashMismatchUpdateCheckException
+import org.cryptomator.domain.exception.vaultconfig.HubNotSupportedOnPreAndroid31Exception
 import org.cryptomator.domain.exception.vaultconfig.MissingVaultConfigFileException
 import org.cryptomator.domain.exception.vaultconfig.UnsupportedMasterkeyLocationException
 import org.cryptomator.domain.exception.vaultconfig.VaultConfigLoadException
@@ -38,7 +40,7 @@ import timber.log.Timber
 class ExceptionHandlers @Inject constructor(private val context: Context, defaultExceptionHandler: DefaultExceptionHandler) : Iterable<ExceptionHandler?> {
 
 	private val exceptionHandlers: MutableList<ExceptionHandler> = ArrayList()
-	private val defaultExceptionHandler: ExceptionHandler
+	private val defaultExceptionHandler: ExceptionHandler = defaultExceptionHandler
 
 	private fun setupHandlers() {
 		staticHandler(AuthenticationException::class.java, R.string.error_authentication_failed)
@@ -55,6 +57,7 @@ class ExceptionHandlers @Inject constructor(private val context: Context, defaul
 		staticHandler(LicenseNotValidException::class.java, R.string.dialog_enter_license_not_valid_content)
 		staticHandler(NoLicenseAvailableException::class.java, R.string.dialog_enter_license_no_content)
 		staticHandler(HashMismatchUpdateCheckException::class.java, R.string.error_hash_mismatch_update)
+		staticHandler(HubNotSupportedOnPreAndroid31Exception::class.java, R.string.error_hub_unlock_pre_31)
 		staticHandler(GeneralUpdateErrorException::class.java, R.string.error_general_update)
 		staticHandler(
 			MissingVaultConfigFileException::class.java, String.format(
@@ -120,7 +123,6 @@ class ExceptionHandlers @Inject constructor(private val context: Context, defaul
 	}
 
 	init {
-		this.defaultExceptionHandler = defaultExceptionHandler
 		setupHandlers()
 	}
 }

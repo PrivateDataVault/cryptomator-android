@@ -1,1 +1,1 @@
-- Migrate cloud access tokens and vault passwords to AES 256bit GCM
+- Fixed app crash on small screens when showing empty vault hint

@@ -11,7 +11,6 @@ import androidx.biometric.BiometricManager
 import androidx.core.content.ContextCompat
 import androidx.preference.Preference
 import androidx.preference.PreferenceCategory
-import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SwitchPreference
 import org.cryptomator.presentation.BuildConfig
 import org.cryptomator.presentation.R
@@ -26,6 +25,7 @@ import org.cryptomator.presentation.ui.dialog.DebugModeDisclaimerDialog
 import org.cryptomator.presentation.ui.dialog.DisableAppWhenObscuredDisclaimerDialog
 import org.cryptomator.presentation.ui.dialog.DisableSecureScreenDisclaimerDialog
 import org.cryptomator.presentation.ui.dialog.MicrosoftWorkaroundDisclaimerDialog
+import org.cryptomator.presentation.ui.layout.PreferenceFragmentCompatLayout
 import org.cryptomator.util.SharedPreferencesHandler
 import org.cryptomator.util.SharedPreferencesHandler.Companion.CRYPTOMATOR_VARIANTS
 import org.cryptomator.util.file.LruFileCacheUtil
@@ -36,7 +36,7 @@ import java.text.DecimalFormat
 import kotlin.math.log10
 import timber.log.Timber
 
-class SettingsFragment : PreferenceFragmentCompat() {
+class SettingsFragment : PreferenceFragmentCompatLayout() {
 
 	private lateinit var sharedPreferencesHandler: SharedPreferencesHandler
 
@@ -174,7 +174,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
 				(findPreference(SharedPreferencesHandler.MAIL) as Preference?)?.title = format(getString(R.string.screen_settings_license_mail), sharedPreferencesHandler.mail())
 				setupUpdateCheck()
 			}
-			"fdroid", "lite" -> {
+			"fdroid", "lite", "accrescent" -> {
 				(findPreference(SharedPreferencesHandler.MAIL) as Preference?)?.title = format(getString(R.string.screen_settings_license_mail), sharedPreferencesHandler.mail())
 				removeUpdateCheck()
 			}
@@ -215,7 +215,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
 	}
 
 	private fun setupCryptomatorVariants() {
-		if (BuildConfig.FLAVOR == "playstore") {
+		if (BuildConfig.FLAVOR == "playstore" || BuildConfig.FLAVOR == "accrescent") {
 			(findPreference(CRYPTOMATOR_VARIANTS) as Preference?)?.let { preference ->
 				(findPreference(getString(R.string.screen_settings_section_general)) as PreferenceCategory?)?.removePreference(preference)
 			}

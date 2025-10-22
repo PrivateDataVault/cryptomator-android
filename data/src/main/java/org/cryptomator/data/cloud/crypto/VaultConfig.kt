@@ -7,8 +7,10 @@ import com.auth0.jwt.exceptions.JWTVerificationException
 import com.auth0.jwt.exceptions.SignatureVerificationException
 import com.auth0.jwt.interfaces.DecodedJWT
 import org.cryptomator.cryptolib.api.CryptorProvider
+import org.cryptomator.domain.KeyLoadingStrategy
 import org.cryptomator.domain.UnverifiedHubVaultConfig
 import org.cryptomator.domain.UnverifiedVaultConfig
+import org.cryptomator.domain.exception.vaultconfig.HubNotSupportedOnPreAndroid31Exception
 import org.cryptomator.domain.exception.vaultconfig.VaultConfigLoadException
 import org.cryptomator.domain.exception.vaultconfig.VaultKeyInvalidException
 import org.cryptomator.domain.exception.vaultconfig.VaultVersionMismatchException
@@ -88,24 +90,42 @@ class VaultConfig private constructor(builder: VaultConfigBuilder) {
 			} catch (e: IllegalArgumentException) {
 				throw VaultConfigLoadException("Invalid 'keyId' in JWT: ${e.message}", e)
 			}
-			if (keyId.scheme.startsWith(CryptoConstants.HUB_SCHEME)) {
-				val hubClaim = unverifiedJwt.getHeaderClaim("hub").asMap()
-				val clientId = hubClaim["clientId"] as? String ?: throw VaultConfigLoadException("Missing or invalid 'clientId' claim in JWT header")
-				val authEndpoint = parseUri(hubClaim, "authEndpoint")
-				val tokenEndpoint = parseUri(hubClaim, "tokenEndpoint")
-				val apiBaseUrl = parseUri(hubClaim, "apiBaseUrl")
-				return UnverifiedHubVaultConfig(token, keyId, vaultFormat, clientId, authEndpoint, tokenEndpoint, apiBaseUrl)
-			} else {
-				return UnverifiedVaultConfig(token, keyId, vaultFormat)
+			return when (KeyLoadingStrategy.fromKeyId(keyId)) {
+				KeyLoadingStrategy.MASTERKEY -> UnverifiedVaultConfig(token, keyId, vaultFormat)
+				KeyLoadingStrategy.HUB -> {
+					if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.S) {
+						throw HubNotSupportedOnPreAndroid31Exception()
+					}
+					val hubClaim = unverifiedJwt.getHeaderClaim("hub").asMap()
+					val clientId = hubClaim["clientId"] as? String ?: throw VaultConfigLoadException("Missing or invalid 'clientId' claim in JWT header")
+					val authEndpoint = parseUri(hubClaim, "authEndpoint")
+					val tokenEndpoint = parseUri(hubClaim, "tokenEndpoint")
+					val apiBaseUrl = getApiBaseUrl(hubClaim)
+					return UnverifiedHubVaultConfig(token, keyId, vaultFormat, clientId, authEndpoint, tokenEndpoint, apiBaseUrl)
+				}
 			}
 		}
 
-		private fun parseUri(uriValue: Map<String, Any>, fieldName: String): URI {
+		private fun parseUri(uriValue: Map<String, Any>, fieldName: String, ensureTrailingSlash: Boolean = false): URI {
 			val uriString = uriValue[fieldName] as? String ?: throw VaultConfigLoadException("Missing or invalid '$fieldName' claim in JWT header")
+			val adjustedUriString = if (ensureTrailingSlash && !uriString.endsWith("/")) {
+				"$uriString/"
+			} else {
+				uriString
+			}
 			return try {
-				URI.create(uriString)
+				URI.create(adjustedUriString)
 			} catch (e: IllegalArgumentException) {
 				throw VaultConfigLoadException("Invalid '$fieldName' URI: ${e.message}", e)
+			}
+		}
+
+		private fun getApiBaseUrl(hubClaim: Map<String, Any>): URI {
+			val apiBaseUrlKey = "apiBaseUrl"
+			return if (hubClaim.containsKey(apiBaseUrlKey)) {
+				parseUri(hubClaim, apiBaseUrlKey, ensureTrailingSlash = true)
+			} else {
+				parseUri(hubClaim, "devicesResourceUrl", ensureTrailingSlash = true).resolve("..")
 			}
 		}
 
