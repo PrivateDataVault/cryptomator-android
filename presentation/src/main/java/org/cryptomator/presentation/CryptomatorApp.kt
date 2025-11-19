@@ -25,8 +25,10 @@ import org.cryptomator.presentation.logging.ReleaseLogger
 import org.cryptomator.presentation.service.AutoUploadNotification
 import org.cryptomator.presentation.service.AutoUploadService
 import org.cryptomator.presentation.service.CryptorsService
+import org.cryptomator.presentation.service.IapBillingService
 import org.cryptomator.util.NoOpActivityLifecycleCallbacks
 import org.cryptomator.util.SharedPreferencesHandler
+import java.lang.ref.WeakReference
 import java.util.concurrent.atomic.AtomicInteger
 import io.reactivex.plugins.RxJavaPlugins
 import timber.log.Timber
@@ -42,6 +44,9 @@ class CryptomatorApp : MultiDexApplication(), HasComponent<ApplicationComponent>
 	@Volatile
 	private var autoUploadServiceBinder: AutoUploadService.Binder? = null
 
+	@Volatile
+	private var iapBillingServiceBinder: IapBillingService.Binder? = null
+
 	override fun onCreate() {
 		super.onCreate()
 		setupLogging()
@@ -51,6 +56,7 @@ class CryptomatorApp : MultiDexApplication(), HasComponent<ApplicationComponent>
 			"fdroid" -> "F-Droid Edition"
 			"lite" -> "F-Droid Main Repo Edition"
 			"accrescent" -> "Accrescent Edition"
+			"playstoreiap" -> "IAP Google Play Edition"
 			else -> "Google Play Edition"
 		}
 		Timber.tag("App").i(
@@ -82,6 +88,11 @@ class CryptomatorApp : MultiDexApplication(), HasComponent<ApplicationComponent>
 			Timber.tag("App").e(e, "Failed to launch cryptors service")
 		}
 		try {
+			startIapBillingService()
+		} catch (e: IllegalStateException) {
+			Timber.tag("App").e(e, "Failed to launch IAP billing service")
+		}
+		try {
 			startAutoUploadService()
 		} catch (e: IllegalStateException) {
 			Timber.tag("App").e(e, "Failed to launch auto upload service")
@@ -106,6 +117,39 @@ class CryptomatorApp : MultiDexApplication(), HasComponent<ApplicationComponent>
 				appCryptors.removeDelegate()
 			}
 		}, BIND_AUTO_CREATE)
+	}
+
+	private fun startIapBillingService() {
+		if (BuildConfig.FLAVOR != "playstoreiap") {
+			Timber.tag("App").d("IAP billing service skipped for flavor %s", BuildConfig.FLAVOR)
+			return
+		}
+		bindService(Intent(this, IapBillingService::class.java), object : ServiceConnection {
+			override fun onServiceConnected(name: ComponentName, service: IBinder) {
+				Timber.tag("App").i("IAP Billing service connected")
+				iapBillingServiceBinder = service as IapBillingService.Binder
+				iapBillingServiceBinder?.init(
+					applicationComponent.updateCheckRepository(),
+					Companion.applicationContext
+				)
+			}
+
+			override fun onServiceDisconnected(name: ComponentName) {
+				Timber.tag("App").i("IAP Billing service disconnected")
+			}
+		}, BIND_AUTO_CREATE)
+	}
+
+	fun launchPurchaseFlow(activity: WeakReference<Activity>) {
+		if (BuildConfig.FLAVOR == "playstoreiap") {
+			iapBillingServiceBinder?.startPurchaseFlow(activity, "full_version")
+		}
+	}
+
+	fun queryExistingPurchases() {
+		if (BuildConfig.FLAVOR == "playstoreiap") {
+			iapBillingServiceBinder?.queryPurchases()
+		}
 	}
 
 	private fun startAutoUploadService() {

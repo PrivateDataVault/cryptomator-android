@@ -112,7 +112,6 @@
 		<activity
 			android:name=".ui.activity.CryptomatorVariantsActivity"
 			android:exported="false" />
-		<activity
 			android:name=".ui.activity.LicensesActivity"
 			android:exported="true" />
 		<activity
@@ -209,6 +208,10 @@
 
 		<service
 			android:name=".service.AutoUploadService"
+			android:enabled="true" />
+
+		<service
+			android:name=".service.IapBillingService"
 			android:enabled="true" />
 
 		<service

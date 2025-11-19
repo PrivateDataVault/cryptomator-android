@@ -19,7 +19,10 @@ class LicenseCheckPresenter @Inject internal constructor(
 
 	fun validate(data: Uri?) {
 		data?.let {
-			val license = it.fragment ?: it.lastPathSegment ?: ""
+			val license = it.fragment ?: it.lastPathSegment
+			if (license.isNullOrEmpty()) {
+				return
+			}
 			view?.showOrUpdateLicenseDialog(license)
 			doLicenseCheckUseCase
 				.withLicense(license)

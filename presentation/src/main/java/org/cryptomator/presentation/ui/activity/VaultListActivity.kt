@@ -15,6 +15,7 @@ import org.cryptomator.presentation.databinding.ActivityLayoutObscureAwareBindin
 import org.cryptomator.presentation.intent.Intents.browseFilesIntent
 import org.cryptomator.presentation.intent.Intents.settingsIntent
 import org.cryptomator.presentation.intent.VaultListIntent
+import org.cryptomator.presentation.licensing.LicenseEnforcer
 import org.cryptomator.presentation.model.CloudFolderModel
 import org.cryptomator.presentation.model.ProgressModel
 import org.cryptomator.presentation.model.VaultModel
@@ -49,6 +50,9 @@ class VaultListActivity : BaseActivity<ActivityLayoutObscureAwareBinding>(Activi
 
 	@Inject
 	lateinit var vaultListPresenter: VaultListPresenter
+
+	@Inject
+	lateinit var licenseEnforcer: LicenseEnforcer
 
 	@InjectIntent
 	lateinit var vaultListIntent: VaultListIntent
@@ -174,6 +178,9 @@ class VaultListActivity : BaseActivity<ActivityLayoutObscureAwareBinding>(Activi
 	}
 
 	override fun onCreateVault() {
+		if (!licenseEnforcer.ensureWriteAccess(this, LicenseEnforcer.LockedAction.CREATE_VAULT)) {
+			return
+		}
 		vaultListPresenter.onCreateVault()
 	}
 

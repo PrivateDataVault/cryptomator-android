@@ -51,6 +51,25 @@
 	<string name="error_hub_invalid_version">Unsupported Hub version.</string>
 	<string name="error_hub_unlock_pre_31">Hub is only supported on Android 12 and above.</string>
 
+	<!-- # read-only & purchases -->
+	<string name="read_only_banner">You are currently in read-only mode.</string>
+	<string name="read_only_reason_create_vault">Creating new vaults requires an active license.</string>
+	<string name="read_only_reason_add_file">Uploading files requires write access.</string>
+	<string name="read_only_reason_create_folder">Folder creation is only available with a license.</string>
+	<string name="read_only_reason_create_text_file">Creating files requires an active license.</string>
+	<string name="read_only_reason_share_node">Sharing files or folders is only available with write access.</string>
+	<string name="read_only_reason_hub_inactive">Upgrade your Hub license to enable writing for this vault.</string>
+	<string name="screen_license_check_title">Unlock write access</string>
+	<string name="screen_license_check_message">You are currently using Cryptomator in read-only mode. Consider purchasing a licence to enable write access and support Cryptomator\'s development.</string>
+	<string name="screen_license_check_benefit_title">Your benefits</string>
+	<string name="screen_license_check_benefit_create_vaults">Create vaults</string>
+	<string name="screen_license_check_benefit_write_access">Write access for vaults, files, and folders</string>
+	<string name="screen_license_check_benefit_support">Helps funding open-source development</string>
+	<string name="screen_license_check_button_purchase">Unlock via Google Play</string>
+	<string name="screen_license_check_button_enter_license">Enter license key</string>
+	<string name="screen_license_check_button_later">Maybe later</string>
+	<string name="screen_license_check_already_unlocked">Write access is already unlocked on this device.</string>
+
 	<!-- # clouds -->
 
 	<!-- ## cloud names -->

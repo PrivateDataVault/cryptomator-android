@@ -128,6 +128,8 @@ abstract class BaseActivity<VB : ViewBinding>(val bindingFactory: (LayoutInflate
 		if (cryptomatorApp.allVaultsLocked()) {
 			vaultExpectedToBeUnlocked()
 		}
+
+		cryptomatorApp.queryExistingPurchases()
 	}
 
 	internal open fun vaultExpectedToBeUnlocked() {

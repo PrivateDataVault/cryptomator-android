@@ -93,6 +93,13 @@ android {
 			dimension "version"
 		}
 
+		playstoreiap {
+			dimension "version"
+
+			applicationIdSuffix ".freemium"
+			resValue "string", "app_id", androidApplicationId + applicationIdSuffix
+		}
+
 		apkstore {
 			dimension "version"
 		}
@@ -115,6 +122,10 @@ android {
 
 	sourceSets {
 		playstore {
+			java.srcDirs = ['src/main/java', 'src/apiKey/java/', 'src/apkStorePlaystore/java/']
+		}
+
+		playstoreiap {
 			java.srcDirs = ['src/main/java', 'src/apiKey/java/', 'src/apkStorePlaystore/java/']
 		}
 
@@ -191,6 +202,8 @@ dependencies {
 	// cloud
 	playstoreImplementation dependencies.dropboxCore
 	playstoreImplementation dependencies.dropboxAndroid
+	playstoreiapImplementation dependencies.dropboxCore
+	playstoreiapImplementation dependencies.dropboxAndroid
 	apkstoreImplementation dependencies.dropboxCore
 	apkstoreImplementation dependencies.dropboxAndroid
 	fdroidImplementation dependencies.dropboxCore
@@ -199,15 +212,23 @@ dependencies {
 	accrescentImplementation dependencies.dropboxAndroid
 
 	playstoreImplementation dependencies.msgraphAuth
+	playstoreiapImplementation dependencies.msgraphAuth
 	apkstoreImplementation dependencies.msgraphAuth
 	fdroidImplementation dependencies.msgraphAuth
 	accrescentImplementation dependencies.msgraphAuth
 	playstoreImplementation dependencies.msgraph
+	playstoreiapImplementation dependencies.msgraph
 	apkstoreImplementation dependencies.msgraph
 	fdroidImplementation dependencies.msgraph
 	accrescentImplementation dependencies.msgraph
 
 	playstoreImplementation(dependencies.googleApiServicesDrive) {
+		exclude module: 'guava-jdk5'
+		exclude module: 'httpclient'
+		exclude module: 'googlehttpclient'
+		exclude group: "com.google.http-client", module: "google-http-client"
+	}
+	playstoreiapImplementation(dependencies.googleApiServicesDrive) {
 		exclude module: 'guava-jdk5'
 		exclude module: 'httpclient'
 		exclude module: 'googlehttpclient'
@@ -227,6 +248,14 @@ dependencies {
 		exclude group: "com.google.http-client", module: "google-http-client"
 		exclude group: "com.google.http-client", module: "jetified-google-http-client"
 	}
+	playstoreiapImplementation(dependencies.googleApiClientAndroid) {
+		exclude module: 'guava-jdk5'
+		exclude module: 'httpclient'
+		exclude module: "google-http-client"
+		exclude module: "jetified-google-http-client"
+		exclude group: "com.google.http-client", module: "google-http-client"
+		exclude group: "com.google.http-client", module: "jetified-google-http-client"
+	}
 	apkstoreImplementation(dependencies.googleApiClientAndroid) {
 		exclude module: 'guava-jdk5'
 		exclude module: 'httpclient'
@@ -237,8 +266,10 @@ dependencies {
 	}
 
 	playstoreImplementation dependencies.trackingFreeGoogleCLient
+	playstoreiapImplementation dependencies.trackingFreeGoogleCLient
 	apkstoreImplementation dependencies.trackingFreeGoogleCLient
 	playstoreImplementation dependencies.trackingFreeGoogleAndroidCLient
+	playstoreiapImplementation dependencies.trackingFreeGoogleAndroidCLient
 	apkstoreImplementation dependencies.trackingFreeGoogleAndroidCLient
 
 	// rest
@@ -247,6 +278,8 @@ dependencies {
 	compileOnly dependencies.javaxAnnotation
 	implementation dependencies.zxcvbn
 	implementation dependencies.rxBinding
+
+	playstoreiapImplementation dependencies.billing
 
 	// multidex
 	implementation dependencies.multidex

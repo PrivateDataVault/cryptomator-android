@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.view.Menu
 import android.view.View
+import android.widget.Toast
 import androidx.appcompat.widget.SearchView
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
@@ -21,6 +22,7 @@ import org.cryptomator.presentation.intent.ChooseCloudNodeSettings
 import org.cryptomator.presentation.intent.ChooseCloudNodeSettings.NavigationMode.BROWSE_FILES
 import org.cryptomator.presentation.intent.ChooseCloudNodeSettings.NavigationMode.MOVE_CLOUD_NODE
 import org.cryptomator.presentation.intent.ChooseCloudNodeSettings.NavigationMode.SELECT_ITEMS
+import org.cryptomator.presentation.licensing.LicenseEnforcer
 import org.cryptomator.presentation.model.CloudFileModel
 import org.cryptomator.presentation.model.CloudFolderModel
 import org.cryptomator.presentation.model.CloudNodeModel
@@ -69,6 +71,9 @@ class BrowseFilesActivity : BaseActivity<ActivityLayoutBinding>(ActivityLayoutBi
 
 	@Inject
 	lateinit var browseFilesPresenter: BrowseFilesPresenter
+
+	@Inject
+	lateinit var licenseEnforcer: LicenseEnforcer
 
 	@InjectIntent
 	lateinit var browseFilesIntent: BrowseFilesIntent
@@ -202,7 +207,9 @@ class BrowseFilesActivity : BaseActivity<ActivityLayoutBinding>(ActivityLayoutBi
 			true
 		}
 		R.id.action_share_items -> {
-			browseFilesPresenter.onShareNodesClicked(browseFilesFragment().selectedCloudNodes)
+			if (ensureWriteAccessForCurrentVault(LicenseEnforcer.LockedAction.SHARE_NODE)) {
+				browseFilesPresenter.onShareNodesClicked(browseFilesFragment().selectedCloudNodes)
+			}
 			true
 		}
 		R.id.action_sort_az -> {
@@ -459,7 +466,9 @@ class BrowseFilesActivity : BaseActivity<ActivityLayoutBinding>(ActivityLayoutBi
 	}
 
 	override fun onCreateNewFolderClicked() {
-		showCreateFolderDialog()
+		if (ensureWriteAccessForCurrentVault(LicenseEnforcer.LockedAction.CREATE_FOLDER)) {
+			showCreateFolderDialog()
+		}
 	}
 
 	private fun showCreateFolderDialog() {
@@ -467,11 +476,15 @@ class BrowseFilesActivity : BaseActivity<ActivityLayoutBinding>(ActivityLayoutBi
 	}
 
 	override fun onUploadFilesClicked(folder: CloudFolderModel) {
-		browseFilesPresenter.onUploadFilesClicked(folder)
+		if (ensureWriteAccessForFolder(folder, LicenseEnforcer.LockedAction.UPLOAD_FILES)) {
+			browseFilesPresenter.onUploadFilesClicked(folder)
+		}
 	}
 
 	override fun onCreateNewTextFileClicked() {
-		browseFilesPresenter.onCreateNewTextFileClicked()
+		if (ensureWriteAccessForCurrentVault(LicenseEnforcer.LockedAction.CREATE_TEXT_FILE)) {
+			browseFilesPresenter.onCreateNewTextFileClicked()
+		}
 	}
 
 	override fun onRenameFileClicked(cloudFile: CloudFileModel) {
@@ -491,7 +504,9 @@ class BrowseFilesActivity : BaseActivity<ActivityLayoutBinding>(ActivityLayoutBi
 	}
 
 	override fun onShareFileClicked(cloudFile: CloudFileModel) {
-		browseFilesPresenter.onShareFileClicked(cloudFile)
+		if (ensureWriteAccessForCurrentVault(LicenseEnforcer.LockedAction.SHARE_NODE)) {
+			browseFilesPresenter.onShareFileClicked(cloudFile)
+		}
 	}
 
 	override fun onMoveFileClicked(cloudFile: CloudFileModel) {
@@ -554,6 +569,24 @@ class BrowseFilesActivity : BaseActivity<ActivityLayoutBinding>(ActivityLayoutBi
 	}
 
 	private fun browseFilesFragment(): BrowseFilesFragment = getCurrentFragment(R.id.fragment_container) as BrowseFilesFragment
+
+	private fun ensureWriteAccessForCurrentVault(action: LicenseEnforcer.LockedAction): Boolean {
+		return ensureWriteAccessForFolder(browseFilesFragment().folder, action)
+	}
+
+	private fun ensureWriteAccessForFolder(folder: CloudFolderModel?, action: LicenseEnforcer.LockedAction): Boolean {
+		val targetFolder = folder ?: browseFilesFragment().folder
+		val vaultModel = targetFolder.vault()
+		if (vaultModel?.isHubVault == true) {
+			return if (vaultModel.hasHubPaidLicense) {
+				true
+			} else {
+				Toast.makeText(this, R.string.read_only_reason_hub_inactive, Toast.LENGTH_LONG).show()
+				false
+			}
+		}
+		return licenseEnforcer.ensureWriteAccess(this, action)
+	}
 
 	override fun onCreateNewTextFileClicked(fileName: String) {
 		browseFilesPresenter.onCreateNewTextFileClicked(browseFilesFragment().folder, fileName)
