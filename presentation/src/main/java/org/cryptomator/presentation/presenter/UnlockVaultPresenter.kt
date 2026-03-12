@@ -161,7 +161,7 @@ class UnlockVaultPresenter @Inject constructor(
 		} else if (unverifiedVaultConfig.isPresent && unverifiedVaultConfig.get().keyLoadingStrategy() == KeyLoadingStrategy.HUB) {
 			val unverifiedHubVaultConfig = unverifiedVaultConfig.get() as UnverifiedHubVaultConfig
 			if (!isConsistentHubConfig(unverifiedHubVaultConfig)) {
-				Timber.tag("VaultListPresenter").e("Inconsistent hub config detected. Denying access to protect the user.")
+				Timber.tag("UnlockVaultPresenter").e("Inconsistent hub config detected. Denying access to protect the user.")
 				Toast.makeText(context(), R.string.error_hub_not_trustworthy, Toast.LENGTH_LONG).show()
 				finish()
 			} else if (configContainsAllowedHosts(unverifiedHubVaultConfig) && !isHttpHost(unverifiedHubVaultConfig)) {
@@ -169,14 +169,14 @@ class UnlockVaultPresenter @Inject constructor(
 			} else if (isCryptomatorCloud(unverifiedHubVaultConfig) && !isHttpHost(unverifiedHubVaultConfig)) {
 				allowedHubHosts(unverifiedHubVaultConfig, vault)
 			} else if (isCryptomatorCloud(unverifiedHubVaultConfig) && isHttpHost(unverifiedHubVaultConfig)) {
-				Timber.tag("VaultListPresenter").e("Cryptomator Cloud with http is not supported.")
+				Timber.tag("UnlockVaultPresenter").e("Cryptomator Cloud with http is not supported.")
 				Toast.makeText(context(), R.string.error_hub_not_trustworthy, Toast.LENGTH_LONG).show()
 				finish()
 			} else if (!isHttpHost(unverifiedHubVaultConfig)) {
 				val hostnames = setOf(unverifiedHubVaultConfig.apiBaseUrl.authority, unverifiedHubVaultConfig.authEndpoint.authority).toTypedArray()
 				view?.showDialog(HubCheckHostAuthenticityDialog.newInstance(hostnames, unverifiedHubVaultConfig, vault))
 			} else {
-				Timber.tag("VaultListPresenter").e("Cryptomator is not allowed to connect to " + unverifiedHubVaultConfig.apiBaseUrl.authority)
+				Timber.tag("UnlockVaultPresenter").e("Cryptomator is not allowed to connect to " + unverifiedHubVaultConfig.apiBaseUrl.authority)
 				Toast.makeText(context(), R.string.error_hub_not_trustworthy, Toast.LENGTH_LONG).show()
 				finish()
 			}
@@ -517,7 +517,7 @@ class UnlockVaultPresenter @Inject constructor(
 			}
 
 			override fun onError(e: Throwable) {
-				Timber.tag("VaultListPresenter").e(e, "Error while removing vault passwords")
+				Timber.tag("UnlockVaultPresenter").e(e, "Error while removing vault passwords")
 				finishWithResult(null)
 			}
 		})
