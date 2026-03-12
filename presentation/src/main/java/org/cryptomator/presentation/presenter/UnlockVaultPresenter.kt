@@ -3,6 +3,7 @@ package org.cryptomator.presentation.presenter
 import android.content.Intent
 import android.net.Uri
 import android.os.Handler
+import android.widget.Toast
 import androidx.biometric.BiometricManager
 import com.google.common.base.Optional
 import net.openid.appauth.AuthorizationException
@@ -50,11 +51,13 @@ import org.cryptomator.presentation.model.ProgressStateModel
 import org.cryptomator.presentation.model.VaultModel
 import org.cryptomator.presentation.ui.activity.view.UnlockVaultView
 import org.cryptomator.presentation.ui.dialog.EnterPasswordDialog
+import org.cryptomator.presentation.ui.dialog.HubCheckHostAuthenticityDialog
 import org.cryptomator.presentation.workflow.ActivityResult
 import org.cryptomator.presentation.workflow.AuthenticationExceptionHandler
 import org.cryptomator.util.SharedPreferencesHandler
 import org.cryptomator.util.crypto.CryptoMode
 import java.io.Serializable
+import java.net.URI
 import javax.inject.Inject
 import timber.log.Timber
 
@@ -74,6 +77,8 @@ class UnlockVaultPresenter @Inject constructor(
 	private val sharedPreferencesHandler: SharedPreferencesHandler,
 	exceptionMappings: ExceptionHandlers
 ) : Presenter<UnlockVaultView>(exceptionMappings) {
+
+	private val trustedCryptomatorCloudDomain = ".cryptomator.cloud"
 
 	private var startedUsingPrepareUnlock = false
 	private var retryUnlockHandler: Handler? = null
@@ -154,20 +159,83 @@ class UnlockVaultPresenter @Inject constructor(
 				else -> {}
 			}
 		} else if (unverifiedVaultConfig.isPresent && unverifiedVaultConfig.get().keyLoadingStrategy() == KeyLoadingStrategy.HUB) {
-			when (intent.vaultAction()) {
-				UnlockVaultIntent.VaultAction.UNLOCK -> {
-					val unverifiedHubVaultConfig = unverifiedVaultConfig.get() as UnverifiedHubVaultConfig
-					if (hubAuthService == null) {
-						hubAuthService = AuthorizationService(context())
-					}
-					view?.showProgress(ProgressModel.GENERIC)
-					unlockHubVault(unverifiedHubVaultConfig, vault)
-				}
-				UnlockVaultIntent.VaultAction.UNLOCK_FOR_BIOMETRIC_AUTH -> showErrorAndFinish(HubVaultOperationNotSupportedException())
-				UnlockVaultIntent.VaultAction.CHANGE_PASSWORD -> showErrorAndFinish(HubVaultOperationNotSupportedException())
-				UnlockVaultIntent.VaultAction.ENCRYPT_PASSWORD -> showErrorAndFinish(HubVaultOperationNotSupportedException())
+			val unverifiedHubVaultConfig = unverifiedVaultConfig.get() as UnverifiedHubVaultConfig
+			if (!isConsistentHubConfig(unverifiedHubVaultConfig)) {
+				Timber.tag("UnlockVaultPresenter").e("Inconsistent hub config detected. Denying access to protect the user.")
+				Toast.makeText(context(), R.string.error_hub_not_trustworthy, Toast.LENGTH_LONG).show()
+				finish()
+			} else if (configContainsAllowedHosts(unverifiedHubVaultConfig) && !isHttpHost(unverifiedHubVaultConfig)) {
+				allowedHubHosts(unverifiedHubVaultConfig, vault)
+			} else if (isCryptomatorCloud(unverifiedHubVaultConfig) && !isHttpHost(unverifiedHubVaultConfig)) {
+				allowedHubHosts(unverifiedHubVaultConfig, vault)
+			} else if (isCryptomatorCloud(unverifiedHubVaultConfig) && isHttpHost(unverifiedHubVaultConfig)) {
+				Timber.tag("UnlockVaultPresenter").e("Cryptomator Cloud with http is not supported.")
+				Toast.makeText(context(), R.string.error_hub_not_trustworthy, Toast.LENGTH_LONG).show()
+				finish()
+			} else if (!isHttpHost(unverifiedHubVaultConfig)) {
+				val hostnames = setOf(unverifiedHubVaultConfig.apiBaseUrl.authority, unverifiedHubVaultConfig.authEndpoint.authority).toTypedArray()
+				view?.showDialog(HubCheckHostAuthenticityDialog.newInstance(hostnames, unverifiedHubVaultConfig, vault))
+			} else {
+				Timber.tag("UnlockVaultPresenter").e("Cryptomator is not allowed to connect to " + unverifiedHubVaultConfig.apiBaseUrl.authority)
+				Toast.makeText(context(), R.string.error_hub_not_trustworthy, Toast.LENGTH_LONG).show()
+				finish()
 			}
 		}
+	}
+
+	fun allowedHubHosts(unverifiedHubVaultConfig: UnverifiedHubVaultConfig, vault: Vault) {
+		when (intent.vaultAction()) {
+			UnlockVaultIntent.VaultAction.UNLOCK -> {
+				if (hubAuthService == null) {
+					hubAuthService = AuthorizationService(context())
+				}
+				view?.showProgress(ProgressModel.GENERIC)
+				unlockHubVault(unverifiedHubVaultConfig, vault)
+			}
+			UnlockVaultIntent.VaultAction.UNLOCK_FOR_BIOMETRIC_AUTH -> showErrorAndFinish(HubVaultOperationNotSupportedException())
+			UnlockVaultIntent.VaultAction.CHANGE_PASSWORD -> showErrorAndFinish(HubVaultOperationNotSupportedException())
+			UnlockVaultIntent.VaultAction.ENCRYPT_PASSWORD -> showErrorAndFinish(HubVaultOperationNotSupportedException())
+		}
+	}
+
+	private fun isConsistentHubConfig(unverifiedVaultConfig: UnverifiedHubVaultConfig): Boolean {
+		return getAuthority(unverifiedVaultConfig.tokenEndpoint) == getAuthority(unverifiedVaultConfig.authEndpoint)
+	}
+
+	private fun isCryptomatorCloud(unverifiedHubVaultConfig: UnverifiedHubVaultConfig): Boolean {
+		return unverifiedHubVaultConfig.apiBaseUrl.host.endsWith(trustedCryptomatorCloudDomain)
+				&& unverifiedHubVaultConfig.authEndpoint.host.endsWith(trustedCryptomatorCloudDomain)
+	}
+
+	private fun configContainsAllowedHosts(unverifiedVaultConfig: UnverifiedHubVaultConfig): Boolean {
+		val allowedHubHosts = sharedPreferencesHandler.getTrustedHubHosts()
+		return containsAllowedHosts(allowedHubHosts, unverifiedVaultConfig)
+	}
+
+	private fun containsAllowedHosts(allowedHubHosts: Set<String>, unverifiedVaultConfig: UnverifiedHubVaultConfig): Boolean {
+		val canonicalHubHost = getAuthority(unverifiedVaultConfig.apiBaseUrl)
+		val canonicalAuthHost = getAuthority(unverifiedVaultConfig.authEndpoint)
+		return allowedHubHosts.contains(canonicalHubHost) && allowedHubHosts.contains(canonicalAuthHost);
+	}
+
+	private fun isHttpHost(unverifiedHubVaultConfig: UnverifiedHubVaultConfig): Boolean {
+		return "http".equals(unverifiedHubVaultConfig.apiBaseUrl.scheme, ignoreCase = true)
+				|| "http".equals(unverifiedHubVaultConfig.authEndpoint.scheme, ignoreCase = true)
+	}
+
+	private fun getAuthority(uri: URI): String {
+		return when (uri.port) {
+			-1 -> "%s://%s".format(uri.scheme, uri.host)
+			80 -> "http://%s".format(uri.host)
+			443 -> "https://%s".format(uri.host)
+			else -> "%s://%s:%s".format(uri.scheme, uri.host, uri.port)
+		}
+	}
+
+	fun onHubCheckHostsAllowed(unverifiedHubVaultConfig: UnverifiedHubVaultConfig, vault: Vault) {
+		sharedPreferencesHandler.addTrustedHubHosts(getAuthority(unverifiedHubVaultConfig.apiBaseUrl))
+		sharedPreferencesHandler.addTrustedHubHosts(getAuthority(unverifiedHubVaultConfig.authEndpoint))
+		onUnverifiedVaultConfigRetrieved(Optional.of(unverifiedHubVaultConfig), vault)
 	}
 
 	private fun showErrorAndFinish(e: Throwable) {
@@ -449,7 +517,7 @@ class UnlockVaultPresenter @Inject constructor(
 			}
 
 			override fun onError(e: Throwable) {
-				Timber.tag("VaultListPresenter").e(e, "Error while removing vault passwords")
+				Timber.tag("UnlockVaultPresenter").e(e, "Error while removing vault passwords")
 				finishWithResult(null)
 			}
 		})
@@ -515,7 +583,7 @@ class UnlockVaultPresenter @Inject constructor(
 
 	@Callback(dispatchResultOkOnly = false)
 	fun changePasswordAfterAuthentication(result: ActivityResult, vault: Vault, unverifiedVaultConfig: UnverifiedVaultConfig, oldPassword: String, newPassword: String) {
-		if(result.isResultOk) {
+		if (result.isResultOk) {
 			val cloud = result.getSingleResult(CloudModel::class.java).toCloud()
 			val vaultWithUpdatedCloud = Vault.aCopyOf(vault).withCloud(cloud).build()
 			onChangePasswordClick(VaultModel(vaultWithUpdatedCloud), unverifiedVaultConfig, oldPassword, newPassword)

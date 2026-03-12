@@ -71,6 +71,12 @@ class SettingsFragment : PreferenceFragmentCompatLayout() {
 		true
 	}
 
+	private val clearTrustedHubHostsClickListener = Preference.OnPreferenceClickListener {
+		sharedPreferencesHandler.clearTrustedHubHosts()
+		Toast.makeText(requireContext(), R.string.notification_cleared_trusted_hosts, Toast.LENGTH_LONG).show()
+		true
+	}
+
 	private val useAutoPhotoUploadChangedListener = Preference.OnPreferenceChangeListener { _, newValue ->
 		onUseAutoPhotoUploadChanged(TRUE == newValue)
 		true
@@ -226,6 +232,7 @@ class SettingsFragment : PreferenceFragmentCompatLayout() {
 		super.onResume()
 		(findPreference(SEND_ERROR_REPORT_ITEM_KEY) as Preference?)?.onPreferenceClickListener = sendErrorReportClickListener
 		(findPreference(LRU_CACHE_CLEAR_ITEM_KEY) as Preference?)?.onPreferenceClickListener = clearCacheClickListener
+		(findPreference(CLEAR_TRUSTED_HUB_HOSTS) as Preference?)?.onPreferenceClickListener = clearTrustedHubHostsClickListener
 		(findPreference(SharedPreferencesHandler.DEBUG_MODE) as Preference?)?.onPreferenceChangeListener = debugModeChangedListener
 		(findPreference(SharedPreferencesHandler.DISABLE_APP_WHEN_OBSCURED) as Preference?)?.onPreferenceChangeListener = disableAppWhenObscuredChangedListener
 		(findPreference(SharedPreferencesHandler.SECURE_SCREEN) as Preference?)?.onPreferenceChangeListener = disableSecureScreenChangedListener
@@ -327,6 +334,7 @@ class SettingsFragment : PreferenceFragmentCompatLayout() {
 		private const val UPDATE_INTERVAL_ITEM_KEY = "updateInterval"
 		private const val DISPLAY_LRU_CACHE_SIZE_ITEM_KEY = "displayLruCacheSize"
 		private const val LRU_CACHE_CLEAR_ITEM_KEY = "lruCacheClear"
+		private const val CLEAR_TRUSTED_HUB_HOSTS = "clearTrustedHubHosts"
 	}
 
 }

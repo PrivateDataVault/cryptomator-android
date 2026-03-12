@@ -50,6 +50,10 @@
 			android:summary="@string/screen_settings_cryptomator_variants_summary"
 			android:title="@string/screen_settings_cryptomator_variants_label" />
 
+		<androidx.preference.PreferenceScreen
+			android:key="clearTrustedHubHosts"
+			android:title="@string/screen_hub_reset_unknown_hub_hosts_title" />
+
 	</PreferenceCategory>
 
 	<PreferenceCategory android:title="@string/screen_settings_section_search">

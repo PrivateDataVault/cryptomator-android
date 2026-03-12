@@ -6,6 +6,7 @@ import com.auth0.jwt.exceptions.JWTDecodeException;
 import com.auth0.jwt.exceptions.SignatureVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.auth0.jwt.interfaces.JWTVerifier;
+import com.google.common.base.CharMatcher;
 import com.google.common.io.BaseEncoding;
 
 import org.cryptomator.domain.exception.BackendException;
@@ -45,6 +46,7 @@ public class DoLicenseCheck {
 
 	public LicenseCheck execute() throws BackendException {
 		license = useLicenseOrRetrieveFromDb(license);
+		license = CharMatcher.whitespace().removeFrom(license);
 		try {
 			Algorithm algorithm = Algorithm.ECDSA512(getPublicKey(ANDROID_PUB_KEY), null);
 			JWTVerifier verifier = JWT.require(algorithm).build();
