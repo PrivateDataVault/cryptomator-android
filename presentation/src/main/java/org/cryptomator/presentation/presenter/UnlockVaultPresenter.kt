@@ -163,19 +163,22 @@ class UnlockVaultPresenter @Inject constructor(
 			if (!isConsistentHubConfig(unverifiedHubVaultConfig)) {
 				Timber.tag("VaultListPresenter").e("Inconsistent hub config detected. Denying access to protect the user.")
 				Toast.makeText(context(), R.string.error_hub_not_trustworthy, Toast.LENGTH_LONG).show()
-			} else if (configContainsAllowedHosts(unverifiedHubVaultConfig)) {
+				finish()
+			} else if (configContainsAllowedHosts(unverifiedHubVaultConfig) && isHttpHost(unverifiedHubVaultConfig)) {
 				allowedHubHosts(unverifiedHubVaultConfig, vault)
 			} else if (isCryptomatorCloud(unverifiedHubVaultConfig) && !isHttpHost(unverifiedHubVaultConfig)) {
 				allowedHubHosts(unverifiedHubVaultConfig, vault)
-			} else if (isHttpHost(unverifiedHubVaultConfig) && !isLocalhost(unverifiedHubVaultConfig)) {
-				Timber.tag("VaultListPresenter").e("Denying attempt to connect to hub instance via unencrypted HTTP.")
+			} else if (isCryptomatorCloud(unverifiedHubVaultConfig) && isHttpHost(unverifiedHubVaultConfig)) {
+				Timber.tag("VaultListPresenter").e("Cryptomator Cloud with http is not supported.")
 				Toast.makeText(context(), R.string.error_hub_not_trustworthy, Toast.LENGTH_LONG).show()
-			} else if (sharedPreferencesHandler.allowUnknownHubHosts()) {
-				val hostnames = arrayOf(unverifiedHubVaultConfig.apiBaseUrl.authority, unverifiedHubVaultConfig.authEndpoint.authority)
+				finish()
+			} else if (!isHttpHost(unverifiedHubVaultConfig)) {
+				val hostnames = setOf(unverifiedHubVaultConfig.apiBaseUrl.authority, unverifiedHubVaultConfig.authEndpoint.authority).toTypedArray()
 				view?.showDialog(HubCheckHostAuthenticityDialog.newInstance(hostnames, unverifiedHubVaultConfig, vault))
 			} else {
-				Timber.tag("VaultListPresenter").e("Cryptomator is not allowed to connect to " + unverifiedHubVaultConfig.apiBaseUrl.authority + ". Check your cryptomator.allowedHubHosts config.")
+				Timber.tag("VaultListPresenter").e("Cryptomator is not allowed to connect to " + unverifiedHubVaultConfig.apiBaseUrl.authority)
 				Toast.makeText(context(), R.string.error_hub_not_trustworthy, Toast.LENGTH_LONG).show()
+				finish()
 			}
 		}
 	}
@@ -219,12 +222,8 @@ class UnlockVaultPresenter @Inject constructor(
 		return "http".equals(unverifiedHubVaultConfig.apiBaseUrl.scheme, ignoreCase = true) || "http".equals(unverifiedHubVaultConfig.authEndpoint.scheme, ignoreCase = true)
 	}
 
-	private fun isLocalhost(unverifiedHubVaultConfig: UnverifiedHubVaultConfig): Boolean {
-		return "localhost".equals(unverifiedHubVaultConfig.apiBaseUrl.host, ignoreCase = true) || "localhost".equals(unverifiedHubVaultConfig.authEndpoint.host, ignoreCase = true)
-	}
-
 	private fun getAuthority(uri: URI): String {
-		return when(uri.port) {
+		return when (uri.port) {
 			-1 -> "%s://%s".format(uri.scheme, uri.host)
 			80 -> "http://%s".format(uri.host)
 			443 -> "https://%s".format(uri.host)

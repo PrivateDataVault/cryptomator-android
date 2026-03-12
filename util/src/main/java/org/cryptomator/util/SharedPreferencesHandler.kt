@@ -283,14 +283,6 @@ constructor(context: Context) : SharedPreferences.OnSharedPreferenceChangeListen
 		return defaultSharedPreferences.getBoolean(MICROSOFT_WORKAROUND, false)
 	}
 
-	fun setAllowUnknownHubHosts(enabled: Boolean) {
-		defaultSharedPreferences.setValue(ALLOW_UNKNOWN_HUB_HOSTS, enabled)
-	}
-
-	fun allowUnknownHubHosts(): Boolean {
-		return defaultSharedPreferences.getBoolean(ALLOW_UNKNOWN_HUB_HOSTS, true)
-	}
-
 	fun addTrustedHubHosts(host: String) {
 		val hosts = defaultSharedPreferences
 			.getStringSet(TRUSTED_HUB_HOSTS, emptySet())
@@ -349,7 +341,6 @@ constructor(context: Context) : SharedPreferences.OnSharedPreferenceChangeListen
 		const val CRYPTOMATOR_VARIANTS = "cryptomatorVariants"
 		const val LICENSES_ACTIVITY = "licensesActivity"
 		const val TRUSTED_HUB_HOSTS = "trustedHubHosts"
-		const val ALLOW_UNKNOWN_HUB_HOSTS = "allowUnknownHubHosts"
 	}
 
 	private inline fun SharedPreferences.edit(operation: (SharedPreferences.Editor) -> Unit) {

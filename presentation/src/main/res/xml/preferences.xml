@@ -54,11 +54,6 @@
 
 	<PreferenceCategory android:title="@string/screen_hub_title">
 
-		<SwitchPreference
-			android:defaultValue="true"
-			android:key="allowUnknownHubHosts"
-			android:title="@string/screen_hub_allow_unknown_hub_hosts_title" />
-
 		<androidx.preference.PreferenceScreen
 			android:key="clearTrustedHubHosts"
 			android:title="@string/screen_hub_clear_unknown_hub_hosts_title" />
