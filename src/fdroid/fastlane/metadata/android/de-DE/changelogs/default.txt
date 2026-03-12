@@ -1,1 +1,1 @@
-- App-Absturz auf kleinen Bildschirmen bei der Anzeige eines leeren Tresor-Hinweises behoben
+- Mögliche Man-in-the-Middle-Angriffe mit manipulierten Cryptomator Hub-Tresorkonfigurationen behoben (GHSA-876q-q3mm-fcvj)
