@@ -219,7 +219,8 @@ class UnlockVaultPresenter @Inject constructor(
 	}
 
 	private fun isHttpHost(unverifiedHubVaultConfig: UnverifiedHubVaultConfig): Boolean {
-		return "http".equals(unverifiedHubVaultConfig.apiBaseUrl.scheme, ignoreCase = true) || "http".equals(unverifiedHubVaultConfig.authEndpoint.scheme, ignoreCase = true)
+		return "http".equals(unverifiedHubVaultConfig.apiBaseUrl.scheme, ignoreCase = true)
+				|| "http".equals(unverifiedHubVaultConfig.authEndpoint.scheme, ignoreCase = true)
 	}
 
 	private fun getAuthority(uri: URI): String {

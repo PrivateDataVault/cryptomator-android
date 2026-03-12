@@ -195,7 +195,6 @@ class UnlockVaultActivity : BaseActivity<ActivityUnlockVaultBinding>(ActivityUnl
 	}
 
 	override fun onHubCheckHostsDenied(unverifiedHubVaultConfig: UnverifiedHubVaultConfig) {
-		// todo toast
 		finish()
 	}
 

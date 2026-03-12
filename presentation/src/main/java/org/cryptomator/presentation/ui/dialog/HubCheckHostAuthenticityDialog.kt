@@ -38,7 +38,7 @@ class HubCheckHostAuthenticityDialog : BaseDialog<HubCheckHostAuthenticityDialog
 
 	public override fun setupView() {
 		val hostnames = requireArguments().getSerializable(HOSTNAMES_ARG) as Array<String>
-		binding.tvHostnames.text =  hostnames.sorted().joinToString(separator = "\n")
+		binding.tvHostnames.text =  hostnames.sorted().joinToString(separator = "\n") { "• $it" }
 	}
 
 	companion object {

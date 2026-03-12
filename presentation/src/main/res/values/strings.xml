@@ -336,7 +336,6 @@
 
 	<!-- ## screen: hub -->
 	<string name="screen_hub_title" translatable="false">Hub</string>
-	<string name="screen_hub_allow_unknown_hub_hosts_title">Allow Unknown Hub Hosts</string>
 	<string name="screen_hub_clear_unknown_hub_hosts_title">Clear Unknown Hub Hosts</string>
 
 	<!-- # dialogs -->
