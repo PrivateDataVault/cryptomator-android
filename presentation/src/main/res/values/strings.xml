@@ -51,6 +51,8 @@
 	<string name="error_hub_invalid_version">Unsupported Hub version.</string>
 	<string name="error_hub_unlock_pre_31">Hub is only supported on Android 12 and above.</string>
 
+	<string name="error_hub_not_trustworthy">Hub is not trustworthy.</string>
+
 	<!-- # clouds -->
 
 	<!-- ## cloud names -->
@@ -332,6 +334,11 @@
 	<string name="screen_cryptomator_variants_website_install" translatable="false">@string/screen_cryptomator_variants_lite_install</string>
 	<string name="screen_cryptomator_variants_installation_hint">Switching from or to the main F-Droid repository variant requires a fresh setup of the app.</string>
 
+	<!-- ## screen: hub -->
+	<string name="screen_hub_title" translatable="false">Hub</string>
+	<string name="screen_hub_allow_unknown_hub_hosts_title">Allow Unknown Hub Hosts</string>
+	<string name="screen_hub_clear_unknown_hub_hosts_title">Clear Unknown Hub Hosts</string>
+
 	<!-- # dialogs -->
 	<string name="dialog_button_cancel">Cancel</string>
 
@@ -558,6 +565,9 @@
 	<string name="dialog_hub_user_setup_required_neutral_button">Go to Profile</string>
 	<string name="dialog_hub_user_setup_required_negative_button" translatable="false">@string/dialog_button_cancel</string>
 
+	<string name="dialog_hub_check_host_authenticity_title">Trust this hosts?</string>
+	<string name="dialog_hub_check_host_authenticity_neutral_button" translatable="false">@string/dialog_unable_to_share_positive_button</string>
+
 	<string name="permission_snackbar_auth_local_vault">Cryptomator needs storage access to use local vaults</string>
 	<string name="permission_snackbar_auth_auto_upload">Cryptomator needs storage access to use auto photo upload</string>
 	<string name="permission_snackbar_notifications">Cryptomator needs notification permissions to display vault status for example</string>
@@ -632,6 +642,8 @@
 	<string name="notification_update_check_finished_latest">Latest version installed</string>
 
 	<string name="notification_authenticating">Authenticating&#8230;</string>
+
+	<string name="notification_cleared_trusted_hosts">Cleared trusted hosts</string>
 
 	<string name="screen_settings_lru_cache">Cache</string>
 	<string name="screen_settings_lru_cache_toggle" translatable="false">@string/screen_settings_section_auto_photo_upload_toggle</string>

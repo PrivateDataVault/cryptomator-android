@@ -17,6 +17,7 @@ import org.cryptomator.presentation.ui.dialog.BiometricAuthKeyInvalidatedDialog
 import org.cryptomator.presentation.ui.dialog.ChangePasswordDialog
 import org.cryptomator.presentation.ui.dialog.CreateHubDeviceDialog
 import org.cryptomator.presentation.ui.dialog.EnterPasswordDialog
+import org.cryptomator.presentation.ui.dialog.HubCheckHostAuthenticityDialog
 import org.cryptomator.presentation.ui.dialog.HubLicenseUpgradeRequiredDialog
 import org.cryptomator.presentation.ui.dialog.HubUserSetupRequiredDialog
 import org.cryptomator.presentation.ui.dialog.HubVaultAccessForbiddenDialog
@@ -38,7 +39,8 @@ class UnlockVaultActivity : BaseActivity<ActivityUnlockVaultBinding>(ActivityUnl
 	HubUserSetupRequiredDialog.Callback, //
 	HubVaultArchivedDialog.Callback, //
 	HubLicenseUpgradeRequiredDialog.Callback, //
-	HubVaultAccessForbiddenDialog.Callback {
+	HubVaultAccessForbiddenDialog.Callback, //
+	HubCheckHostAuthenticityDialog.Callback {
 
 	@Inject
 	lateinit var presenter: UnlockVaultPresenter
@@ -185,6 +187,15 @@ class UnlockVaultActivity : BaseActivity<ActivityUnlockVaultBinding>(ActivityUnl
 	}
 
 	override fun onBiometricAuthKeyInvalidatedDialogFinished() {
+		finish()
+	}
+
+	override fun onHubCheckHostsAllowed(unverifiedHubVaultConfig: UnverifiedHubVaultConfig, vault: Vault) {
+		presenter.onHubCheckHostsAllowed(unverifiedHubVaultConfig, vault)
+	}
+
+	override fun onHubCheckHostsDenied(unverifiedHubVaultConfig: UnverifiedHubVaultConfig) {
+		// todo toast
 		finish()
 	}
 
