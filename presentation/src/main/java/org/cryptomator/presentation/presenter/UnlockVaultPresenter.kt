@@ -164,7 +164,7 @@ class UnlockVaultPresenter @Inject constructor(
 				Timber.tag("VaultListPresenter").e("Inconsistent hub config detected. Denying access to protect the user.")
 				Toast.makeText(context(), R.string.error_hub_not_trustworthy, Toast.LENGTH_LONG).show()
 				finish()
-			} else if (configContainsAllowedHosts(unverifiedHubVaultConfig) && isHttpHost(unverifiedHubVaultConfig)) {
+			} else if (configContainsAllowedHosts(unverifiedHubVaultConfig) && !isHttpHost(unverifiedHubVaultConfig)) {
 				allowedHubHosts(unverifiedHubVaultConfig, vault)
 			} else if (isCryptomatorCloud(unverifiedHubVaultConfig) && !isHttpHost(unverifiedHubVaultConfig)) {
 				allowedHubHosts(unverifiedHubVaultConfig, vault)
