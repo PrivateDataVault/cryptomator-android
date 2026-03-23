@@ -22,6 +22,7 @@ constructor(context: Context) : SharedPreferences.OnSharedPreferenceChangeListen
 	private val defaultSharedPreferences: SharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
 
 	private val lockTimeoutChangedListeners = WeakHashMap<Consumer<LockTimeout>, Void>()
+	private val licenseChangedListeners = WeakHashMap<Consumer<String>, Void>()
 
 	init {
 		defaultSharedPreferences.registerOnSharedPreferenceChangeListener(this)
@@ -165,14 +166,30 @@ constructor(context: Context) : SharedPreferences.OnSharedPreferenceChangeListen
 		return defaultSharedPreferences.getValue(USE_LRU_CACHE, false)
 	}
 
-	override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String?) {
-		if (LOCK_TIMEOUT == key) {
+	fun addLicenseChangedListeners(listener: Consumer<String>) {
+		licenseChangedListeners[listener] = null
+		listener.accept(licenseToken())
+	}
+
+	fun removeLicenseChangedListeners(listener: Consumer<String>) {
+		licenseChangedListeners.remove(listener)
+	}
+
+override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String?) {
+	when (key) {
+		LOCK_TIMEOUT -> {
 			val lockTimeout = lockTimeout
 			lockTimeoutChangedListeners.keys.forEach { listener ->
-				listener.accept(lockTimeout)
+					listener.accept(lockTimeout)
+				}
+			}
+			LICENSE_TOKEN -> {
+				licenseChangedListeners.keys.forEach { listener ->
+					listener.accept(licenseToken())
 			}
 		}
 	}
+}
 
 	fun lruCacheSize(): Int {
 		return defaultSharedPreferences.getValue(LRU_CACHE_SIZE, "100").toInt() * 1024 * 1024
@@ -184,6 +201,14 @@ constructor(context: Context) : SharedPreferences.OnSharedPreferenceChangeListen
 
 	fun setMail(mail: String) {
 		defaultSharedPreferences.setValue(MAIL, mail)
+	}
+
+	fun licenseToken(): String {
+		return defaultSharedPreferences.getValue(LICENSE_TOKEN, "")
+	}
+
+	fun setLicenseToken(licenseToken: String) {
+		defaultSharedPreferences.setValue(LICENSE_TOKEN, licenseToken)
 	}
 
 	fun keepUnlockedWhileEditing(): Boolean {
@@ -283,6 +308,14 @@ constructor(context: Context) : SharedPreferences.OnSharedPreferenceChangeListen
 		return defaultSharedPreferences.getBoolean(MICROSOFT_WORKAROUND, false)
 	}
 
+	fun hasCompletedWelcomeFlow(): Boolean {
+		return defaultSharedPreferences.getValue(WELCOME_FLOW_COMPLETED, false)
+	}
+
+	fun setWelcomeFlowCompleted() {
+		defaultSharedPreferences.setValue(WELCOME_FLOW_COMPLETED, true)
+	}
+
 	companion object {
 
 		private const val SCREEN_LOCK_DIALOG_SHOWN = "askForScreenLockDialogShown"
@@ -299,6 +332,7 @@ constructor(context: Context) : SharedPreferences.OnSharedPreferenceChangeListen
 		private const val VAULTS_REMOVED_DURING_MIGRATION = "vaultsRemovedDuringMigration"
 		private const val VAULTS_REMOVED_DURING_MIGRATION_TYPE = "vaultsRemovedDuringMigrationType"
 		private const val LAST_UPDATE_CHECK = "lastUpdateCheck"
+		private const val WELCOME_FLOW_COMPLETED = "welcomeFlowCompleted"
 		const val DEBUG_MODE = "debugMode"
 		const val DISABLE_APP_WHEN_OBSCURED = "disableAppWhenObscured"
 		const val SECURE_SCREEN = "secureScreen"
@@ -313,6 +347,7 @@ constructor(context: Context) : SharedPreferences.OnSharedPreferenceChangeListen
 		const val LRU_CACHE_SIZE = "lruCacheSize"
 		const val MICROSOFT_WORKAROUND = "shareOfficeFilePublicly"
 		const val MAIL = "mail"
+		const val LICENSE_TOKEN = "licenseToken"
 		const val UPDATE_INTERVAL = "updateInterval"
 		const val CLOUD_SETTINGS = "cloudSettings"
 		const val BIOMETRIC_AUTHENTICATION = "biometricAuthentication"

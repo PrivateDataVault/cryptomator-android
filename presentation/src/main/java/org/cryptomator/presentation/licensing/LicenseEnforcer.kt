@@ -6,16 +6,14 @@ import android.net.Uri
 import android.widget.Toast
 import androidx.annotation.StringRes
 import org.cryptomator.domain.di.PerView
-import org.cryptomator.domain.repository.UpdateCheckRepository
 import org.cryptomator.presentation.BuildConfig
 import org.cryptomator.presentation.R
 import org.cryptomator.presentation.ui.activity.LicenseCheckActivity
+import org.cryptomator.util.SharedPreferencesHandler
 import javax.inject.Inject
 
 @PerView
-class LicenseEnforcer @Inject constructor(
-	private val updateCheckRepository: UpdateCheckRepository
-) {
+class LicenseEnforcer @Inject constructor(private val sharedPreferencesHandler: SharedPreferencesHandler) {
 
 	enum class LockedAction(
 		@StringRes val toastMessageRes: Int
@@ -44,10 +42,10 @@ class LicenseEnforcer @Inject constructor(
 	}
 
 	fun hasWriteAccess(): Boolean {
-		if (BuildConfig.FLAVOR == "playstore") {
+		if (BuildConfig.FLAVOR == "playstore" || BuildConfig.FLAVOR == "accrescent") {
 			return true
 		}
-		return !updateCheckRepository.license.isNullOrEmpty()
+		return sharedPreferencesHandler.licenseToken().isNotEmpty()
 	}
 
 	@StringRes
@@ -60,7 +58,7 @@ class LicenseEnforcer @Inject constructor(
 
 		Toast.makeText(activity, activity.getString(action.toastMessageRes), Toast.LENGTH_LONG).show()
 
-		if (BuildConfig.FLAVOR == "playstore") {
+		if (BuildConfig.FLAVOR == "playstore" || BuildConfig.FLAVOR == "accrescent") {
 			return false
 		}
 

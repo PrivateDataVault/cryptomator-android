@@ -79,7 +79,7 @@ android {
 
 			manifestPlaceholders = [DROPBOX_API_KEY: getApiKey('DROPBOX_API_KEY_DEBUG'), ONEDRIVE_API_KEY_DECODED: getOnedriveApiKey()]
 
-			applicationIdSuffix ".debug"
+			//applicationIdSuffix ".debug" FIXME
 			versionNameSuffix '-DEBUG'
 			enableUnitTestCoverage false
 			enableAndroidTestCoverage false
@@ -122,27 +122,27 @@ android {
 
 	sourceSets {
 		playstore {
-			java.srcDirs = ['src/main/java', 'src/apiKey/java/', 'src/apkStorePlaystore/java/']
+			java.srcDirs = ['src/main/java', 'src/apiKey/java/', 'src/apkStorePlaystore/java/', 'src/nonplaystoreiap/java/']
 		}
 
 		playstoreiap {
-			java.srcDirs = ['src/main/java', 'src/apiKey/java/', 'src/apkStorePlaystore/java/']
+			java.srcDirs = ['src/main/java', 'src/apiKey/java/', 'src/apkStorePlaystore/java/', 'src/playstoreiap/java/']
 		}
 
 		apkstore {
-			java.srcDirs = ['src/main/java/', 'src/apiKey/java/', 'src/apkStorePlaystore/java/']
+			java.srcDirs = ['src/main/java/', 'src/apiKey/java/', 'src/apkStorePlaystore/java/', 'src/nonplaystoreiap/java/']
 		}
 
 		fdroid {
-			java.srcDirs = ['src/main/java/', 'src/apiKey/java/', 'src/fdroid/java/', 'src/fdroidLiteAccrescent/java/']
+			java.srcDirs = ['src/main/java/', 'src/apiKey/java/', 'src/fdroid/java/', 'src/fdroidLiteAccrescent/java/', 'src/nonplaystoreiap/java/']
 		}
 
 		lite {
-			java.srcDirs = ['src/main/java/', 'src/lite/java/', 'src/fdroidLiteAccrescent/java/']
+			java.srcDirs = ['src/main/java/', 'src/lite/java/', 'src/fdroidLiteAccrescent/java/', 'src/nonplaystoreiap/java/']
 		}
 
 		accrescent {
-			java.srcDirs = ['src/main/java/', 'src/apiKey/java/', 'src/accrescent/java/', 'src/fdroidLiteAccrescent/java/']
+			java.srcDirs = ['src/main/java/', 'src/apiKey/java/', 'src/accrescent/java/', 'src/fdroidLiteAccrescent/java/', 'src/nonplaystoreiap/java/']
 		}
 	}
 

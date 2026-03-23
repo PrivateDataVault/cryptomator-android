@@ -68,6 +68,12 @@ class VaultListActivity : BaseActivity<ActivityLayoutObscureAwareBinding>(Activi
 	}
 
 	override fun setupView() {
+		if (!sharedPreferencesHandler.hasCompletedWelcomeFlow()) {
+			startActivity(Intent(this, WelcomeActivity::class.java))
+			finish()
+			return
+		}
+
 		setupToolbar()
 		vaultListPresenter.prepareView()
 		binding.activityRootView.setOnFilteredTouchEventForSecurityListener(object : Listener {

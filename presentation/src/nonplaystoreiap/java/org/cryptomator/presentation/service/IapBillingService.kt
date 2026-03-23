@@ -5,7 +5,6 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.os.IBinder
-import org.cryptomator.domain.repository.UpdateCheckRepository
 import java.lang.ref.WeakReference
 import timber.log.Timber
 
@@ -23,7 +22,7 @@ class IapBillingService : Service() {
 
 	class Binder : android.os.Binder() {
 
-		fun init(updateCheckRepository: UpdateCheckRepository, context: Context) {
+		fun init(context: Context) {
 			// no-op
 		}
 
@@ -31,7 +30,7 @@ class IapBillingService : Service() {
 			// no-op
 		}
 
-		fun startPurchaseFlow(activity: WeakReference<Activity>, productId: String) {
+		fun startPurchaseFlow(activity: WeakReference<Activity>) {
 			// no-op
 		}
 	}

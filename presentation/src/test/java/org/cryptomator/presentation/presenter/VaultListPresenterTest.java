@@ -25,6 +25,7 @@ import org.cryptomator.domain.usecases.vault.SaveVaultsUseCase;
 import org.cryptomator.domain.usecases.vault.UnlockToken;
 import org.cryptomator.domain.usecases.vault.UpdateVaultParameterIfChangedRemotelyUseCase;
 import org.cryptomator.presentation.exception.ExceptionHandlers;
+import org.cryptomator.presentation.licensing.LicenseEnforcer;
 import org.cryptomator.presentation.model.VaultModel;
 import org.cryptomator.presentation.model.mappers.CloudFolderModelMapper;
 import org.cryptomator.presentation.ui.activity.view.VaultListView;
@@ -115,6 +116,7 @@ public class VaultListPresenterTest {
 	private FileUtil fileUtil = Mockito.mock(FileUtil.class);
 	private AuthenticationExceptionHandler authenticationExceptionHandler = Mockito.mock(AuthenticationExceptionHandler.class);
 	private SharedPreferencesHandler sharedPreferencesHandler = Mockito.mock(SharedPreferencesHandler.class);
+	private LicenseEnforcer licenseEnforcer = Mockito.mock(LicenseEnforcer.class);
 	private ExceptionHandlers exceptionMappings = Mockito.mock(ExceptionHandlers.class);
 	private VaultListPresenter inTest;
 
@@ -142,6 +144,7 @@ public class VaultListPresenterTest {
 				authenticationExceptionHandler, //
 				cloudNodeModelMapper, //
 				sharedPreferencesHandler, //
+				licenseEnforcer,
 				exceptionMappings);
 		when(vaultListView.activity()).thenReturn(activity);
 		inTest.setView(vaultListView);

@@ -14,15 +14,12 @@ import org.cryptomator.presentation.licensing.LicenseEnforcer
 import org.cryptomator.presentation.presenter.LicenseCheckPresenter
 import org.cryptomator.presentation.ui.activity.view.UpdateLicenseView
 import org.cryptomator.presentation.ui.dialog.LicenseConfirmationDialog
-import org.cryptomator.presentation.ui.dialog.UpdateLicenseDialog
 import org.cryptomator.presentation.ui.layout.ObscuredAwareCoordinatorLayout
 import java.lang.ref.WeakReference
 import javax.inject.Inject
-import kotlin.system.exitProcess
 
 @Activity
 class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityLicenseCheckBinding::inflate), //
-	UpdateLicenseDialog.Callback, //
 	LicenseConfirmationDialog.Callback, //
 	UpdateLicenseView {
 
@@ -64,32 +61,30 @@ class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityL
 		supportActionBar?.setHomeAsUpIndicator(R.drawable.ic_clear)
 		binding.mtToolbar.toolbar.setNavigationOnClickListener { finish() }
 		supportActionBar?.title = getString(R.string.screen_license_check_title)
-		binding.tvLockedSubline.setText(R.string.screen_license_check_message)
-		binding.btnPurchase.text = if (isIapFlavor) {
+		binding.licenseContent.btnPurchase.text = if (isIapFlavor) {
 			getString(R.string.screen_license_check_button_purchase)
 		} else {
-			getString(R.string.screen_license_check_button_enter_license)
+			getString(R.string.dialog_enter_license_ok_button)
 		}
-		binding.tvLockedSubline.visibility = View.VISIBLE
-		binding.tvBenefitsTitle.visibility = View.VISIBLE
-		binding.btnPurchase.setOnClickListener {
+		binding.licenseContent.tvLicenseLink.text = getString(R.string.dialog_enter_license_ok_button)
+		binding.licenseContent.licenseEntryGroup.visibility = if (isIapFlavor) View.GONE else View.VISIBLE
+		binding.licenseContent.btnPurchase.setOnClickListener {
 			if (isIapFlavor) {
 				(application as CryptomatorApp).launchPurchaseFlow(WeakReference(this))
 			} else {
-				showDialog(UpdateLicenseDialog.newInstance(null))
+				onLicenseSubmit()
 			}
 		}
-		binding.btnLater.setOnClickListener { finish() }
+		binding.licenseContent.tvLicenseLink.visibility = if (isIapFlavor) View.GONE else View.VISIBLE
+		binding.licenseContent.tvLicenseLink.setOnClickListener {
+			startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://cryptomator.org/android/")))
+		}
 	}
 
 	private fun updatePurchaseState() {
 		val unlocked = licenseEnforcer.hasWriteAccess()
-		binding.btnPurchase.isEnabled = !unlocked
-		binding.tvUnlocked.visibility = if (unlocked) View.VISIBLE else View.GONE
-	}
-
-	override fun checkLicenseClicked(license: String?) {
-		licenseCheckPresenter.validateDialogAware(license)
+		binding.licenseContent.btnPurchase.isEnabled = !unlocked
+		binding.licenseContent.tvUnlocked.visibility = if (unlocked) View.VISIBLE else View.GONE
 	}
 
 	override fun onNewIntent(intent: Intent) {
@@ -106,20 +101,8 @@ class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityL
 	}
 
 	override fun showOrUpdateLicenseDialog(license: String) {
-		showDialog(UpdateLicenseDialog.newInstance(license))
-	}
-
-	override fun onCheckLicenseCanceled() {
-		if (exitOnCancel) {
-			exitProcess(0)
-		} else {
-			finish()
-		}
-	}
-
-	override fun appObscuredClosingEnterLicenseDialog() {
-		closeDialog()
-		licenseCheckPresenter.onFilteredTouchEventForSecurity()
+		binding.licenseContent.etLicense.setText(license)
+		binding.licenseContent.licenseEntryGroup.visibility = View.VISIBLE
 	}
 
 	override fun showConfirmationDialog(mail: String) {
@@ -130,6 +113,10 @@ class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityL
 		vaultListIntent() //
 			.preventGoingBackInHistory() //
 			.startActivity(this) //
+	}
+
+	private fun onLicenseSubmit() {
+		licenseCheckPresenter.validateDialogAware(binding.licenseContent.etLicense.text?.toString())
 	}
 
 	companion object {

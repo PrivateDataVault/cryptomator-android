@@ -19,6 +19,7 @@ import org.cryptomator.presentation.ui.activity.AutoUploadChooseVaultActivity
 import org.cryptomator.presentation.ui.activity.BiometricAuthSettingsActivity
 import org.cryptomator.presentation.ui.activity.CloudSettingsActivity
 import org.cryptomator.presentation.ui.activity.CryptomatorVariantsActivity
+import org.cryptomator.presentation.ui.activity.LicenseCheckActivity
 import org.cryptomator.presentation.ui.activity.LicensesActivity
 import org.cryptomator.presentation.ui.activity.SettingsActivity
 import org.cryptomator.presentation.ui.dialog.DebugModeDisclaimerDialog
@@ -81,9 +82,7 @@ class SettingsFragment : PreferenceFragmentCompatLayout() {
 			LruFileCacheUtil(requireContext()).clear()
 			setupLruCacheSize()
 		}
-
 		Toast.makeText(context, context?.getString(R.string.screen_settings_lru_cache_changed__restart_toast), Toast.LENGTH_SHORT).show()
-
 		true
 	}
 
@@ -169,18 +168,49 @@ class SettingsFragment : PreferenceFragmentCompatLayout() {
 	}
 
 	private fun setupLicense() {
+		val licenseCategory = findPreference(LICENSE_ITEM_KEY) as PreferenceCategory?
+		val licensePref = findPreference(SharedPreferencesHandler.MAIL) as Preference?
+		licenseCategory?.title = getString(R.string.screen_settings_license)
+		licensePref?.isEnabled = true
+		val license = sharedPreferencesHandler.licenseToken()
 		when (BuildConfig.FLAVOR) {
-			"apkstore" -> {
-				(findPreference(SharedPreferencesHandler.MAIL) as Preference?)?.title = format(getString(R.string.screen_settings_license_mail), sharedPreferencesHandler.mail())
-				setupUpdateCheck()
+			"playstore", "accrescent" -> {
+				licensePref?.let { pref ->
+					pref.summary = getString(R.string.screen_settings_license_summary_write_access)
+					pref.onPreferenceClickListener = null
+				}
+				removeUpdateCheck()
 			}
-			"fdroid", "lite", "accrescent" -> {
-				(findPreference(SharedPreferencesHandler.MAIL) as Preference?)?.title = format(getString(R.string.screen_settings_license_mail), sharedPreferencesHandler.mail())
+			"playstoreiap" -> {
+				licensePref?.let { pref ->
+					if (license.isEmpty()) {
+						pref.summary = getString(R.string.screen_settings_license_summary_tap_to_unlock)
+						pref.setOnPreferenceClickListener {
+							startActivity(Intent(activity(), LicenseCheckActivity::class.java))
+							true
+						}
+					} else {
+						pref.summary = getString(R.string.screen_settings_license_summary_write_access)
+						pref.onPreferenceClickListener = null
+					}
+				}
 				removeUpdateCheck()
 			}
 			else -> {
-				(findPreference(LICENSE_ITEM_KEY) as Preference?)?.let { preferenceScreen.removePreference(it) }
-				removeUpdateCheck()
+				licensePref?.let { pref ->
+					val mail = sharedPreferencesHandler.mail()
+					if (mail.isEmpty()) {
+						pref.summary = getString(R.string.screen_settings_license_summary_tap_to_unlock)
+						pref.setOnPreferenceClickListener {
+							startActivity(Intent(activity(), LicenseCheckActivity::class.java))
+							true
+						}
+					} else {
+						pref.summary = format(getString(R.string.screen_settings_license_summary_write_access_mail), mail)
+						pref.onPreferenceClickListener = null
+					}
+				}
+				setupUpdateCheck()
 			}
 		}
 	}

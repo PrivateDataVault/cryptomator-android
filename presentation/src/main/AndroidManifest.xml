@@ -53,6 +53,11 @@
 			</intent-filter>
 		</activity>
 
+		<activity
+			android:name=".ui.activity.WelcomeActivity"
+			android:exported="false"
+			android:windowSoftInputMode="adjustPan" />
+
 		<activity android:name=".ui.activity.ChooseCloudServiceActivity" />
 		<activity
 			android:name=".ui.activity.CreateVaultActivity"
@@ -112,8 +117,6 @@
 		<activity
 			android:name=".ui.activity.CryptomatorVariantsActivity"
 			android:exported="false" />
-			android:name=".ui.activity.LicensesActivity"
-			android:exported="true" />
 		<activity
 			android:name=".ui.activity.SettingsActivity"
 			android:exported="false" />

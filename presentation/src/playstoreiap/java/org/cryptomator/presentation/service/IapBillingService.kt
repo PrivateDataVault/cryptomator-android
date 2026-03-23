@@ -13,12 +13,11 @@ import com.android.billingclient.api.BillingFlowParams
 import com.android.billingclient.api.BillingFlowParams.ProductDetailsParams
 import com.android.billingclient.api.BillingResult
 import com.android.billingclient.api.PendingPurchasesParams
-import com.android.billingclient.api.ProductDetailsResponseListener
 import com.android.billingclient.api.Purchase
 import com.android.billingclient.api.PurchasesUpdatedListener
 import com.android.billingclient.api.QueryProductDetailsParams
 import com.android.billingclient.api.QueryPurchasesParams
-import org.cryptomator.domain.repository.UpdateCheckRepository
+import org.cryptomator.util.SharedPreferencesHandler
 import java.lang.ref.WeakReference
 import timber.log.Timber
 
@@ -27,19 +26,21 @@ class IapBillingService : Service(), PurchasesUpdatedListener, AcknowledgePurcha
 	private val fullVersionProductId = "full_version"
 
 	private lateinit var billingClient: BillingClient
-	private lateinit var updateCheckRepository: UpdateCheckRepository
+	private lateinit var sharedPreferencesHandler: SharedPreferencesHandler
 
-	private fun initBillingClient(updateCheckRepository: UpdateCheckRepository, context: Context) {
-		this.updateCheckRepository = updateCheckRepository
+	private fun initBillingClient(context: Context) {
+		this.sharedPreferencesHandler = SharedPreferencesHandler(context)
 		val pendingPurchasesParams = PendingPurchasesParams.newBuilder().enableOneTimeProducts().build()
 		billingClient = BillingClient.newBuilder(context)
 			.setListener(this)
 			.enablePendingPurchases(pendingPurchasesParams)
+			.enableAutoServiceReconnection()
 			.build()
 		billingClient.startConnection(object : BillingClientStateListener {
 			override fun onBillingSetupFinished(billingResult: BillingResult) {
 				if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
 					Timber.tag("IapBillingService").d("Billing setup successful")
+					queryExistingPurchases()
 				} else {
 					Timber.tag("IapBillingService").e("Billing setup not successful, error: " + billingResult.responseCode)
 				}
@@ -74,8 +75,8 @@ class IapBillingService : Service(), PurchasesUpdatedListener, AcknowledgePurcha
 			}
 			if (purchase.purchaseState == Purchase.PurchaseState.PURCHASED) {
 				Timber.tag("IapBillingService").i("Purchase found: " + purchase.signature)
-				if (updateCheckRepository.license == null) {
-					updateCheckRepository.license = purchase.purchaseToken
+				if (sharedPreferencesHandler.licenseToken().isEmpty()) {
+					sharedPreferencesHandler.setLicenseToken(purchase.purchaseToken)
 				}
 				if (!purchase.isAcknowledged) {
 					val acknowledgePurchaseParams = AcknowledgePurchaseParams.newBuilder()
@@ -86,9 +87,9 @@ class IapBillingService : Service(), PurchasesUpdatedListener, AcknowledgePurcha
 				return
 			}
 		}
-		if (updateCheckRepository.license != null) {
+		if (sharedPreferencesHandler.licenseToken().isNotEmpty()) {
 			Timber.tag("IapBillingService").i("Remove license, purchase does not exists anymore")
-			updateCheckRepository.license = null
+			sharedPreferencesHandler.setLicenseToken("")
 		}
 	}
 
@@ -96,13 +97,13 @@ class IapBillingService : Service(), PurchasesUpdatedListener, AcknowledgePurcha
 		Timber.tag("IapBillingService").i("Purchase acknowledged")
 	}
 
-	fun launchPurchaseFlow(activity: WeakReference<Activity>, productId: String) {
+	fun launchPurchaseFlow(activity: WeakReference<Activity>) {
 		if (billingClient.isReady) {
 			val params = QueryProductDetailsParams.newBuilder()
 				.setProductList(
 					listOf(
 						QueryProductDetailsParams.Product.newBuilder()
-							.setProductId(productId)
+							.setProductId(fullVersionProductId)
 							.setProductType(BillingClient.ProductType.INAPP)
 							.build()
 					)
@@ -112,13 +113,7 @@ class IapBillingService : Service(), PurchasesUpdatedListener, AcknowledgePurcha
 				if (billingResult.responseCode == BillingClient.BillingResponseCode.OK && queryProductDetailsResult.productDetailsList.isNotEmpty()) {
 					queryProductDetailsResult.productDetailsList.first()?.let { productDetails ->
 						val billingFlowParams = BillingFlowParams.newBuilder()
-							.setProductDetailsParamsList(
-								listOf(
-									ProductDetailsParams.newBuilder()
-										.setProductDetails(productDetails)
-										.build()
-								)
-							)
+							.setProductDetailsParamsList(listOf(ProductDetailsParams.newBuilder().setProductDetails(productDetails).build()))
 							.build()
 						activity.get()?.let {
 							billingClient.launchBillingFlow(it, billingFlowParams)
@@ -147,29 +142,12 @@ class IapBillingService : Service(), PurchasesUpdatedListener, AcknowledgePurcha
 
 	class Binder(private val service: IapBillingService) : android.os.Binder() {
 
-		fun init(updateCheckRepository: UpdateCheckRepository, context: Context) {
-			service.initBillingClient(updateCheckRepository, context)
+		fun init(context: Context) {
+			service.initBillingClient(context)
 		}
 
-		fun queryPurchases() {
-			service.queryExistingPurchases()
-		}
-
-		fun startPurchaseFlow(activity: WeakReference<Activity>, productId: String) {
-			service.launchPurchaseFlow(activity, productId)
-		}
-
-		fun getProductDetails(productId: String, productDetailsResponseListener: ProductDetailsResponseListener) {
-			val params = QueryProductDetailsParams.newBuilder()
-				.setProductList(
-					listOf(
-						QueryProductDetailsParams.Product.newBuilder()
-							.setProductId(productId)
-							.setProductType(BillingClient.ProductType.INAPP)
-							.build()
-					)
-				).build()
-			service.billingClient.queryProductDetailsAsync(params, productDetailsResponseListener)
+		fun startPurchaseFlow(activity: WeakReference<Activity>) {
+			service.launchPurchaseFlow(activity)
 		}
 	}
 }

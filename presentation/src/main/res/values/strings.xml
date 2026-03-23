@@ -60,15 +60,26 @@
 	<string name="read_only_reason_share_node">Sharing files or folders is only available with write access.</string>
 	<string name="read_only_reason_hub_inactive">Upgrade your Hub license to enable writing for this vault.</string>
 	<string name="screen_license_check_title">Unlock write access</string>
-	<string name="screen_license_check_message">You are currently using Cryptomator in read-only mode. Consider purchasing a licence to enable write access and support Cryptomator\'s development.</string>
 	<string name="screen_license_check_benefit_title">Your benefits</string>
-	<string name="screen_license_check_benefit_create_vaults">Create vaults</string>
-	<string name="screen_license_check_benefit_write_access">Write access for vaults, files, and folders</string>
-	<string name="screen_license_check_benefit_support">Helps funding open-source development</string>
+	<string name="screen_license_check_benefit_family_sharing">Family Sharing</string>
+	<string name="screen_license_check_benefit_write_access" translatable="false">@string/screen_welcome_license_title</string>
+	<string name="screen_license_check_benefit_support">Open-source development</string>
 	<string name="screen_license_check_button_purchase">Unlock via Google Play</string>
 	<string name="screen_license_check_button_enter_license">Enter license key</string>
-	<string name="screen_license_check_button_later">Maybe later</string>
-	<string name="screen_license_check_already_unlocked">Write access is already unlocked on this device.</string>
+	<string name="screen_license_check_already_unlocked">Write access is unlocked on this device.</string>
+	<string name="screen_welcome_title">Welcome</string>
+	<string name="screen_welcome_notifications_title">Stay notified</string>
+	<string name="screen_welcome_notifications_message">Allow notifications so Cryptomator can inform you about background activity, auto uploads, or other important events.</string>
+	<string name="screen_welcome_notifications_button">Allow notifications</string>
+	<string name="screen_welcome_notifications_granted">Notifications are enabled.</string>
+	<string name="screen_welcome_continue_button">Continue</string>
+	<string name="screen_welcome_license_title">Write access</string>
+	<string name="screen_welcome_intro_body">Thanks for choosing Cryptomator to protect your files.\n\nWith Cryptomator, the key to your data is in your hands.\n\nCryptomator encrypts your data quickly and easily.</string>
+	<string name="next">Next</string>
+	<string name="back">Back</string>
+	<string name="screen_settings_license_unlock_prompt">Unlock write access</string>
+	<string name="screen_settings_license_unlock_summary">Tap to enter your license key.</string>
+	<string name="screen_settings_license_unlocked_iap">Write access is unlocked</string>
 
 	<!-- # clouds -->
 
@@ -509,12 +520,12 @@
 	<string name="dialog_biometric_auth_key_invalidated_neutral_button" translatable="false">@string/dialog_unable_to_share_positive_button</string>
 
 	<string name="dialog_enter_license_title">Provide a valid license</string>
-	<string name="dialog_enter_license_content">We detected that you installed Cryptomator without using Google Play Store. Provide a valid license, which can be purchased on <a href="https://cryptomator.org/android/">https://cryptomator.org/android/</a></string>
+	<string name="dialog_enter_license_content">A license can be purchased on <a href="https://cryptomator.org/android/">https://cryptomator.org/android/</a> or enter your existing Android License Key</string>
 	<string name="dialog_enter_license_not_valid_content">The provided license isn\'t valid. Make sure you entered it correctly.</string>
 	<string name="dialog_enter_license_not_valid_content_desktop_supporter_certificate">The provided key is a desktop supporter certificate. Please enter a valid license.</string>
 	<string name="dialog_enter_license_no_content">No license provided. Please enter a valid license.</string>
 	<string name="dialog_enter_license_ok_button" translatable="false">@string/dialog_unable_to_share_positive_button</string>
-	<string name="dialog_enter_license_decline_button">Exit</string>
+	<string name="dialog_enter_license_decline_button">Cancel</string>
 
 	<string name="dialog_license_confirmation_title">License confirmation</string>
 	<string name="dialog_license_confirmation_message">Thanks %1$s for providing your valid license.</string>
@@ -631,7 +642,7 @@
 
 	<string name="notification_cancel_auto_upload">Cancel upload</string>
 	<string name="notification_auto_upload_title">Auto photo upload running</string>
-	<string name="notification_auto_upload_message">Uploading %1d/%2d</string>
+	<string name="notification_auto_upload_message">Uploading %1$d/%2$d</string>
 
 	<string name="notification_auto_upload_finished_title">Auto photo upload finished</string>
 	<string name="notification_auto_upload_finished_message">%1$d images uploaded to vault</string>
@@ -659,8 +670,11 @@
 	<string name="screen_settings_clear_lru_cache_size">Clear Cache</string>
 	<string name="screen_settings_lru_cache_changed__restart_toast">Changes will be applied on next app restart</string>
 
-	<string name="screen_settings_license">Registered for</string>
+	<string name="screen_settings_license">License details</string>
 	<string name="screen_settings_license_mail">%1$s</string>
+	<string name="screen_settings_license_summary_write_access">Write access unlocked!</string>
+	<string name="screen_settings_license_summary_tap_to_unlock">Tap to unlock write access</string>
+	<string name="screen_settings_license_summary_write_access_mail">Write access for %1$s</string>
 
 	<string name="dialog_settings_update_check_interval_title">Update check interval</string>
 	<string name="screen_settings_check_updates">Check for updates</string>

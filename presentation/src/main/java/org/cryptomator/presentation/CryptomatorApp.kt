@@ -128,10 +128,7 @@ class CryptomatorApp : MultiDexApplication(), HasComponent<ApplicationComponent>
 			override fun onServiceConnected(name: ComponentName, service: IBinder) {
 				Timber.tag("App").i("IAP Billing service connected")
 				iapBillingServiceBinder = service as IapBillingService.Binder
-				iapBillingServiceBinder?.init(
-					applicationComponent.updateCheckRepository(),
-					Companion.applicationContext
-				)
+				iapBillingServiceBinder?.init(Companion.applicationContext)
 			}
 
 			override fun onServiceDisconnected(name: ComponentName) {
@@ -142,13 +139,7 @@ class CryptomatorApp : MultiDexApplication(), HasComponent<ApplicationComponent>
 
 	fun launchPurchaseFlow(activity: WeakReference<Activity>) {
 		if (BuildConfig.FLAVOR == "playstoreiap") {
-			iapBillingServiceBinder?.startPurchaseFlow(activity, "full_version")
-		}
-	}
-
-	fun queryExistingPurchases() {
-		if (BuildConfig.FLAVOR == "playstoreiap") {
-			iapBillingServiceBinder?.queryPurchases()
+			iapBillingServiceBinder?.startPurchaseFlow(activity)
 		}
 	}
 
