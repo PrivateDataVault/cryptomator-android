@@ -133,6 +133,9 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 		binding.welcomePager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
 			override fun onPageSelected(position: Int) {
 				updateNavigationButtons(position)
+				if (isIapFlavor && pages[position] is FragmentPage.License) {
+					loadProductPrices()
+				}
 			}
 		})
 		updateNavigationButtons(0)
