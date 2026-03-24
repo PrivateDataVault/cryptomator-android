@@ -31,6 +31,8 @@ class IapBillingService : Service(), PurchasesUpdatedListener, AcknowledgePurcha
 	private lateinit var sharedPreferencesHandler: SharedPreferencesHandler
 
 	private val productDetailsMap = mutableMapOf<String, ProductDetails>()
+	@Volatile
+	private var pendingProductDetailsCallback: ((List<ProductInfo>) -> Unit)? = null
 
 	private fun initBillingClient(context: Context) {
 		this.sharedPreferencesHandler = SharedPreferencesHandler(context)
@@ -48,6 +50,10 @@ class IapBillingService : Service(), PurchasesUpdatedListener, AcknowledgePurcha
 				if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
 					Timber.tag("IapBillingService").d("Billing setup successful")
 					queryExistingPurchases()
+					pendingProductDetailsCallback?.let { callback ->
+						pendingProductDetailsCallback = null
+						queryProductDetails(callback)
+					}
 				} else {
 					Timber.tag("IapBillingService").e("Billing setup not successful, error: " + billingResult.responseCode)
 				}
@@ -134,7 +140,7 @@ class IapBillingService : Service(), PurchasesUpdatedListener, AcknowledgePurcha
 
 	fun queryProductDetails(callback: (List<ProductInfo>) -> Unit) {
 		if (!billingClient.isReady) {
-			callback(emptyList())
+			pendingProductDetailsCallback = callback
 			return
 		}
 		val results = mutableListOf<ProductInfo>()
