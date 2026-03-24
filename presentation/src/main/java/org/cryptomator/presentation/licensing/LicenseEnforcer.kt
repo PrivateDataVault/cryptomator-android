@@ -45,7 +45,32 @@ class LicenseEnforcer @Inject constructor(private val sharedPreferencesHandler: 
 		if (BuildConfig.FLAVOR == "playstore" || BuildConfig.FLAVOR == "accrescent") {
 			return true
 		}
-		return sharedPreferencesHandler.licenseToken().isNotEmpty()
+		if (sharedPreferencesHandler.licenseToken().isNotEmpty()) {
+			return true
+		}
+		if (sharedPreferencesHandler.hasRunningSubscription()) {
+			return true
+		}
+		val trialExpiration = sharedPreferencesHandler.trialExpirationDate()
+		if (trialExpiration > 0 && trialExpiration > System.currentTimeMillis()) {
+			return true
+		}
+		return false
+	}
+
+	fun startTrial() {
+		val trialExpiration = System.currentTimeMillis() + TRIAL_DURATION_MS
+		sharedPreferencesHandler.setTrialExpirationDate(trialExpiration)
+	}
+
+	fun hasActiveTrial(): Boolean {
+		val trialExpiration = sharedPreferencesHandler.trialExpirationDate()
+		return trialExpiration > 0 && trialExpiration > System.currentTimeMillis()
+	}
+
+	fun hasExpiredTrial(): Boolean {
+		val trialExpiration = sharedPreferencesHandler.trialExpirationDate()
+		return trialExpiration > 0 && trialExpiration <= System.currentTimeMillis()
 	}
 
 	@StringRes
@@ -70,5 +95,9 @@ class LicenseEnforcer @Inject constructor(private val sharedPreferencesHandler: 
 		}
 		activity.startActivity(intent)
 		return false
+	}
+
+	companion object {
+		private const val TRIAL_DURATION_MS = 30L * 24 * 60 * 60 * 1000
 	}
 }

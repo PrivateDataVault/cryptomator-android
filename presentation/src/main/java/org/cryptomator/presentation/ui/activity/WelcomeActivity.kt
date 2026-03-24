@@ -8,6 +8,7 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.view.View
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
@@ -28,9 +29,12 @@ import org.cryptomator.presentation.ui.activity.view.WelcomeView
 import org.cryptomator.presentation.ui.fragment.WelcomeIntroFragment
 import org.cryptomator.presentation.ui.fragment.WelcomeLicenseFragment
 import org.cryptomator.presentation.ui.fragment.WelcomeNotificationsFragment
+import org.cryptomator.presentation.service.ProductInfo
 import org.cryptomator.presentation.ui.fragment.WelcomeScreenLockFragment
 import org.cryptomator.presentation.ui.layout.ObscuredAwareCoordinatorLayout
 import java.lang.ref.WeakReference
+import java.text.DateFormat
+import java.util.Date
 import javax.inject.Inject
 
 @Activity
@@ -108,6 +112,9 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 		updateNotificationPermissionState()
 		updateLicenseSectionState()
 		updateScreenLockState()
+		if (isIapFlavor) {
+			loadProductPrices()
+		}
 	}
 
 	private fun setupPages() {
@@ -160,6 +167,30 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 		}
 		val unlocked = licenseEnforcer.hasWriteAccess()
 		pagerAdapter.licenseFragment?.updateUnlocked(unlocked)
+		if (isIapFlavor) {
+			val active = licenseEnforcer.hasActiveTrial()
+			val expired = licenseEnforcer.hasExpiredTrial()
+			val expirationText = if (active) {
+				getString(R.string.screen_license_check_trial_active, DateFormat.getDateInstance().format(Date(sharedPreferencesHandler.trialExpirationDate())))
+			} else null
+			pagerAdapter.licenseFragment?.updateTrialState(active, expired, expirationText)
+		}
+	}
+
+	private fun loadProductPrices() {
+		if (!this::pagerAdapter.isInitialized) {
+			return
+		}
+		(application as CryptomatorApp).queryProductDetails { products ->
+			runOnUiThread {
+				val subscription = products.find { it.productId == ProductInfo.PRODUCT_YEARLY_SUBSCRIPTION }
+				val lifetime = products.find { it.productId == ProductInfo.PRODUCT_FULL_VERSION }
+				pagerAdapter.licenseFragment?.updateProductPrices(
+					subscription?.formattedPrice ?: "",
+					lifetime?.formattedPrice ?: ""
+				)
+			}
+		}
 	}
 
 	private fun needsNotificationPermission(): Boolean {
@@ -216,12 +247,7 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 	// In onboarding, a valid license auto-advances to the next page instead of showing a dialog
 	override fun showConfirmationDialog(mail: String) {
 		updateLicenseSectionState()
-		binding.welcomePager.postDelayed({
-			val pos = binding.welcomePager.currentItem
-			if (pos < pagerAdapter.itemCount - 1) {
-				binding.welcomePager.currentItem = pos + 1
-			}
-		}, AUTO_ADVANCE_DELAY_MS)
+		autoAdvanceToNextPage()
 	}
 
 	override fun onNotificationPermissionResult(granted: Boolean) {
@@ -230,6 +256,15 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 
 	override fun onLicenseStateChanged() {
 		updateLicenseSectionState()
+	}
+
+	private fun autoAdvanceToNextPage() {
+		binding.welcomePager.postDelayed({
+			val pos = binding.welcomePager.currentItem
+			if (pos < pagerAdapter.itemCount - 1) {
+				binding.welcomePager.currentItem = pos + 1
+			}
+		}, AUTO_ADVANCE_DELAY_MS)
 	}
 
 	private sealed class FragmentPage {
@@ -260,7 +295,26 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 						}
 
 						override fun onPurchaseClick() {
-							(application as CryptomatorApp).launchPurchaseFlow(WeakReference(this@WelcomeActivity))
+							(application as CryptomatorApp).launchPurchaseFlow(WeakReference(this@WelcomeActivity), ProductInfo.PRODUCT_FULL_VERSION)
+						}
+
+						override fun onStartTrial() {
+							licenseEnforcer.startTrial()
+							updateLicenseSectionState()
+							autoAdvanceToNextPage()
+						}
+
+						override fun onPurchaseSubscription() {
+							(application as CryptomatorApp).launchPurchaseFlow(WeakReference(this@WelcomeActivity), ProductInfo.PRODUCT_YEARLY_SUBSCRIPTION)
+						}
+
+						override fun onPurchaseLifetime() {
+							(application as CryptomatorApp).launchPurchaseFlow(WeakReference(this@WelcomeActivity), ProductInfo.PRODUCT_FULL_VERSION)
+						}
+
+						override fun onRestorePurchases() {
+							(application as CryptomatorApp).restorePurchases()
+							Toast.makeText(this@WelcomeActivity, getString(R.string.screen_license_check_restore_purchase), Toast.LENGTH_SHORT).show()
 						}
 
 						override fun onSkipLicense() {

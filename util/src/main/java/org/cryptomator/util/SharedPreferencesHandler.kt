@@ -183,7 +183,7 @@ override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key
 					listener.accept(lockTimeout)
 				}
 			}
-			LICENSE_TOKEN -> {
+			LICENSE_TOKEN, TRIAL_EXPIRATION_DATE, HAS_RUNNING_SUBSCRIPTION -> {
 				licenseChangedListeners.keys.forEach { listener ->
 					listener.accept(licenseToken())
 			}
@@ -209,6 +209,22 @@ override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key
 
 	fun setLicenseToken(licenseToken: String) {
 		defaultSharedPreferences.setValue(LICENSE_TOKEN, licenseToken)
+	}
+
+	fun trialExpirationDate(): Long {
+		return defaultSharedPreferences.getValue(TRIAL_EXPIRATION_DATE, 0L)
+	}
+
+	fun setTrialExpirationDate(date: Long) {
+		defaultSharedPreferences.setValue(TRIAL_EXPIRATION_DATE, date)
+	}
+
+	fun hasRunningSubscription(): Boolean {
+		return defaultSharedPreferences.getValue(HAS_RUNNING_SUBSCRIPTION, false)
+	}
+
+	fun setHasRunningSubscription(value: Boolean) {
+		defaultSharedPreferences.setValue(HAS_RUNNING_SUBSCRIPTION, value)
 	}
 
 	fun keepUnlockedWhileEditing(): Boolean {
@@ -333,6 +349,8 @@ override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key
 		private const val VAULTS_REMOVED_DURING_MIGRATION_TYPE = "vaultsRemovedDuringMigrationType"
 		private const val LAST_UPDATE_CHECK = "lastUpdateCheck"
 		private const val WELCOME_FLOW_COMPLETED = "welcomeFlowCompleted"
+		private const val TRIAL_EXPIRATION_DATE = "trialExpirationDate"
+		private const val HAS_RUNNING_SUBSCRIPTION = "hasRunningSubscription"
 		const val DEBUG_MODE = "debugMode"
 		const val DISABLE_APP_WHEN_OBSCURED = "disableAppWhenObscured"
 		const val SECURE_SCREEN = "secureScreen"

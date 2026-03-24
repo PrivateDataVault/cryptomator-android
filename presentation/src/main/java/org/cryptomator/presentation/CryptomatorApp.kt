@@ -26,6 +26,7 @@ import org.cryptomator.presentation.service.AutoUploadNotification
 import org.cryptomator.presentation.service.AutoUploadService
 import org.cryptomator.presentation.service.CryptorsService
 import org.cryptomator.presentation.service.IapBillingService
+import org.cryptomator.presentation.service.ProductInfo
 import org.cryptomator.util.NoOpActivityLifecycleCallbacks
 import org.cryptomator.util.SharedPreferencesHandler
 import java.lang.ref.WeakReference
@@ -137,9 +138,23 @@ class CryptomatorApp : MultiDexApplication(), HasComponent<ApplicationComponent>
 		}, BIND_AUTO_CREATE)
 	}
 
-	fun launchPurchaseFlow(activity: WeakReference<Activity>) {
+	fun launchPurchaseFlow(activity: WeakReference<Activity>, productId: String) {
 		if (BuildConfig.FLAVOR == "playstoreiap") {
-			iapBillingServiceBinder?.startPurchaseFlow(activity)
+			iapBillingServiceBinder?.startPurchaseFlow(activity, productId)
+		}
+	}
+
+	fun queryProductDetails(callback: (List<ProductInfo>) -> Unit) {
+		if (BuildConfig.FLAVOR == "playstoreiap") {
+			iapBillingServiceBinder?.queryProductDetails(callback) ?: callback(emptyList())
+		} else {
+			callback(emptyList())
+		}
+	}
+
+	fun restorePurchases() {
+		if (BuildConfig.FLAVOR == "playstoreiap") {
+			iapBillingServiceBinder?.restorePurchases()
 		}
 	}
 

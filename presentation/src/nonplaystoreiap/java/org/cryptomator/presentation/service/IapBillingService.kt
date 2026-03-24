@@ -26,11 +26,15 @@ class IapBillingService : Service() {
 			// no-op
 		}
 
-		fun queryPurchases() {
+		fun startPurchaseFlow(activity: WeakReference<Activity>, productId: String) {
 			// no-op
 		}
 
-		fun startPurchaseFlow(activity: WeakReference<Activity>) {
+		fun queryProductDetails(callback: (List<ProductInfo>) -> Unit) {
+			callback(emptyList())
+		}
+
+		fun restorePurchases() {
 			// no-op
 		}
 	}
