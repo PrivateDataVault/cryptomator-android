@@ -11,13 +11,16 @@ import timber.log.Timber
 internal class Upgrade13To14 @Inject constructor(private val sharedPreferencesHandler: SharedPreferencesHandler) : DatabaseUpgrade(13, 14) {
 
 	override fun internalApplyTo(db: Database, origin: Int) {
-		if (nonLicenseKeyVariant()) {
-			setWelcomeFlowCompleted()
-		} else {
-			val licenseToken = getExistingLicenseToken(db)
-			if (licenseToken != null) {
-				sharedPreferencesHandler.setLicenseToken(licenseToken)
+		if (origin > 0) {
+			// Only skip welcome for genuine upgrades, not fresh installs
+			if (nonLicenseKeyVariant()) {
 				setWelcomeFlowCompleted()
+			} else {
+				val licenseToken = getExistingLicenseToken(db)
+				if (licenseToken != null) {
+					sharedPreferencesHandler.setLicenseToken(licenseToken)
+					setWelcomeFlowCompleted()
+				}
 			}
 		}
 		removeLicenseFromDb(db)

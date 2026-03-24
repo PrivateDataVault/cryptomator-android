@@ -66,7 +66,7 @@ class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityL
 		} else {
 			getString(R.string.dialog_enter_license_ok_button)
 		}
-		binding.licenseContent.tvLicenseLink.text = getString(R.string.dialog_enter_license_ok_button)
+		binding.licenseContent.tvLicenseLink.text = getString(R.string.dialog_enter_license_content)
 		binding.licenseContent.licenseEntryGroup.visibility = if (isIapFlavor) View.GONE else View.VISIBLE
 		binding.licenseContent.btnPurchase.setOnClickListener {
 			if (isIapFlavor) {

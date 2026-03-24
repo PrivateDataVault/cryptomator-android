@@ -1,6 +1,8 @@
 package org.cryptomator.presentation.ui.activity
 
 import android.Manifest
+import android.app.KeyguardManager
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -23,17 +25,16 @@ import org.cryptomator.presentation.licensing.LicenseEnforcer
 import org.cryptomator.presentation.presenter.WelcomePresenter
 import org.cryptomator.presentation.ui.activity.view.UpdateLicenseView
 import org.cryptomator.presentation.ui.activity.view.WelcomeView
-import org.cryptomator.presentation.ui.dialog.LicenseConfirmationDialog
 import org.cryptomator.presentation.ui.fragment.WelcomeIntroFragment
 import org.cryptomator.presentation.ui.fragment.WelcomeLicenseFragment
 import org.cryptomator.presentation.ui.fragment.WelcomeNotificationsFragment
+import org.cryptomator.presentation.ui.fragment.WelcomeScreenLockFragment
 import org.cryptomator.presentation.ui.layout.ObscuredAwareCoordinatorLayout
 import java.lang.ref.WeakReference
 import javax.inject.Inject
 
 @Activity
 class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBinding::inflate), //
-	LicenseConfirmationDialog.Callback, //
 	UpdateLicenseView, //
 	WelcomeView {
 
@@ -48,6 +49,8 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 
 	private val isIapFlavor: Boolean
 		get() = BuildConfig.FLAVOR == "playstoreiap"
+
+	private val keyguardManager by lazy { getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager }
 
 	private lateinit var pagerAdapter: WelcomePagerAdapter
 	private val pages = mutableListOf<FragmentPage>()
@@ -93,6 +96,7 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 		validate(intent)
 		updateNotificationPermissionState()
 		updateLicenseSectionState()
+		updateScreenLockState()
 	}
 
 	override fun onResume() {
@@ -103,6 +107,7 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 		}
 		updateNotificationPermissionState()
 		updateLicenseSectionState()
+		updateScreenLockState()
 	}
 
 	private fun setupPages() {
@@ -112,11 +117,13 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 			pages.add(FragmentPage.License)
 		}
 		pages.add(FragmentPage.Notifications)
+		pages.add(FragmentPage.ScreenLock)
 	}
 
 	private fun setupPager() {
 		pagerAdapter = WelcomePagerAdapter(this, pages)
 		binding.welcomePager.adapter = pagerAdapter
+		binding.welcomePager.setCurrentItem(0, false)
 		binding.welcomePager.isUserInputEnabled = true
 		binding.welcomePager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
 			override fun onPageSelected(position: Int) {
@@ -177,8 +184,16 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 		pagerAdapter.notificationsFragment?.updatePermissionState(granted)
 	}
 
+	private fun updateScreenLockState() {
+		if (!this::pagerAdapter.isInitialized) {
+			return
+		}
+		pagerAdapter.screenLockFragment?.updateScreenLockState(keyguardManager.isKeyguardSecure)
+	}
+
 	private fun completeWelcomeFlow() {
 		sharedPreferencesHandler.setWelcomeFlowCompleted()
+		sharedPreferencesHandler.setScreenLockDialogAlreadyShown()
 		openVaultList()
 	}
 
@@ -198,12 +213,15 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 		pagerAdapter.licenseFragment?.prefillLicense(license)
 	}
 
+	// In onboarding, a valid license auto-advances to the next page instead of showing a dialog
 	override fun showConfirmationDialog(mail: String) {
-		showDialog(LicenseConfirmationDialog.newInstance(mail))
-	}
-
-	override fun licenseConfirmationClicked() {
-		completeWelcomeFlow()
+		updateLicenseSectionState()
+		binding.welcomePager.postDelayed({
+			val pos = binding.welcomePager.currentItem
+			if (pos < pagerAdapter.itemCount - 1) {
+				binding.welcomePager.currentItem = pos + 1
+			}
+		}, AUTO_ADVANCE_DELAY_MS)
 	}
 
 	override fun onNotificationPermissionResult(granted: Boolean) {
@@ -218,11 +236,13 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 		object Intro : FragmentPage()
 		object License : FragmentPage()
 		object Notifications : FragmentPage()
+		object ScreenLock : FragmentPage()
 	}
 
 	private inner class WelcomePagerAdapter(activity: AppCompatActivity, private val pages: List<FragmentPage>) : androidx.viewpager2.adapter.FragmentStateAdapter(activity) {
 		var licenseFragment: WelcomeLicenseFragment? = null
 		var notificationsFragment: WelcomeNotificationsFragment? = null
+		var screenLockFragment: WelcomeScreenLockFragment? = null
 
 		override fun getItemCount(): Int = pages.size
 
@@ -231,7 +251,7 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 				is FragmentPage.Intro -> WelcomeIntroFragment()
 				is FragmentPage.License -> WelcomeLicenseFragment().also { fragment ->
 					fragment.setListener(object : WelcomeLicenseFragment.Listener {
-						override fun onSubmitLicense(license: String?) {
+						override fun onLicenseTextChanged(license: String?) {
 							welcomePresenter.validateDialogAware(license)
 						}
 
@@ -263,7 +283,20 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 					})
 					notificationsFragment = fragment
 				}
+
+				is FragmentPage.ScreenLock -> WelcomeScreenLockFragment().also { fragment ->
+					fragment.setListener(object : WelcomeScreenLockFragment.Listener {
+						override fun onSetScreenLock(setScreenLock: Boolean) {
+							welcomePresenter.onSetScreenLock(setScreenLock)
+						}
+					})
+					screenLockFragment = fragment
+				}
 			}
 		}
+	}
+
+	companion object {
+		private const val AUTO_ADVANCE_DELAY_MS = 500L
 	}
 }

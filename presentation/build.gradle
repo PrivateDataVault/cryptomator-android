@@ -79,7 +79,6 @@ android {
 
 			manifestPlaceholders = [DROPBOX_API_KEY: getApiKey('DROPBOX_API_KEY_DEBUG'), ONEDRIVE_API_KEY_DECODED: getOnedriveApiKey()]
 
-			//applicationIdSuffix ".debug" FIXME
 			versionNameSuffix '-DEBUG'
 			enableUnitTestCoverage false
 			enableAndroidTestCoverage false

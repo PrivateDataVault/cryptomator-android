@@ -73,6 +73,8 @@
 	<string name="screen_welcome_notifications_button">Allow notifications</string>
 	<string name="screen_welcome_notifications_granted">Notifications are enabled.</string>
 	<string name="screen_welcome_continue_button">Continue</string>
+	<string name="screen_welcome_screen_lock_button">Set screen lock</string>
+	<string name="screen_welcome_screen_lock_already_set">Screen lock is already set.</string>
 	<string name="screen_welcome_license_title">Write access</string>
 	<string name="screen_welcome_intro_body">Thanks for choosing Cryptomator to protect your files.\n\nWith Cryptomator, the key to your data is in your hands.\n\nCryptomator encrypts your data quickly and easily.</string>
 	<string name="next">Next</string>
