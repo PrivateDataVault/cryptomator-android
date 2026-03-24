@@ -28,6 +28,7 @@ class WelcomeScreenLockFragment : BaseFragment<FragmentWelcomeScreenLockBinding>
 	}
 
 	fun updateScreenLockState(isSecure: Boolean) {
+		if (!isAdded) return
 		binding.btnSetScreenLock.isEnabled = !isSecure
 		binding.cbSetScreenLock.isEnabled = !isSecure
 		if (isSecure) {

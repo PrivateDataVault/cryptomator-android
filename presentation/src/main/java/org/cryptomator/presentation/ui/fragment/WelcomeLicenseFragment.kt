@@ -66,11 +66,13 @@ class WelcomeLicenseFragment : BaseFragment<FragmentWelcomeLicenseBinding>(Fragm
 	}
 
 	fun updateUnlocked(unlocked: Boolean) {
+		if (!isAdded) return
 		binding.licenseContent.btnPurchase.isEnabled = !unlocked
 		binding.licenseContent.tvUnlocked.visibility = if (unlocked) View.VISIBLE else View.GONE
 	}
 
 	fun prefillLicense(license: String) {
+		if (!isAdded) return
 		binding.licenseContent.etLicense.setText(license)
 		binding.licenseContent.licenseEntryGroup.visibility = if (isIapFlavor) View.GONE else View.VISIBLE
 	}

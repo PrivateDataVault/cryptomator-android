@@ -1,6 +1,5 @@
 package org.cryptomator.presentation.ui.fragment
 
-import android.os.Bundle
 import android.view.View
 import org.cryptomator.generator.Fragment
 import org.cryptomator.presentation.databinding.FragmentWelcomeNotificationsBinding
@@ -18,11 +17,6 @@ class WelcomeNotificationsFragment : BaseFragment<FragmentWelcomeNotificationsBi
 		this.listener = listener
 	}
 
-	override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-		super.onViewCreated(view, savedInstanceState)
-		setupUi()
-	}
-
 	override fun setupView() {
 		setupUi()
 	}
@@ -34,6 +28,7 @@ class WelcomeNotificationsFragment : BaseFragment<FragmentWelcomeNotificationsBi
 	}
 
 	fun updatePermissionState(granted: Boolean) {
+		if (!isAdded) return
 		binding.btnNotificationPermission.isEnabled = !granted
 		binding.btnNotificationPermission.visibility = View.VISIBLE
 		binding.tvNotificationStatus.visibility = if (granted) View.VISIBLE else View.GONE

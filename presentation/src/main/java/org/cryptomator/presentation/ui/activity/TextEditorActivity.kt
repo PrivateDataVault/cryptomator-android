@@ -9,6 +9,7 @@ import org.cryptomator.generator.InjectIntent
 import org.cryptomator.presentation.R
 import org.cryptomator.presentation.databinding.ActivityLayoutBinding
 import org.cryptomator.presentation.intent.TextEditorIntent
+import org.cryptomator.presentation.licensing.LicenseEnforcer
 import org.cryptomator.presentation.presenter.TextEditorPresenter
 import org.cryptomator.presentation.ui.activity.view.TextEditorView
 import org.cryptomator.presentation.ui.dialog.UnsavedChangesDialog
@@ -24,6 +25,9 @@ class TextEditorActivity : BaseActivity<ActivityLayoutBinding>(ActivityLayoutBin
 	@Inject
 	lateinit var textEditorPresenter: TextEditorPresenter
 
+	@Inject
+	lateinit var licenseEnforcer: LicenseEnforcer
+
 	@InjectIntent
 	lateinit var textEditorIntent: TextEditorIntent
 
@@ -38,6 +42,10 @@ class TextEditorActivity : BaseActivity<ActivityLayoutBinding>(ActivityLayoutBin
 	override fun createFragment(): Fragment = TextEditorFragment()
 
 	override fun onBackPressed() {
+		if (!licenseEnforcer.hasWriteAccess()) {
+			super.onBackPressed()
+			return
+		}
 		textEditorPresenter.onBackPressed()
 	}
 
@@ -97,6 +105,8 @@ class TextEditorActivity : BaseActivity<ActivityLayoutBinding>(ActivityLayoutBin
 		val searchView = menu.findItem(R.id.action_search).actionView as SearchView
 		searchView.setOnQueryTextListener(this)
 
+		menu.findItem(R.id.action_save_changes).isVisible = licenseEnforcer.hasWriteAccess()
+
 		return super.onPrepareOptionsMenu(menu)
 	}
 
@@ -115,9 +125,13 @@ class TextEditorActivity : BaseActivity<ActivityLayoutBinding>(ActivityLayoutBin
 
 	override fun displayTextFileContent(textFileContent: String) {
 		textEditorFragment().displayTextFileContent(textFileContent)
+		if (!licenseEnforcer.hasWriteAccess()) {
+			textEditorFragment().setReadOnly()
+		}
 	}
 
 	override fun onSaveChangesClicked() {
+		if (!licenseEnforcer.hasWriteAccess()) return
 		textEditorPresenter.saveChanges()
 	}
 
