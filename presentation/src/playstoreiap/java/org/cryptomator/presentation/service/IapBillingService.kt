@@ -137,46 +137,70 @@ class IapBillingService : Service(), PurchasesUpdatedListener, AcknowledgePurcha
 			callback(emptyList())
 			return
 		}
-		val products = listOf(
-			QueryProductDetailsParams.Product.newBuilder()
-				.setProductId(fullVersionProductId)
-				.setProductType(BillingClient.ProductType.INAPP)
-				.build(),
-			QueryProductDetailsParams.Product.newBuilder()
-				.setProductId(yearlySubscriptionProductId)
-				.setProductType(BillingClient.ProductType.SUBS)
-				.build()
-		)
-		val params = QueryProductDetailsParams.newBuilder().setProductList(products).build()
-		billingClient.queryProductDetailsAsync(params) { billingResult, productDetailsResult ->
+		val results = mutableListOf<ProductInfo>()
+		var queriesCompleted = 0
+		val totalQueries = 2
+
+		fun onQueryComplete() {
+			queriesCompleted++
+			if (queriesCompleted == totalQueries) {
+				callback(results)
+			}
+		}
+
+		// Query INAPP products
+		val inappParams = QueryProductDetailsParams.newBuilder().setProductList(
+			listOf(
+				QueryProductDetailsParams.Product.newBuilder()
+					.setProductId(fullVersionProductId)
+					.setProductType(BillingClient.ProductType.INAPP)
+					.build()
+			)
+		).build()
+		billingClient.queryProductDetailsAsync(inappParams) { billingResult, productDetailsResult ->
 			if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-				val infos = productDetailsResult.productDetailsList.mapNotNull { productDetails ->
+				for (productDetails in productDetailsResult.productDetailsList) {
 					productDetailsMap[productDetails.productId] = productDetails
-					when (productDetails.productId) {
-						fullVersionProductId -> ProductInfo(
+					results.add(
+						ProductInfo(
 							productDetails.productId,
 							productDetails.oneTimePurchaseOfferDetails?.formattedPrice ?: "",
 							"inapp"
 						)
-						yearlySubscriptionProductId -> {
-							val pricingPhase = productDetails.subscriptionOfferDetails
-								?.firstOrNull()
-								?.pricingPhases
-								?.pricingPhaseList
-								?.firstOrNull()
-							ProductInfo(
-								productDetails.productId,
-								pricingPhase?.formattedPrice ?: "",
-								"subs"
-							)
-						}
-						else -> null
-					}
+					)
 				}
-				callback(infos)
-			} else {
-				callback(emptyList())
 			}
+			onQueryComplete()
+		}
+
+		// Query SUBS products (must be separate — Billing Library requires same product type per query)
+		val subsParams = QueryProductDetailsParams.newBuilder().setProductList(
+			listOf(
+				QueryProductDetailsParams.Product.newBuilder()
+					.setProductId(yearlySubscriptionProductId)
+					.setProductType(BillingClient.ProductType.SUBS)
+					.build()
+			)
+		).build()
+		billingClient.queryProductDetailsAsync(subsParams) { billingResult, productDetailsResult ->
+			if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
+				for (productDetails in productDetailsResult.productDetailsList) {
+					productDetailsMap[productDetails.productId] = productDetails
+					val pricingPhase = productDetails.subscriptionOfferDetails
+						?.firstOrNull()
+						?.pricingPhases
+						?.pricingPhaseList
+						?.firstOrNull()
+					results.add(
+						ProductInfo(
+							productDetails.productId,
+							pricingPhase?.formattedPrice ?: "",
+							"subs"
+						)
+					)
+				}
+			}
+			onQueryComplete()
 		}
 	}
 
