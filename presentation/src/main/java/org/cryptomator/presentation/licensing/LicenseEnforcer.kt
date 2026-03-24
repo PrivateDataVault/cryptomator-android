@@ -10,6 +10,8 @@ import org.cryptomator.presentation.BuildConfig
 import org.cryptomator.presentation.R
 import org.cryptomator.presentation.ui.activity.LicenseCheckActivity
 import org.cryptomator.util.SharedPreferencesHandler
+import java.text.DateFormat
+import java.util.Date
 import javax.inject.Inject
 
 @PerView
@@ -72,6 +74,19 @@ class LicenseEnforcer @Inject constructor(private val sharedPreferencesHandler: 
 		val trialExpiration = sharedPreferencesHandler.trialExpirationDate()
 		return trialExpiration > 0 && trialExpiration <= System.currentTimeMillis()
 	}
+
+	fun evaluateTrialState(): TrialState {
+		val trialExpiration = sharedPreferencesHandler.trialExpirationDate()
+		val now = System.currentTimeMillis()
+		val active = trialExpiration > 0 && trialExpiration > now
+		val expired = trialExpiration > 0 && trialExpiration <= now
+		val formattedDate = if (active) {
+			DateFormat.getDateInstance().format(Date(trialExpiration))
+		} else null
+		return TrialState(active, expired, formattedDate)
+	}
+
+	data class TrialState(val isActive: Boolean, val isExpired: Boolean, val formattedExpirationDate: String?)
 
 	@StringRes
 	fun defaultReasonRes(): Int = R.string.read_only_banner

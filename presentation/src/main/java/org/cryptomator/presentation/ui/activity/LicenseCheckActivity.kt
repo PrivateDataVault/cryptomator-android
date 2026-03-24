@@ -18,8 +18,6 @@ import org.cryptomator.presentation.ui.activity.view.UpdateLicenseView
 import org.cryptomator.presentation.ui.dialog.LicenseConfirmationDialog
 import org.cryptomator.presentation.ui.layout.ObscuredAwareCoordinatorLayout
 import java.lang.ref.WeakReference
-import java.text.DateFormat
-import java.util.Date
 import java.util.function.Consumer
 import javax.inject.Inject
 
@@ -164,18 +162,22 @@ class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityL
 	}
 
 	private fun updateTrialState() {
-		if (licenseEnforcer.hasActiveTrial()) {
-			binding.licenseContent.btnTrial.isEnabled = false
-			binding.licenseContent.tvTrialStatus.visibility = View.VISIBLE
-			val expirationDate = DateFormat.getDateInstance().format(Date(sharedPreferencesHandler.trialExpirationDate()))
-			binding.licenseContent.tvTrialStatus.text = getString(R.string.screen_license_check_trial_active, expirationDate)
-		} else if (licenseEnforcer.hasExpiredTrial()) {
-			binding.licenseContent.btnTrial.isEnabled = false
-			binding.licenseContent.tvTrialStatus.visibility = View.VISIBLE
-			binding.licenseContent.tvTrialStatus.text = getString(R.string.screen_license_check_trial_expired)
-		} else {
-			binding.licenseContent.btnTrial.isEnabled = true
-			binding.licenseContent.tvTrialStatus.visibility = View.GONE
+		val state = licenseEnforcer.evaluateTrialState()
+		when {
+			state.isActive -> {
+				binding.licenseContent.btnTrial.isEnabled = false
+				binding.licenseContent.tvTrialStatus.visibility = View.VISIBLE
+				binding.licenseContent.tvTrialStatus.text = getString(R.string.screen_license_check_trial_active, state.formattedExpirationDate)
+			}
+			state.isExpired -> {
+				binding.licenseContent.btnTrial.isEnabled = false
+				binding.licenseContent.tvTrialStatus.visibility = View.VISIBLE
+				binding.licenseContent.tvTrialStatus.text = getString(R.string.screen_license_check_trial_expired)
+			}
+			else -> {
+				binding.licenseContent.btnTrial.isEnabled = true
+				binding.licenseContent.tvTrialStatus.visibility = View.GONE
+			}
 		}
 	}
 

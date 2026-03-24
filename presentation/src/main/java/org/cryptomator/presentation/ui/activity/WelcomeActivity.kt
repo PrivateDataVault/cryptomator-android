@@ -24,17 +24,15 @@ import org.cryptomator.presentation.R
 import org.cryptomator.presentation.databinding.ActivityWelcomeBinding
 import org.cryptomator.presentation.licensing.LicenseEnforcer
 import org.cryptomator.presentation.presenter.WelcomePresenter
+import org.cryptomator.presentation.service.ProductInfo
 import org.cryptomator.presentation.ui.activity.view.UpdateLicenseView
 import org.cryptomator.presentation.ui.activity.view.WelcomeView
 import org.cryptomator.presentation.ui.fragment.WelcomeIntroFragment
 import org.cryptomator.presentation.ui.fragment.WelcomeLicenseFragment
 import org.cryptomator.presentation.ui.fragment.WelcomeNotificationsFragment
-import org.cryptomator.presentation.service.ProductInfo
 import org.cryptomator.presentation.ui.fragment.WelcomeScreenLockFragment
 import org.cryptomator.presentation.ui.layout.ObscuredAwareCoordinatorLayout
 import java.lang.ref.WeakReference
-import java.text.DateFormat
-import java.util.Date
 import javax.inject.Inject
 
 @Activity
@@ -169,12 +167,11 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 		val hasPaidLicense = licenseEnforcer.hasPaidLicense()
 		pagerAdapter.licenseFragment?.updateUnlocked(unlocked, hasPaidLicense)
 		if (isIapFlavor) {
-			val active = licenseEnforcer.hasActiveTrial()
-			val expired = licenseEnforcer.hasExpiredTrial()
-			val expirationText = if (active) {
-				getString(R.string.screen_license_check_trial_active, DateFormat.getDateInstance().format(Date(sharedPreferencesHandler.trialExpirationDate())))
+			val state = licenseEnforcer.evaluateTrialState()
+			val expirationText = if (state.isActive) {
+				getString(R.string.screen_license_check_trial_active, state.formattedExpirationDate)
 			} else null
-			pagerAdapter.licenseFragment?.updateTrialState(active, expired, expirationText)
+			pagerAdapter.licenseFragment?.updateTrialState(state.isActive, state.isExpired, expirationText)
 		}
 	}
 

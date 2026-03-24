@@ -20,6 +20,7 @@ import com.android.billingclient.api.QueryProductDetailsParams
 import com.android.billingclient.api.QueryPurchasesParams
 import org.cryptomator.util.SharedPreferencesHandler
 import java.lang.ref.WeakReference
+import java.util.concurrent.ConcurrentHashMap
 import timber.log.Timber
 
 class IapBillingService : Service(), PurchasesUpdatedListener, AcknowledgePurchaseResponseListener {
@@ -30,7 +31,7 @@ class IapBillingService : Service(), PurchasesUpdatedListener, AcknowledgePurcha
 	private lateinit var billingClient: BillingClient
 	private lateinit var sharedPreferencesHandler: SharedPreferencesHandler
 
-	private val productDetailsMap = mutableMapOf<String, ProductDetails>()
+	private val productDetailsMap = ConcurrentHashMap<String, ProductDetails>()
 	@Volatile
 	private var pendingProductDetailsCallback: ((List<ProductInfo>) -> Unit)? = null
 
@@ -55,7 +56,7 @@ class IapBillingService : Service(), PurchasesUpdatedListener, AcknowledgePurcha
 						queryProductDetails(callback)
 					}
 				} else {
-					Timber.tag("IapBillingService").e("Billing setup not successful, error: " + billingResult.responseCode)
+					Timber.tag("IapBillingService").e("Billing setup not successful, error: %d", billingResult.responseCode)
 				}
 			}
 
@@ -95,7 +96,7 @@ class IapBillingService : Service(), PurchasesUpdatedListener, AcknowledgePurcha
 				continue
 			}
 			if (purchase.purchaseState == Purchase.PurchaseState.PURCHASED) {
-				Timber.tag("IapBillingService").i("In-app purchase found: " + purchase.signature)
+				Timber.tag("IapBillingService").i("In-app purchase found: %s", purchase.signature)
 				if (sharedPreferencesHandler.licenseToken().isEmpty()) {
 					sharedPreferencesHandler.setLicenseToken(purchase.purchaseToken)
 				}
@@ -120,7 +121,7 @@ class IapBillingService : Service(), PurchasesUpdatedListener, AcknowledgePurcha
 				continue
 			}
 			if (purchase.purchaseState == Purchase.PurchaseState.PURCHASED) {
-				Timber.tag("IapBillingService").i("Subscription found: " + purchase.signature)
+				Timber.tag("IapBillingService").i("Subscription found: %s", purchase.signature)
 				sharedPreferencesHandler.setHasRunningSubscription(true)
 				if (!purchase.isAcknowledged) {
 					val acknowledgePurchaseParams = AcknowledgePurchaseParams.newBuilder()
@@ -143,15 +144,18 @@ class IapBillingService : Service(), PurchasesUpdatedListener, AcknowledgePurcha
 			pendingProductDetailsCallback = callback
 			return
 		}
+		val lock = Any()
 		val results = mutableListOf<ProductInfo>()
 		var queriesCompleted = 0
 		val totalQueries = 2
 
 		fun onQueryComplete() {
-			queriesCompleted++
-			if (queriesCompleted == totalQueries) {
-				callback(results)
+			val readyResults: List<ProductInfo>?
+			synchronized(lock) {
+				queriesCompleted++
+				readyResults = if (queriesCompleted == totalQueries) ArrayList(results) else null
 			}
+			readyResults?.let { callback(it) }
 		}
 
 		// Query INAPP products
@@ -165,15 +169,16 @@ class IapBillingService : Service(), PurchasesUpdatedListener, AcknowledgePurcha
 		).build()
 		billingClient.queryProductDetailsAsync(inappParams) { billingResult, productDetailsResult ->
 			if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-				for (productDetails in productDetailsResult.productDetailsList) {
-					productDetailsMap[productDetails.productId] = productDetails
-					results.add(
-						ProductInfo(
-							productDetails.productId,
-							productDetails.oneTimePurchaseOfferDetails?.formattedPrice ?: "",
-							"inapp"
+				synchronized(lock) {
+					for (productDetails in productDetailsResult.productDetailsList) {
+						productDetailsMap[productDetails.productId] = productDetails
+						results.add(
+							ProductInfo(
+								productDetails.productId,
+								productDetails.oneTimePurchaseOfferDetails?.formattedPrice ?: ""
+							)
 						)
-					)
+					}
 				}
 			}
 			onQueryComplete()
@@ -190,20 +195,21 @@ class IapBillingService : Service(), PurchasesUpdatedListener, AcknowledgePurcha
 		).build()
 		billingClient.queryProductDetailsAsync(subsParams) { billingResult, productDetailsResult ->
 			if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-				for (productDetails in productDetailsResult.productDetailsList) {
-					productDetailsMap[productDetails.productId] = productDetails
-					val pricingPhase = productDetails.subscriptionOfferDetails
-						?.firstOrNull()
-						?.pricingPhases
-						?.pricingPhaseList
-						?.firstOrNull()
-					results.add(
-						ProductInfo(
-							productDetails.productId,
-							pricingPhase?.formattedPrice ?: "",
-							"subs"
+				synchronized(lock) {
+					for (productDetails in productDetailsResult.productDetailsList) {
+						productDetailsMap[productDetails.productId] = productDetails
+						val pricingPhase = productDetails.subscriptionOfferDetails
+							?.firstOrNull()
+							?.pricingPhases
+							?.pricingPhaseList
+							?.firstOrNull()
+						results.add(
+							ProductInfo(
+								productDetails.productId,
+								pricingPhase?.formattedPrice ?: ""
+							)
 						)
-					)
+					}
 				}
 			}
 			onQueryComplete()

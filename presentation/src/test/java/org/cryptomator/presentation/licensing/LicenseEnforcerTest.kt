@@ -3,6 +3,8 @@ package org.cryptomator.presentation.licensing
 import org.cryptomator.presentation.BuildConfig
 import org.cryptomator.util.SharedPreferencesHandler
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.BeforeEach
@@ -166,5 +168,41 @@ class LicenseEnforcerTest {
 		val thirtyDaysMs = 30L * 24 * 60 * 60 * 1000
 		assertTrue(captor.value >= before + thirtyDaysMs)
 		assertTrue(captor.value <= after + thirtyDaysMs)
+	}
+
+	// -- evaluateTrialState --
+
+	@Test
+	fun `evaluateTrialState returns active with formatted date when trial is active`() {
+		val futureDate = System.currentTimeMillis() + 86400000L
+		`when`(sharedPreferencesHandler.trialExpirationDate()).thenReturn(futureDate)
+
+		val state = licenseEnforcer.evaluateTrialState()
+
+		assertTrue(state.isActive)
+		assertFalse(state.isExpired)
+		assertNotNull(state.formattedExpirationDate)
+	}
+
+	@Test
+	fun `evaluateTrialState returns expired with null date when trial is expired`() {
+		`when`(sharedPreferencesHandler.trialExpirationDate()).thenReturn(System.currentTimeMillis() - 1000L)
+
+		val state = licenseEnforcer.evaluateTrialState()
+
+		assertFalse(state.isActive)
+		assertTrue(state.isExpired)
+		assertNull(state.formattedExpirationDate)
+	}
+
+	@Test
+	fun `evaluateTrialState returns inactive and not expired when no trial started`() {
+		`when`(sharedPreferencesHandler.trialExpirationDate()).thenReturn(0L)
+
+		val state = licenseEnforcer.evaluateTrialState()
+
+		assertFalse(state.isActive)
+		assertFalse(state.isExpired)
+		assertNull(state.formattedExpirationDate)
 	}
 }
