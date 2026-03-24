@@ -42,6 +42,10 @@ class LicenseEnforcer @Inject constructor(private val sharedPreferencesHandler: 
 	}
 
 	fun hasWriteAccess(): Boolean {
+		return hasPaidLicense() || hasActiveTrial()
+	}
+
+	fun hasPaidLicense(): Boolean {
 		if (BuildConfig.FLAVOR == "playstore" || BuildConfig.FLAVOR == "accrescent") {
 			return true
 		}
@@ -49,10 +53,6 @@ class LicenseEnforcer @Inject constructor(private val sharedPreferencesHandler: 
 			return true
 		}
 		if (sharedPreferencesHandler.hasRunningSubscription()) {
-			return true
-		}
-		val trialExpiration = sharedPreferencesHandler.trialExpirationDate()
-		if (trialExpiration > 0 && trialExpiration > System.currentTimeMillis()) {
 			return true
 		}
 		return false

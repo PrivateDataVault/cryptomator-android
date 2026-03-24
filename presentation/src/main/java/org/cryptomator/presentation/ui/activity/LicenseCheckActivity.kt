@@ -152,9 +152,10 @@ class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityL
 	private fun updatePurchaseState() {
 		val unlocked = licenseEnforcer.hasWriteAccess()
 		if (isIapFlavor) {
+			val hasPaidLicense = licenseEnforcer.hasPaidLicense()
 			binding.licenseContent.tvUnlocked.visibility = if (unlocked) View.VISIBLE else View.GONE
-			binding.licenseContent.purchaseOptionsGroup.visibility = if (unlocked) View.GONE else View.VISIBLE
-			binding.licenseContent.tvRestorePurchase.visibility = if (unlocked) View.GONE else View.VISIBLE
+			binding.licenseContent.purchaseOptionsGroup.visibility = if (hasPaidLicense) View.GONE else View.VISIBLE
+			binding.licenseContent.tvRestorePurchase.visibility = if (hasPaidLicense) View.GONE else View.VISIBLE
 			updateTrialState()
 		} else {
 			binding.licenseContent.btnPurchase.isEnabled = !unlocked

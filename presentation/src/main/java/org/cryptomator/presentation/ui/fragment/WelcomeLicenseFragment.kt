@@ -98,12 +98,12 @@ class WelcomeLicenseFragment : BaseFragment<FragmentWelcomeLicenseBinding>(Fragm
 		})
 	}
 
-	fun updateUnlocked(unlocked: Boolean) {
+	fun updateUnlocked(unlocked: Boolean, hasPaidLicense: Boolean) {
 		if (!isAdded) return
 		if (isIapFlavor) {
 			binding.licenseContent.tvUnlocked.visibility = if (unlocked) View.VISIBLE else View.GONE
-			binding.licenseContent.purchaseOptionsGroup.visibility = if (unlocked) View.GONE else View.VISIBLE
-			binding.licenseContent.tvRestorePurchase.visibility = if (unlocked) View.GONE else View.VISIBLE
+			binding.licenseContent.purchaseOptionsGroup.visibility = if (hasPaidLicense) View.GONE else View.VISIBLE
+			binding.licenseContent.tvRestorePurchase.visibility = if (hasPaidLicense) View.GONE else View.VISIBLE
 		} else {
 			binding.licenseContent.btnPurchase.isEnabled = !unlocked
 			binding.licenseContent.tvUnlocked.visibility = if (unlocked) View.VISIBLE else View.GONE

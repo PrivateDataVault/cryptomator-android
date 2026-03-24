@@ -166,7 +166,8 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 			return
 		}
 		val unlocked = licenseEnforcer.hasWriteAccess()
-		pagerAdapter.licenseFragment?.updateUnlocked(unlocked)
+		val hasPaidLicense = licenseEnforcer.hasPaidLicense()
+		pagerAdapter.licenseFragment?.updateUnlocked(unlocked, hasPaidLicense)
 		if (isIapFlavor) {
 			val active = licenseEnforcer.hasActiveTrial()
 			val expired = licenseEnforcer.hasExpiredTrial()

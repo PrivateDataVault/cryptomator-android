@@ -1,8 +1,10 @@
 package org.cryptomator.presentation.licensing
 
+import org.cryptomator.presentation.BuildConfig
 import org.cryptomator.util.SharedPreferencesHandler
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
@@ -49,6 +51,7 @@ class LicenseEnforcerTest {
 
 	@Test
 	fun `hasWriteAccess returns false when trial is expired`() {
+		assumeTrue(BuildConfig.FLAVOR != "playstore" && BuildConfig.FLAVOR != "accrescent", "Licensing logic is bypassed on this flavor")
 		`when`(sharedPreferencesHandler.licenseToken()).thenReturn("")
 		`when`(sharedPreferencesHandler.hasRunningSubscription()).thenReturn(false)
 		`when`(sharedPreferencesHandler.trialExpirationDate()).thenReturn(System.currentTimeMillis() - 1000L)
@@ -58,11 +61,49 @@ class LicenseEnforcerTest {
 
 	@Test
 	fun `hasWriteAccess returns false when no license and no trial and no subscription`() {
+		assumeTrue(BuildConfig.FLAVOR != "playstore" && BuildConfig.FLAVOR != "accrescent", "Licensing logic is bypassed on this flavor")
 		`when`(sharedPreferencesHandler.licenseToken()).thenReturn("")
 		`when`(sharedPreferencesHandler.hasRunningSubscription()).thenReturn(false)
 		`when`(sharedPreferencesHandler.trialExpirationDate()).thenReturn(0L)
 
 		assertFalse(licenseEnforcer.hasWriteAccess())
+	}
+
+	// -- hasPaidLicense --
+
+	@Test
+	fun `hasPaidLicense returns true when license token is present`() {
+		`when`(sharedPreferencesHandler.licenseToken()).thenReturn("some-token")
+		`when`(sharedPreferencesHandler.hasRunningSubscription()).thenReturn(false)
+
+		assertTrue(licenseEnforcer.hasPaidLicense())
+	}
+
+	@Test
+	fun `hasPaidLicense returns true when subscription is active`() {
+		`when`(sharedPreferencesHandler.licenseToken()).thenReturn("")
+		`when`(sharedPreferencesHandler.hasRunningSubscription()).thenReturn(true)
+
+		assertTrue(licenseEnforcer.hasPaidLicense())
+	}
+
+	@Test
+	fun `hasPaidLicense returns false when only trial is active`() {
+		assumeTrue(BuildConfig.FLAVOR != "playstore" && BuildConfig.FLAVOR != "accrescent", "Licensing logic is bypassed on this flavor")
+		`when`(sharedPreferencesHandler.licenseToken()).thenReturn("")
+		`when`(sharedPreferencesHandler.hasRunningSubscription()).thenReturn(false)
+		`when`(sharedPreferencesHandler.trialExpirationDate()).thenReturn(System.currentTimeMillis() + 86400000L)
+
+		assertFalse(licenseEnforcer.hasPaidLicense())
+	}
+
+	@Test
+	fun `hasPaidLicense returns false when no license and no subscription`() {
+		assumeTrue(BuildConfig.FLAVOR != "playstore" && BuildConfig.FLAVOR != "accrescent", "Licensing logic is bypassed on this flavor")
+		`when`(sharedPreferencesHandler.licenseToken()).thenReturn("")
+		`when`(sharedPreferencesHandler.hasRunningSubscription()).thenReturn(false)
+
+		assertFalse(licenseEnforcer.hasPaidLicense())
 	}
 
 	// -- hasActiveTrial --
