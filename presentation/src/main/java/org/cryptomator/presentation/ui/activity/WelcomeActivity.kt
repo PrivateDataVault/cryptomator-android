@@ -25,6 +25,7 @@ import org.cryptomator.presentation.databinding.ActivityWelcomeBinding
 import org.cryptomator.presentation.licensing.LicenseEnforcer
 import org.cryptomator.presentation.presenter.WelcomePresenter
 import org.cryptomator.presentation.service.ProductInfo
+import org.cryptomator.presentation.service.resolveProductPrices
 import org.cryptomator.presentation.ui.activity.view.UpdateLicenseView
 import org.cryptomator.presentation.ui.activity.view.WelcomeView
 import org.cryptomator.presentation.ui.fragment.WelcomeIntroFragment
@@ -183,12 +184,11 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 			return
 		}
 		(application as CryptomatorApp).queryProductDetails { products ->
+			val prices = products.resolveProductPrices()
 			runOnUiThread {
-				val subscription = products.find { it.productId == ProductInfo.PRODUCT_YEARLY_SUBSCRIPTION }
-				val lifetime = products.find { it.productId == ProductInfo.PRODUCT_FULL_VERSION }
 				pagerAdapter.licenseFragment?.updateProductPrices(
-					subscription?.formattedPrice ?: "",
-					lifetime?.formattedPrice ?: ""
+					prices.subscriptionPrice ?: "",
+					prices.lifetimePrice ?: ""
 				)
 			}
 		}

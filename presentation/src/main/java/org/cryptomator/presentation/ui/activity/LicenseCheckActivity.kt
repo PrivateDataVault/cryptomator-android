@@ -14,6 +14,7 @@ import org.cryptomator.presentation.intent.Intents.vaultListIntent
 import org.cryptomator.presentation.licensing.LicenseEnforcer
 import org.cryptomator.presentation.presenter.LicenseCheckPresenter
 import org.cryptomator.presentation.service.ProductInfo
+import org.cryptomator.presentation.service.resolveProductPrices
 import org.cryptomator.presentation.ui.activity.view.UpdateLicenseView
 import org.cryptomator.presentation.ui.dialog.LicenseConfirmationDialog
 import org.cryptomator.presentation.ui.layout.ObscuredAwareCoordinatorLayout
@@ -132,15 +133,14 @@ class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityL
 
 	private fun loadProductPrices() {
 		(application as CryptomatorApp).queryProductDetails { products ->
+			val prices = products.resolveProductPrices()
 			runOnUiThread {
-				val subscription = products.find { it.productId == ProductInfo.PRODUCT_YEARLY_SUBSCRIPTION }
-				val lifetime = products.find { it.productId == ProductInfo.PRODUCT_FULL_VERSION }
-				if (subscription != null) {
-					binding.licenseContent.btnSubscription.text = subscription.formattedPrice
+				if (prices.subscriptionPrice != null) {
+					binding.licenseContent.btnSubscription.text = prices.subscriptionPrice
 					binding.licenseContent.btnSubscription.isEnabled = true
 				}
-				if (lifetime != null) {
-					binding.licenseContent.btnLifetime.text = lifetime.formattedPrice
+				if (prices.lifetimePrice != null) {
+					binding.licenseContent.btnLifetime.text = prices.lifetimePrice
 					binding.licenseContent.btnLifetime.isEnabled = true
 				}
 			}
