@@ -48,6 +48,8 @@ class CryptomatorApp : MultiDexApplication(), HasComponent<ApplicationComponent>
 	@Volatile
 	private var iapBillingServiceBinder: IapBillingService.Binder? = null
 
+	private val pendingProductDetailsCallbacks = mutableListOf<(List<ProductInfo>) -> Unit>()
+
 	override fun onCreate() {
 		super.onCreate()
 		setupLogging()
@@ -130,10 +132,12 @@ class CryptomatorApp : MultiDexApplication(), HasComponent<ApplicationComponent>
 				Timber.tag("App").i("IAP Billing service connected")
 				iapBillingServiceBinder = service as IapBillingService.Binder
 				iapBillingServiceBinder?.init(Companion.applicationContext)
+				drainPendingProductDetailsCallbacks()
 			}
 
 			override fun onServiceDisconnected(name: ComponentName) {
 				Timber.tag("App").i("IAP Billing service disconnected")
+				iapBillingServiceBinder = null
 			}
 		}, BIND_AUTO_CREATE)
 	}
@@ -146,9 +150,23 @@ class CryptomatorApp : MultiDexApplication(), HasComponent<ApplicationComponent>
 
 	fun queryProductDetails(callback: (List<ProductInfo>) -> Unit) {
 		if (BuildConfig.FLAVOR == "playstoreiap") {
-			iapBillingServiceBinder?.queryProductDetails(callback) ?: callback(emptyList())
+			val binder = iapBillingServiceBinder
+			if (binder != null) {
+				binder.queryProductDetails(callback)
+			} else {
+				pendingProductDetailsCallbacks.add(callback)
+			}
 		} else {
 			callback(emptyList())
+		}
+	}
+
+	private fun drainPendingProductDetailsCallbacks() {
+		if (pendingProductDetailsCallbacks.isEmpty()) return
+		val callbacks = ArrayList(pendingProductDetailsCallbacks)
+		pendingProductDetailsCallbacks.clear()
+		iapBillingServiceBinder?.queryProductDetails { products ->
+			callbacks.forEach { it(products) }
 		}
 	}
 
