@@ -185,14 +185,14 @@ class LicenseEnforcerTest {
 	}
 
 	@Test
-	fun `evaluateTrialState returns expired with null date when trial is expired`() {
+	fun `evaluateTrialState returns expired with formatted date when trial is expired`() {
 		`when`(sharedPreferencesHandler.trialExpirationDate()).thenReturn(System.currentTimeMillis() - 1000L)
 
 		val state = licenseEnforcer.evaluateTrialState()
 
 		assertFalse(state.isActive)
 		assertTrue(state.isExpired)
-		assertNull(state.formattedExpirationDate)
+		assertNotNull(state.formattedExpirationDate)
 	}
 
 	@Test

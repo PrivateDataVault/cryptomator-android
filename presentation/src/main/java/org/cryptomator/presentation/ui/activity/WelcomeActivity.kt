@@ -172,8 +172,8 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 		pagerAdapter.licenseFragment?.updateUnlocked(unlocked, hasPaidLicense)
 		if (isIapFlavor) {
 			val state = licenseEnforcer.evaluateTrialState()
-			val expirationText = if (state.isActive) {
-				getString(R.string.screen_license_check_trial_active, state.formattedExpirationDate)
+			val expirationText = if (state.isActive || state.isExpired) {
+				getString(R.string.screen_license_check_trial_expiration, state.formattedExpirationDate)
 			} else null
 			pagerAdapter.licenseFragment?.updateTrialState(state.isActive, state.isExpired, expirationText)
 		}

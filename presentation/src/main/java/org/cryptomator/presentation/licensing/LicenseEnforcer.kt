@@ -80,7 +80,7 @@ class LicenseEnforcer @Inject constructor(private val sharedPreferencesHandler: 
 		val now = System.currentTimeMillis()
 		val active = trialExpiration > 0 && trialExpiration > now
 		val expired = trialExpiration > 0 && trialExpiration <= now
-		val formattedDate = if (active) {
+		val formattedDate = if (active || expired) {
 			DateFormat.getDateInstance().format(Date(trialExpiration))
 		} else null
 		return TrialState(active, expired, formattedDate)

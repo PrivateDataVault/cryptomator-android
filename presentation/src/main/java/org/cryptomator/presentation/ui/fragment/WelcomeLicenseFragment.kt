@@ -112,21 +112,20 @@ class WelcomeLicenseFragment : BaseFragment<FragmentWelcomeLicenseBinding>(Fragm
 
 	fun updateTrialState(active: Boolean, expired: Boolean, expirationText: String?) {
 		if (!isAdded) return
-		when {
-			active -> {
-				binding.licenseContent.btnTrial.isEnabled = false
-				binding.licenseContent.tvTrialStatus.visibility = View.VISIBLE
-				binding.licenseContent.tvTrialStatus.text = expirationText
-			}
-			expired -> {
-				binding.licenseContent.btnTrial.isEnabled = false
-				binding.licenseContent.tvTrialStatus.visibility = View.VISIBLE
-				binding.licenseContent.tvTrialStatus.text = getString(R.string.screen_license_check_trial_expired)
-			}
-			else -> {
-				binding.licenseContent.btnTrial.isEnabled = true
-				binding.licenseContent.tvTrialStatus.visibility = View.GONE
-			}
+		if (active || expired) {
+			binding.licenseContent.trialButtonGroup.visibility = View.GONE
+			binding.licenseContent.tvTrialStatusBadge.visibility = View.VISIBLE
+			binding.licenseContent.tvTrialStatusBadge.text = getString(
+				if (active) R.string.screen_license_check_trial_status_active
+				else R.string.screen_license_check_trial_status_expired
+			)
+			binding.licenseContent.tvTrialExpiration.visibility = View.VISIBLE
+			binding.licenseContent.tvTrialExpiration.text = expirationText
+		} else {
+			binding.licenseContent.trialButtonGroup.visibility = View.VISIBLE
+			binding.licenseContent.tvTrialStatusBadge.visibility = View.GONE
+			binding.licenseContent.tvTrialExpiration.visibility = View.GONE
+			binding.licenseContent.btnTrial.isEnabled = true
 		}
 	}
 

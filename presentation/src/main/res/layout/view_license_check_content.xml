@@ -15,8 +15,8 @@
 		android:orientation="horizontal">
 
 		<androidx.appcompat.widget.AppCompatImageView
-			android:layout_width="80dp"
-			android:layout_height="80dp"
+			android:layout_width="100dp"
+			android:layout_height="100dp"
 			android:adjustViewBounds="true"
 			android:contentDescription="@null"
 			android:scaleType="fitCenter"
@@ -136,7 +136,7 @@
 		android:orientation="vertical"
 		android:visibility="gone">
 
-		<!-- 30-Day Free Trial -->
+		<!-- 30-Day Trial -->
 		<LinearLayout
 			android:id="@+id/rowTrial"
 			android:layout_width="match_parent"
@@ -145,15 +145,29 @@
 			android:orientation="horizontal"
 			android:paddingVertical="12dp">
 
-			<TextView
-				android:id="@+id/tvTrialTitle"
+			<LinearLayout
 				android:layout_width="0dp"
 				android:layout_height="wrap_content"
 				android:layout_weight="1"
-				android:text="@string/screen_license_check_trial_title"
-				android:textAppearance="?attr/textAppearanceBody1" />
+				android:orientation="vertical">
+
+				<TextView
+					android:id="@+id/tvTrialTitle"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:text="@string/screen_license_check_trial_title"
+					android:textAppearance="?attr/textAppearanceBody1" />
+
+				<TextView
+					android:id="@+id/tvTrialExpiration"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:textAppearance="?attr/textAppearanceCaption"
+					android:visibility="gone" />
+			</LinearLayout>
 
 			<LinearLayout
+				android:id="@+id/trialButtonGroup"
 				android:layout_width="wrap_content"
 				android:layout_height="wrap_content"
 				android:gravity="center"
@@ -164,7 +178,7 @@
 					style="@style/Widget.Material3.Button.TonalButton"
 					android:layout_width="wrap_content"
 					android:layout_height="36dp"
-					android:minWidth="80dp"
+					android:minWidth="85dp"
 					android:text="@string/screen_license_check_trial_price"
 					android:textSize="14sp" />
 
@@ -175,6 +189,15 @@
 					android:text="@string/screen_license_check_trial_subtitle"
 					android:textAppearance="?attr/textAppearanceCaption" />
 			</LinearLayout>
+
+			<TextView
+				android:id="@+id/tvTrialStatusBadge"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:textAllCaps="true"
+				android:textAppearance="?attr/textAppearanceBody1"
+				android:textColor="?android:attr/textColorSecondary"
+				android:visibility="gone" />
 		</LinearLayout>
 
 		<View
@@ -210,7 +233,7 @@
 					style="@style/Widget.Material3.Button.TonalButton"
 					android:layout_width="wrap_content"
 					android:layout_height="36dp"
-					android:minWidth="80dp"
+					android:minWidth="85dp"
 					android:text="…"
 					android:textSize="14sp" />
 
@@ -256,7 +279,7 @@
 					style="@style/Widget.Material3.Button.TonalButton"
 					android:layout_width="wrap_content"
 					android:layout_height="36dp"
-					android:minWidth="80dp"
+					android:minWidth="85dp"
 					android:text="…"
 					android:textSize="14sp" />
 
@@ -290,24 +313,14 @@
 		android:textAppearance="?attr/textAppearanceBody2"
 		android:visibility="gone" />
 
-	<!-- Trial status text -->
-	<TextView
-		android:id="@+id/tvTrialStatus"
-		android:layout_width="match_parent"
-		android:layout_height="wrap_content"
-		android:layout_marginTop="8dp"
-		android:gravity="center"
-		android:textAppearance="?attr/textAppearanceBody2"
-		android:visibility="gone" />
-
 	<!-- Restore Purchase (IAP only) -->
 	<TextView
 		android:id="@+id/tvRestorePurchase"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
-		android:layout_marginTop="24dp"
+		android:layout_marginTop="32dp"
 		android:text="@string/screen_license_check_restore_purchase"
-		android:textAppearance="?attr/textAppearanceBody2"
+		android:textAppearance="?attr/textAppearanceCaption"
 		android:textColor="?attr/colorPrimary"
 		android:visibility="gone" />
 
@@ -316,7 +329,7 @@
 		android:id="@+id/legalLinksGroup"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
-		android:layout_marginTop="12dp"
+		android:layout_marginTop="24dp"
 		android:gravity="center"
 		android:orientation="horizontal"
 		android:visibility="gone">

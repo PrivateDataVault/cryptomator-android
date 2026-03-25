@@ -163,21 +163,20 @@ class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityL
 
 	private fun updateTrialState() {
 		val state = licenseEnforcer.evaluateTrialState()
-		when {
-			state.isActive -> {
-				binding.licenseContent.btnTrial.isEnabled = false
-				binding.licenseContent.tvTrialStatus.visibility = View.VISIBLE
-				binding.licenseContent.tvTrialStatus.text = getString(R.string.screen_license_check_trial_active, state.formattedExpirationDate)
-			}
-			state.isExpired -> {
-				binding.licenseContent.btnTrial.isEnabled = false
-				binding.licenseContent.tvTrialStatus.visibility = View.VISIBLE
-				binding.licenseContent.tvTrialStatus.text = getString(R.string.screen_license_check_trial_expired)
-			}
-			else -> {
-				binding.licenseContent.btnTrial.isEnabled = true
-				binding.licenseContent.tvTrialStatus.visibility = View.GONE
-			}
+		if (state.isActive || state.isExpired) {
+			binding.licenseContent.trialButtonGroup.visibility = View.GONE
+			binding.licenseContent.tvTrialStatusBadge.visibility = View.VISIBLE
+			binding.licenseContent.tvTrialStatusBadge.text = getString(
+				if (state.isActive) R.string.screen_license_check_trial_status_active
+				else R.string.screen_license_check_trial_status_expired
+			)
+			binding.licenseContent.tvTrialExpiration.visibility = View.VISIBLE
+			binding.licenseContent.tvTrialExpiration.text = getString(R.string.screen_license_check_trial_expiration, state.formattedExpirationDate)
+		} else {
+			binding.licenseContent.trialButtonGroup.visibility = View.VISIBLE
+			binding.licenseContent.tvTrialStatusBadge.visibility = View.GONE
+			binding.licenseContent.tvTrialExpiration.visibility = View.GONE
+			binding.licenseContent.btnTrial.isEnabled = true
 		}
 	}
 
