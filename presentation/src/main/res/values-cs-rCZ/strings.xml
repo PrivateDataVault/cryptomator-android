@@ -407,7 +407,6 @@
 	<string name="screen_settings_lru_cache_size">Velikost mezipaměti</string>
 	<string name="screen_settings_clear_lru_cache_size">Vyčistit mezipaměť</string>
 	<string name="screen_settings_lru_cache_changed__restart_toast">Změny budou použity při příštím restartu aplikace</string>
-	<string name="screen_settings_license">Registrováno na</string>
 	<string name="screen_settings_license_mail">%1$s</string>
 	<string name="dialog_settings_update_check_interval_title">Interval kontroly aktualizací</string>
 	<string name="screen_settings_check_updates">Zkontrolovat aktualizace</string>

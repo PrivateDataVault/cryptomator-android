@@ -431,7 +431,6 @@
 	<string name="screen_settings_lru_cache_size">Dimensione totale della cache</string>
 	<string name="screen_settings_clear_lru_cache_size">Svuota Cache</string>
 	<string name="screen_settings_lru_cache_changed__restart_toast">Le modifiche saranno applicate al prossimo riavvio dell\' app</string>
-	<string name="screen_settings_license">Registrato per</string>
 	<string name="screen_settings_license_mail">%1$s</string>
 	<string name="dialog_settings_update_check_interval_title">Aggiorna intervallo di controllo</string>
 	<string name="screen_settings_check_updates">Controlla aggiornamenti</string>

@@ -90,7 +90,6 @@
 	<string name="screen_welcome_continue_button">Continue</string>
 	<string name="screen_welcome_screen_lock_button">Set screen lock</string>
 	<string name="screen_welcome_screen_lock_already_set">Screen lock is already set.</string>
-	<string name="screen_welcome_license_title">Write access</string>
 	<string name="screen_welcome_intro_body">Thanks for choosing Cryptomator to protect your files.\n\nWith Cryptomator, the key to your data is in your hands.\n\nCryptomator encrypts your data quickly and easily.</string>
 	<string name="next">Next</string>
 	<string name="back">Back</string>
@@ -687,7 +686,9 @@
 	<string name="screen_settings_clear_lru_cache_size">Clear Cache</string>
 	<string name="screen_settings_lru_cache_changed__restart_toast">Changes will be applied on next app restart</string>
 
-	<string name="screen_settings_license">License details</string>
+	<string name="screen_settings_license">Premium</string>
+	<string name="screen_settings_license_title_unlock">Unlock Full Version</string>
+	<string name="screen_settings_license_title_unlocked">Full Version</string>
 	<string name="screen_settings_license_mail">%1$s</string>
 	<string name="screen_settings_license_summary_write_access">Write access unlocked!</string>
 	<string name="screen_settings_license_summary_tap_to_unlock">Tap to unlock write access</string>

@@ -407,7 +407,6 @@
 	<string name="screen_settings_lru_cache_size">Total hurtigminnestørrelse</string>
 	<string name="screen_settings_clear_lru_cache_size">Tøm hurtigminnet</string>
 	<string name="screen_settings_lru_cache_changed__restart_toast">Endringer vil bli tatt i bruk ved neste omstart av appen</string>
-	<string name="screen_settings_license">Registrert for</string>
 	<string name="screen_settings_license_mail">%1$s</string>
 	<string name="dialog_settings_update_check_interval_title">Intervall for å se etter oppdateringer</string>
 	<string name="screen_settings_check_updates">Se etter oppdateringer</string>

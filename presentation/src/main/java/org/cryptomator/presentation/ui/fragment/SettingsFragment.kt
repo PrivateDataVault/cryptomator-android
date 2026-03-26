@@ -177,6 +177,7 @@ class SettingsFragment : PreferenceFragmentCompatLayout() {
 		when (BuildConfig.FLAVOR) {
 			"playstore", "accrescent" -> {
 				licensePref?.let { pref ->
+					pref.title = getString(R.string.screen_settings_license_title_unlocked)
 					pref.summary = getString(R.string.screen_settings_license_summary_write_access)
 					pref.onPreferenceClickListener = null
 				}
@@ -189,9 +190,11 @@ class SettingsFragment : PreferenceFragmentCompatLayout() {
 				val trialState = licenseEnforcer.evaluateTrialState()
 				licensePref?.let { pref ->
 					if (hasPaidLicense) {
+						pref.title = getString(R.string.screen_settings_license_title_unlocked)
 						pref.summary = getString(R.string.screen_settings_license_summary_write_access)
 						pref.onPreferenceClickListener = null
 					} else {
+						pref.title = getString(R.string.screen_settings_license_title_unlock)
 						pref.summary = if (trialState.isActive) {
 							getString(R.string.screen_settings_license_summary_trial_expires, trialState.formattedExpirationDate)
 						} else {
@@ -227,12 +230,14 @@ class SettingsFragment : PreferenceFragmentCompatLayout() {
 				licensePref?.let { pref ->
 					val mail = sharedPreferencesHandler.mail()
 					if (mail.isEmpty()) {
+						pref.title = getString(R.string.screen_settings_license_title_unlock)
 						pref.summary = getString(R.string.screen_settings_license_summary_tap_to_unlock)
 						pref.setOnPreferenceClickListener {
 							startActivity(Intent(activity(), LicenseCheckActivity::class.java))
 							true
 						}
 					} else {
+						pref.title = getString(R.string.screen_settings_license_title_unlocked)
 						pref.summary = format(getString(R.string.screen_settings_license_summary_write_access_mail), mail)
 						pref.onPreferenceClickListener = null
 					}

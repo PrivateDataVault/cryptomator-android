@@ -399,7 +399,6 @@
 	<string name="screen_settings_lru_cache_size">נפח מטמון</string>
 	<string name="screen_settings_clear_lru_cache_size">נקה מטמון</string>
 	<string name="screen_settings_lru_cache_changed__restart_toast">השינויים יכנסו לתוקף בהפעלה מחדש הבאה של הישום</string>
-	<string name="screen_settings_license">רשום עבור</string>
 	<string name="screen_settings_license_mail">%1$s</string>
 	<string name="dialog_settings_update_check_interval_title">בדוק עדכונים אוטומטית</string>
 	<string name="screen_settings_check_updates">חפש עדכונים</string>

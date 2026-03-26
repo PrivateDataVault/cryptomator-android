@@ -402,7 +402,6 @@
 	<string name="screen_settings_lru_cache_size">Tổng kích thước bộ đệm</string>
 	<string name="screen_settings_clear_lru_cache_size">Xóa bộ nhớ Cache</string>
 	<string name="screen_settings_lru_cache_changed__restart_toast">Các thay đổi sẽ được áp dụng vào lần tiếp theo ứng dụng khởi động lại</string>
-	<string name="screen_settings_license">Đăng ký cho</string>
 	<string name="screen_settings_license_mail">%1$s</string>
 	<string name="dialog_settings_update_check_interval_title">Khoảng thời gian kiểm tra cập nhật</string>
 	<string name="screen_settings_check_updates">Kiểm tra cập nhật</string>

@@ -430,7 +430,6 @@
 	<string name="screen_settings_lru_cache_size">Total ukuran cache</string>
 	<string name="screen_settings_clear_lru_cache_size">Bersihkan Cache</string>
 	<string name="screen_settings_lru_cache_changed__restart_toast">Perubahan akan diterapkan pada saat aplikasi dibuka kembali</string>
-	<string name="screen_settings_license">Terdaftar untuk</string>
 	<string name="screen_settings_license_mail">%1$s</string>
 	<string name="dialog_settings_update_check_interval_title">Jangka waktu pembaruan</string>
 	<string name="screen_settings_check_updates">Periksa untuk pembaruan</string>

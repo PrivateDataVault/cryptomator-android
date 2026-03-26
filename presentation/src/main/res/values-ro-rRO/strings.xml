@@ -418,7 +418,6 @@
 	<string name="screen_settings_lru_cache_size">Total memorie cache</string>
 	<string name="screen_settings_clear_lru_cache_size">Golește memoria cache</string>
 	<string name="screen_settings_lru_cache_changed__restart_toast">Modificările vor fi aplicate la următoarea repornire a aplicației</string>
-	<string name="screen_settings_license">Înregistrat pentru</string>
 	<string name="screen_settings_license_mail">%1$s</string>
 	<string name="dialog_settings_update_check_interval_title">Interval de verificare a actualizărilor</string>
 	<string name="screen_settings_check_updates">Verifică actualizări</string>

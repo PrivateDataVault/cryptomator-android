@@ -433,7 +433,6 @@
 	<string name="screen_settings_lru_cache_size">Rozmiar całkowity pamięci podręcznej</string>
 	<string name="screen_settings_clear_lru_cache_size">Wyczyść pamięć podręczną</string>
 	<string name="screen_settings_lru_cache_changed__restart_toast">Zmiany zostaną zastosowane po ponownym uruchomieniu</string>
-	<string name="screen_settings_license">Zarejestrowano dla</string>
 	<string name="screen_settings_license_mail">%1$s</string>
 	<string name="dialog_settings_update_check_interval_title">Częstotliwość sprawdzania aktualizacji</string>
 	<string name="screen_settings_check_updates">Sprawdź dostępne aktualizacje</string>

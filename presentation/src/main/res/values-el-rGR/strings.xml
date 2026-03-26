@@ -431,7 +431,6 @@
 	<string name="screen_settings_lru_cache_size">Συνολικό μέγεθος προσωρινής μνήμης</string>
 	<string name="screen_settings_clear_lru_cache_size">Εκκαθάριση προσωρινής μνήμης</string>
 	<string name="screen_settings_lru_cache_changed__restart_toast">Οι αλλαγές θα εφαρμοστούν στην επόμενη επανεκκίνηση της εφαρμογής</string>
-	<string name="screen_settings_license">Εγγεγραμμένος για</string>
 	<string name="screen_settings_license_mail">%1$s</string>
 	<string name="dialog_settings_update_check_interval_title">Διάστημα ελέγχου ενημερώσεων</string>
 	<string name="screen_settings_check_updates">\'Έλεγχος για ενημερώσεις</string>

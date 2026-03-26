@@ -8,14 +8,6 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/tvLicenseTitle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/screen_welcome_license_title"
-            android:textAppearance="?attr/textAppearanceSubtitle1"
-            android:textStyle="bold" />
-
         <include
             android:id="@+id/licenseContent"
             android:layout_width="match_parent"
