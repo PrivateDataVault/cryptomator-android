@@ -151,13 +151,15 @@ class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityL
 		val unlocked = licenseEnforcer.hasWriteAccess()
 		if (isIapFlavor) {
 			val hasPaidLicense = licenseEnforcer.hasPaidLicense()
-			binding.licenseContent.tvUnlocked.visibility = if (unlocked) View.VISIBLE else View.GONE
 			binding.licenseContent.purchaseOptionsGroup.visibility = if (hasPaidLicense) View.GONE else View.VISIBLE
 			binding.licenseContent.tvRestorePurchase.visibility = if (hasPaidLicense) View.GONE else View.VISIBLE
-			updateTrialState()
+			if (hasPaidLicense) {
+				binding.licenseContent.tvInfoText.visibility = View.GONE
+			} else {
+				updateTrialState()
+			}
 		} else {
 			binding.licenseContent.btnPurchase.isEnabled = !unlocked
-			binding.licenseContent.tvUnlocked.visibility = if (unlocked) View.VISIBLE else View.GONE
 		}
 	}
 
@@ -172,10 +174,17 @@ class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityL
 			)
 			binding.licenseContent.tvTrialExpiration.visibility = View.VISIBLE
 			binding.licenseContent.tvTrialExpiration.text = getString(R.string.screen_license_check_trial_expiration, state.formattedExpirationDate)
+			binding.licenseContent.tvInfoText.visibility = View.VISIBLE
+			binding.licenseContent.tvInfoText.text = if (state.isActive) {
+				getString(R.string.screen_license_check_trial_active_info, state.formattedExpirationDate)
+			} else {
+				getString(R.string.screen_license_check_trial_expired_info)
+			}
 		} else {
 			binding.licenseContent.trialButtonGroup.visibility = View.VISIBLE
 			binding.licenseContent.tvTrialStatusBadge.visibility = View.GONE
 			binding.licenseContent.tvTrialExpiration.visibility = View.GONE
+			binding.licenseContent.tvInfoText.visibility = View.GONE
 			binding.licenseContent.btnTrial.isEnabled = true
 		}
 	}

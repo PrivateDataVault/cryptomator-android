@@ -101,12 +101,10 @@ class WelcomeLicenseFragment : BaseFragment<FragmentWelcomeLicenseBinding>(Fragm
 	fun updateUnlocked(unlocked: Boolean, hasPaidLicense: Boolean) {
 		if (!isAdded) return
 		if (isIapFlavor) {
-			binding.licenseContent.tvUnlocked.visibility = if (unlocked) View.VISIBLE else View.GONE
 			binding.licenseContent.purchaseOptionsGroup.visibility = if (hasPaidLicense) View.GONE else View.VISIBLE
 			binding.licenseContent.tvRestorePurchase.visibility = if (hasPaidLicense) View.GONE else View.VISIBLE
 		} else {
 			binding.licenseContent.btnPurchase.isEnabled = !unlocked
-			binding.licenseContent.tvUnlocked.visibility = if (unlocked) View.VISIBLE else View.GONE
 		}
 	}
 
@@ -121,10 +119,17 @@ class WelcomeLicenseFragment : BaseFragment<FragmentWelcomeLicenseBinding>(Fragm
 			)
 			binding.licenseContent.tvTrialExpiration.visibility = View.VISIBLE
 			binding.licenseContent.tvTrialExpiration.text = expirationText
+			binding.licenseContent.tvInfoText.visibility = View.VISIBLE
+			binding.licenseContent.tvInfoText.text = if (active) {
+				getString(R.string.screen_license_check_trial_active_info, expirationText ?: "")
+			} else {
+				getString(R.string.screen_license_check_trial_expired_info)
+			}
 		} else {
 			binding.licenseContent.trialButtonGroup.visibility = View.VISIBLE
 			binding.licenseContent.tvTrialStatusBadge.visibility = View.GONE
 			binding.licenseContent.tvTrialExpiration.visibility = View.GONE
+			binding.licenseContent.tvInfoText.visibility = View.GONE
 			binding.licenseContent.btnTrial.isEnabled = true
 		}
 	}

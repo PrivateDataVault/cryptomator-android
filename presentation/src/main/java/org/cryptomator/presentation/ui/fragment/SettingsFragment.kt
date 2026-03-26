@@ -1,6 +1,7 @@
 package org.cryptomator.presentation.ui.fragment
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.text.SpannableString
 import android.text.style.ForegroundColorSpan
@@ -14,6 +15,7 @@ import androidx.preference.PreferenceCategory
 import androidx.preference.SwitchPreference
 import org.cryptomator.presentation.BuildConfig
 import org.cryptomator.presentation.R
+import org.cryptomator.presentation.licensing.LicenseEnforcer
 import org.cryptomator.presentation.service.PhotoContentJob
 import org.cryptomator.presentation.ui.activity.AutoUploadChooseVaultActivity
 import org.cryptomator.presentation.ui.activity.BiometricAuthSettingsActivity
@@ -172,7 +174,6 @@ class SettingsFragment : PreferenceFragmentCompatLayout() {
 		val licensePref = findPreference(SharedPreferencesHandler.MAIL) as Preference?
 		licenseCategory?.title = getString(R.string.screen_settings_license)
 		licensePref?.isEnabled = true
-		val license = sharedPreferencesHandler.licenseToken()
 		when (BuildConfig.FLAVOR) {
 			"playstore", "accrescent" -> {
 				licensePref?.let { pref ->
@@ -182,16 +183,42 @@ class SettingsFragment : PreferenceFragmentCompatLayout() {
 				removeUpdateCheck()
 			}
 			"playstoreiap" -> {
+				val licenseEnforcer = LicenseEnforcer(sharedPreferencesHandler)
+				val hasSubscription = sharedPreferencesHandler.hasRunningSubscription()
+				val hasPaidLicense = licenseEnforcer.hasPaidLicense()
+				val trialState = licenseEnforcer.evaluateTrialState()
 				licensePref?.let { pref ->
-					if (license.isEmpty()) {
-						pref.summary = getString(R.string.screen_settings_license_summary_tap_to_unlock)
+					if (hasPaidLicense) {
+						pref.summary = getString(R.string.screen_settings_license_summary_write_access)
+						pref.onPreferenceClickListener = null
+					} else {
+						pref.summary = if (trialState.isActive) {
+							getString(R.string.screen_settings_license_summary_trial_expires, trialState.formattedExpirationDate)
+						} else {
+							getString(R.string.screen_settings_license_summary_tap_to_unlock)
+						}
 						pref.setOnPreferenceClickListener {
 							startActivity(Intent(activity(), LicenseCheckActivity::class.java))
 							true
 						}
+					}
+				}
+				licenseCategory?.let { category ->
+					if (hasSubscription) {
+						if (category.findPreference<Preference>(MANAGE_SUBSCRIPTION_KEY) == null) {
+							category.addPreference(Preference(requireContext()).apply {
+								key = MANAGE_SUBSCRIPTION_KEY
+								title = getString(R.string.screen_settings_manage_subscription)
+								setOnPreferenceClickListener {
+									startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/account/subscriptions")))
+									true
+								}
+							})
+						}
 					} else {
-						pref.summary = getString(R.string.screen_settings_license_summary_write_access)
-						pref.onPreferenceClickListener = null
+						category.findPreference<Preference>(MANAGE_SUBSCRIPTION_KEY)?.let {
+							category.removePreference(it)
+						}
 					}
 				}
 				removeUpdateCheck()
@@ -353,6 +380,7 @@ class SettingsFragment : PreferenceFragmentCompatLayout() {
 		private const val SEND_ERROR_REPORT_ITEM_KEY = "sendErrorReport"
 		private const val BIOMETRIC_AUTHENTICATION_ITEM_KEY = "biometricAuthentication"
 		private const val LICENSE_ITEM_KEY = "license"
+		private const val MANAGE_SUBSCRIPTION_KEY = "manageSubscription"
 		private const val UPDATE_CHECK_ITEM_KEY = "updateCheck"
 		private const val UPDATE_INTERVAL_ITEM_KEY = "updateInterval"
 		private const val DISPLAY_LRU_CACHE_SIZE_ITEM_KEY = "displayLruCacheSize"

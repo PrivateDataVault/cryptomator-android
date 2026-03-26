@@ -66,7 +66,6 @@
 	<string name="screen_license_check_benefit_support">Open-source development</string>
 	<string name="screen_license_check_button_purchase">Unlock via Google Play</string>
 	<string name="screen_license_check_button_enter_license">Enter license key</string>
-	<string name="screen_license_check_already_unlocked">Write access is unlocked on this device.</string>
 	<string name="screen_license_check_title_full_version">Unlock Full Version</string>
 	<string name="screen_license_check_trial_title">30-Day Trial</string>
 	<string name="screen_license_check_trial_price">Free</string>
@@ -81,6 +80,8 @@
 	<string name="screen_license_check_trial_expiration">Expiration Date: %s</string>
 	<string name="screen_license_check_trial_status_active">Active</string>
 	<string name="screen_license_check_trial_status_expired">Expired</string>
+	<string name="screen_license_check_trial_active_info">Trial expires: %s</string>
+	<string name="screen_license_check_trial_expired_info">Your trial has expired.</string>
 	<string name="screen_welcome_title">Welcome</string>
 	<string name="screen_welcome_notifications_title">Stay notified</string>
 	<string name="screen_welcome_notifications_message">Allow notifications so Cryptomator can inform you about background activity, auto uploads, or other important events.</string>
@@ -691,6 +692,8 @@
 	<string name="screen_settings_license_summary_write_access">Write access unlocked!</string>
 	<string name="screen_settings_license_summary_tap_to_unlock">Tap to unlock write access</string>
 	<string name="screen_settings_license_summary_write_access_mail">Write access for %1$s</string>
+	<string name="screen_settings_license_summary_trial_expires">@string/screen_license_check_trial_active_info</string>
+	<string name="screen_settings_manage_subscription">Manage Subscription</string>
 
 	<string name="dialog_settings_update_check_interval_title">Update check interval</string>
 	<string name="screen_settings_check_updates">Check for updates</string>
