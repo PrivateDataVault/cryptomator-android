@@ -63,13 +63,8 @@ class WelcomeLicenseFragment : BaseFragment<FragmentWelcomeLicenseBinding>(Fragm
 	}
 
 	private fun setupLicenseEntryUi() {
-		binding.licenseContent.licenseEntryGroup.visibility = View.VISIBLE
-		binding.licenseContent.tvLicenseLink.visibility = View.VISIBLE
-		binding.licenseContent.tvLicenseLink.text = getString(R.string.dialog_enter_license_content)
+		licenseContentViewBinder.bindInitialLicenseEntryLayout()
 		binding.licenseContent.tvLicenseLink.setOnClickListener { listener?.onOpenLicenseLink() }
-		binding.licenseContent.purchaseOptionsGroup.visibility = View.GONE
-		binding.licenseContent.tvRestorePurchase.visibility = View.GONE
-		binding.licenseContent.legalLinksGroup.visibility = View.GONE
 		binding.licenseContent.btnPurchase.visibility = View.GONE
 		binding.licenseContent.etLicense.addTextChangedListener(object : TextWatcher {
 			override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}

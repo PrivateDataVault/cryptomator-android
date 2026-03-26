@@ -108,15 +108,10 @@ class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityL
 
 	private fun setupLicenseEntryView() {
 		supportActionBar?.title = getString(R.string.screen_license_check_title)
-		binding.licenseContent.licenseEntryGroup.visibility = View.VISIBLE
-		binding.licenseContent.purchaseOptionsGroup.visibility = View.GONE
-		binding.licenseContent.tvRestorePurchase.visibility = View.GONE
-		binding.licenseContent.legalLinksGroup.visibility = View.GONE
+		licenseContentViewBinder.bindInitialLicenseEntryLayout()
 		binding.licenseContent.btnPurchase.visibility = View.VISIBLE
 		binding.licenseContent.btnPurchase.text = getString(R.string.dialog_enter_license_ok_button)
 		binding.licenseContent.btnPurchase.setOnClickListener { onLicenseSubmit() }
-		binding.licenseContent.tvLicenseLink.text = getString(R.string.dialog_enter_license_content)
-		binding.licenseContent.tvLicenseLink.visibility = View.VISIBLE
 		binding.licenseContent.tvLicenseLink.setOnClickListener {
 			startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://cryptomator.org/android/")))
 		}

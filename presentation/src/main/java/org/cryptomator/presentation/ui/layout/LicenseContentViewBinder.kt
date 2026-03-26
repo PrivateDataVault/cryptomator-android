@@ -26,6 +26,16 @@ class LicenseContentViewBinder(
 		binding.btnLifetime.isEnabled = false
 	}
 
+	/** Sets the initial visibility state for license-entry (non-IAP) mode. */
+	fun bindInitialLicenseEntryLayout() {
+		binding.licenseEntryGroup.visibility = View.VISIBLE
+		binding.purchaseOptionsGroup.visibility = View.GONE
+		binding.tvRestorePurchase.visibility = View.GONE
+		binding.legalLinksGroup.visibility = View.GONE
+		binding.tvLicenseLink.visibility = View.VISIBLE
+		binding.tvLicenseLink.text = context.getString(R.string.dialog_enter_license_content)
+	}
+
 	/** Sets click listeners on Terms and Privacy links. */
 	fun bindLegalLinks() {
 		binding.tvTerms.setOnClickListener {
