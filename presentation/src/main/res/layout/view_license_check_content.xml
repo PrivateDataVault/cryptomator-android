@@ -99,16 +99,20 @@
 		android:layout_marginBottom="16dp"
 		android:background="?android:attr/listDivider" />
 
-	<!-- Info text (trial status, shown between header and product table) -->
+	<!-- Info text (expired trial, shown between header and product table) -->
 	<TextView
 		android:id="@+id/tvInfoText"
-		android:layout_width="match_parent"
+		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
 		android:layout_marginTop="12dp"
+		android:layout_marginBottom="16dp"
+		android:drawablePadding="6dp"
+		android:drawableTint="?android:attr/textColorSecondary"
 		android:gravity="center"
 		android:textAppearance="?attr/textAppearanceBody2"
 		android:textColor="?android:attr/textColorSecondary"
-		android:visibility="gone" />
+		android:visibility="gone"
+		app:drawableStartCompat="@drawable/ic_info_circle" />
 
 	<!-- License entry group (non-IAP flavors only) -->
 	<LinearLayout

@@ -119,11 +119,11 @@ class WelcomeLicenseFragment : BaseFragment<FragmentWelcomeLicenseBinding>(Fragm
 			)
 			binding.licenseContent.tvTrialExpiration.visibility = View.VISIBLE
 			binding.licenseContent.tvTrialExpiration.text = expirationText
-			binding.licenseContent.tvInfoText.visibility = View.VISIBLE
-			binding.licenseContent.tvInfoText.text = if (active) {
-				getString(R.string.screen_license_check_trial_active_info, expirationText ?: "")
+			if (expired) {
+				binding.licenseContent.tvInfoText.visibility = View.VISIBLE
+				binding.licenseContent.tvInfoText.text = getString(R.string.screen_license_check_trial_expired_info)
 			} else {
-				getString(R.string.screen_license_check_trial_expired_info)
+				binding.licenseContent.tvInfoText.visibility = View.GONE
 			}
 		} else {
 			binding.licenseContent.trialButtonGroup.visibility = View.VISIBLE

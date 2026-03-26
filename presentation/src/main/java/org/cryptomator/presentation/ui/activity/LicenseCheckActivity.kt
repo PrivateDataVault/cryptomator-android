@@ -174,11 +174,11 @@ class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityL
 			)
 			binding.licenseContent.tvTrialExpiration.visibility = View.VISIBLE
 			binding.licenseContent.tvTrialExpiration.text = getString(R.string.screen_license_check_trial_expiration, state.formattedExpirationDate)
-			binding.licenseContent.tvInfoText.visibility = View.VISIBLE
-			binding.licenseContent.tvInfoText.text = if (state.isActive) {
-				getString(R.string.screen_license_check_trial_active_info, state.formattedExpirationDate)
+			if (state.isExpired) {
+				binding.licenseContent.tvInfoText.visibility = View.VISIBLE
+				binding.licenseContent.tvInfoText.text = getString(R.string.screen_license_check_trial_expired_info)
 			} else {
-				getString(R.string.screen_license_check_trial_expired_info)
+				binding.licenseContent.tvInfoText.visibility = View.GONE
 			}
 		} else {
 			binding.licenseContent.trialButtonGroup.visibility = View.VISIBLE
