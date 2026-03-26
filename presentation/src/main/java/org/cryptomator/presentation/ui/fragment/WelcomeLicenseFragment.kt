@@ -11,6 +11,7 @@ import org.cryptomator.generator.Fragment
 import org.cryptomator.presentation.BuildConfig
 import org.cryptomator.presentation.R
 import org.cryptomator.presentation.databinding.FragmentWelcomeLicenseBinding
+import org.cryptomator.presentation.ui.layout.LicenseContentViewBinder
 
 @Fragment
 class WelcomeLicenseFragment : BaseFragment<FragmentWelcomeLicenseBinding>(FragmentWelcomeLicenseBinding::inflate) {
@@ -27,6 +28,7 @@ class WelcomeLicenseFragment : BaseFragment<FragmentWelcomeLicenseBinding>(Fragm
 	}
 
 	private val isIapFlavor = BuildConfig.FLAVOR == "playstoreiap"
+	private val licenseContentViewBinder by lazy { LicenseContentViewBinder(binding.licenseContent, isIapFlavor) }
 	private var listener: Listener? = null
 	private val debounceHandler = Handler(Looper.getMainLooper())
 	private var debounceRunnable: Runnable? = null
@@ -100,41 +102,12 @@ class WelcomeLicenseFragment : BaseFragment<FragmentWelcomeLicenseBinding>(Fragm
 
 	fun updateUnlocked(unlocked: Boolean, hasPaidLicense: Boolean) {
 		if (!isAdded) return
-		if (isIapFlavor) {
-			binding.licenseContent.purchaseOptionsGroup.visibility = if (hasPaidLicense) View.GONE else View.VISIBLE
-			binding.licenseContent.tvRestorePurchase.visibility = if (hasPaidLicense) View.GONE else View.VISIBLE
-			if (hasPaidLicense) {
-				binding.licenseContent.tvInfoText.visibility = View.GONE
-			}
-		} else {
-			binding.licenseContent.btnPurchase.isEnabled = !unlocked
-		}
+		licenseContentViewBinder.bindPurchaseState(unlocked, hasPaidLicense)
 	}
 
 	fun updateTrialState(active: Boolean, expired: Boolean, expirationText: String?) {
 		if (!isAdded) return
-		if (active || expired) {
-			binding.licenseContent.trialButtonGroup.visibility = View.GONE
-			binding.licenseContent.tvTrialStatusBadge.visibility = View.VISIBLE
-			binding.licenseContent.tvTrialStatusBadge.text = getString(
-				if (active) R.string.screen_license_check_trial_status_active
-				else R.string.screen_license_check_trial_status_expired
-			)
-			binding.licenseContent.tvTrialExpiration.visibility = View.VISIBLE
-			binding.licenseContent.tvTrialExpiration.text = expirationText
-			if (expired) {
-				binding.licenseContent.tvInfoText.visibility = View.VISIBLE
-				binding.licenseContent.tvInfoText.text = getString(R.string.screen_license_check_trial_expired_info)
-			} else {
-				binding.licenseContent.tvInfoText.visibility = View.GONE
-			}
-		} else {
-			binding.licenseContent.trialButtonGroup.visibility = View.VISIBLE
-			binding.licenseContent.tvTrialStatusBadge.visibility = View.GONE
-			binding.licenseContent.tvTrialExpiration.visibility = View.GONE
-			binding.licenseContent.tvInfoText.visibility = View.GONE
-			binding.licenseContent.btnTrial.isEnabled = true
-		}
+		licenseContentViewBinder.bindTrialState(active, expired, expirationText)
 	}
 
 	fun updateProductPrices(subscriptionPrice: String, lifetimePrice: String) {

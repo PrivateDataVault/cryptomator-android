@@ -17,6 +17,7 @@ import org.cryptomator.presentation.service.ProductInfo
 import org.cryptomator.presentation.service.resolveProductPrices
 import org.cryptomator.presentation.ui.activity.view.UpdateLicenseView
 import org.cryptomator.presentation.ui.dialog.LicenseConfirmationDialog
+import org.cryptomator.presentation.ui.layout.LicenseContentViewBinder
 import org.cryptomator.presentation.ui.layout.ObscuredAwareCoordinatorLayout
 import java.lang.ref.WeakReference
 import java.util.function.Consumer
@@ -36,6 +37,7 @@ class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityL
 	private var exitOnCancel = true
 	private var lockedAction: LicenseEnforcer.LockedAction? = null
 	private val isIapFlavor = BuildConfig.FLAVOR == "playstoreiap"
+	private val licenseContentViewBinder by lazy { LicenseContentViewBinder(binding.licenseContent, isIapFlavor) }
 
 	private val licenseChangeListener = Consumer<String> { _ -> updatePurchaseState() }
 
@@ -149,44 +151,19 @@ class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityL
 
 	private fun updatePurchaseState() {
 		val unlocked = licenseEnforcer.hasWriteAccess()
-		if (isIapFlavor) {
-			val hasPaidLicense = licenseEnforcer.hasPaidLicense()
-			binding.licenseContent.purchaseOptionsGroup.visibility = if (hasPaidLicense) View.GONE else View.VISIBLE
-			binding.licenseContent.tvRestorePurchase.visibility = if (hasPaidLicense) View.GONE else View.VISIBLE
-			if (hasPaidLicense) {
-				binding.licenseContent.tvInfoText.visibility = View.GONE
-			} else {
-				updateTrialState()
-			}
-		} else {
-			binding.licenseContent.btnPurchase.isEnabled = !unlocked
+		val hasPaidLicense = licenseEnforcer.hasPaidLicense()
+		licenseContentViewBinder.bindPurchaseState(unlocked, hasPaidLicense)
+		if (isIapFlavor && !hasPaidLicense) {
+			updateTrialState()
 		}
 	}
 
 	private fun updateTrialState() {
 		val state = licenseEnforcer.evaluateTrialState()
-		if (state.isActive || state.isExpired) {
-			binding.licenseContent.trialButtonGroup.visibility = View.GONE
-			binding.licenseContent.tvTrialStatusBadge.visibility = View.VISIBLE
-			binding.licenseContent.tvTrialStatusBadge.text = getString(
-				if (state.isActive) R.string.screen_license_check_trial_status_active
-				else R.string.screen_license_check_trial_status_expired
-			)
-			binding.licenseContent.tvTrialExpiration.visibility = View.VISIBLE
-			binding.licenseContent.tvTrialExpiration.text = getString(R.string.screen_license_check_trial_expiration, state.formattedExpirationDate)
-			if (state.isExpired) {
-				binding.licenseContent.tvInfoText.visibility = View.VISIBLE
-				binding.licenseContent.tvInfoText.text = getString(R.string.screen_license_check_trial_expired_info)
-			} else {
-				binding.licenseContent.tvInfoText.visibility = View.GONE
-			}
-		} else {
-			binding.licenseContent.trialButtonGroup.visibility = View.VISIBLE
-			binding.licenseContent.tvTrialStatusBadge.visibility = View.GONE
-			binding.licenseContent.tvTrialExpiration.visibility = View.GONE
-			binding.licenseContent.tvInfoText.visibility = View.GONE
-			binding.licenseContent.btnTrial.isEnabled = true
-		}
+		val expirationText = if (state.isActive || state.isExpired) {
+			getString(R.string.screen_license_check_trial_expiration, state.formattedExpirationDate)
+		} else null
+		licenseContentViewBinder.bindTrialState(state.isActive, state.isExpired, expirationText)
 	}
 
 	override fun onNewIntent(intent: Intent) {
