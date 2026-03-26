@@ -1,5 +1,7 @@
 package org.cryptomator.presentation.ui.layout
 
+import android.content.Intent
+import android.net.Uri
 import android.view.View
 import org.cryptomator.presentation.R
 import org.cryptomator.presentation.databinding.ViewLicenseCheckContentBinding
@@ -11,6 +13,40 @@ class LicenseContentViewBinder(
 ) {
 
 	private val context get() = binding.root.context
+
+	/** Sets the initial visibility state and button defaults for IAP mode. */
+	fun bindInitialIapLayout() {
+		binding.licenseEntryGroup.visibility = View.GONE
+		binding.btnPurchase.visibility = View.GONE
+		binding.tvLicenseLink.visibility = View.GONE
+		binding.purchaseOptionsGroup.visibility = View.VISIBLE
+		binding.tvRestorePurchase.visibility = View.VISIBLE
+		binding.legalLinksGroup.visibility = View.VISIBLE
+		binding.btnSubscription.isEnabled = false
+		binding.btnLifetime.isEnabled = false
+	}
+
+	/** Sets click listeners on Terms and Privacy links. */
+	fun bindLegalLinks() {
+		binding.tvTerms.setOnClickListener {
+			context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://cryptomator.org/terms/")))
+		}
+		binding.tvPrivacy.setOnClickListener {
+			context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://cryptomator.org/privacy/")))
+		}
+	}
+
+	/** Updates subscription and lifetime button text and enabled state from resolved prices. */
+	fun bindProductPrices(subscriptionPrice: String?, lifetimePrice: String?) {
+		if (!subscriptionPrice.isNullOrEmpty()) {
+			binding.btnSubscription.text = subscriptionPrice
+			binding.btnSubscription.isEnabled = true
+		}
+		if (!lifetimePrice.isNullOrEmpty()) {
+			binding.btnLifetime.text = lifetimePrice
+			binding.btnLifetime.isEnabled = true
+		}
+	}
 
 	/** Updates purchase-related view visibility based on license state. */
 	fun bindPurchaseState(unlocked: Boolean, hasPaidLicense: Boolean) {

@@ -1,7 +1,5 @@
 package org.cryptomator.presentation.ui.fragment
 
-import android.content.Intent
-import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.text.Editable
@@ -55,25 +53,13 @@ class WelcomeLicenseFragment : BaseFragment<FragmentWelcomeLicenseBinding>(Fragm
 	}
 
 	private fun setupIapUi() {
-		binding.licenseContent.licenseEntryGroup.visibility = View.GONE
-		binding.licenseContent.btnPurchase.visibility = View.GONE
-		binding.licenseContent.tvLicenseLink.visibility = View.GONE
-		binding.licenseContent.purchaseOptionsGroup.visibility = View.VISIBLE
-		binding.licenseContent.tvRestorePurchase.visibility = View.VISIBLE
-		binding.licenseContent.legalLinksGroup.visibility = View.VISIBLE
+		licenseContentViewBinder.bindInitialIapLayout()
+		licenseContentViewBinder.bindLegalLinks()
 
 		binding.licenseContent.btnTrial.setOnClickListener { listener?.onStartTrial() }
-		binding.licenseContent.btnSubscription.isEnabled = false
 		binding.licenseContent.btnSubscription.setOnClickListener { listener?.onPurchaseSubscription() }
-		binding.licenseContent.btnLifetime.isEnabled = false
 		binding.licenseContent.btnLifetime.setOnClickListener { listener?.onPurchaseLifetime() }
 		binding.licenseContent.tvRestorePurchase.setOnClickListener { listener?.onRestorePurchases() }
-		binding.licenseContent.tvTerms.setOnClickListener {
-			startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://cryptomator.org/terms/")))
-		}
-		binding.licenseContent.tvPrivacy.setOnClickListener {
-			startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://cryptomator.org/privacy/")))
-		}
 	}
 
 	private fun setupLicenseEntryUi() {
@@ -112,14 +98,7 @@ class WelcomeLicenseFragment : BaseFragment<FragmentWelcomeLicenseBinding>(Fragm
 
 	fun updateProductPrices(subscriptionPrice: String, lifetimePrice: String) {
 		if (!isAdded) return
-		if (subscriptionPrice.isNotEmpty()) {
-			binding.licenseContent.btnSubscription.text = subscriptionPrice
-			binding.licenseContent.btnSubscription.isEnabled = true
-		}
-		if (lifetimePrice.isNotEmpty()) {
-			binding.licenseContent.btnLifetime.text = lifetimePrice
-			binding.licenseContent.btnLifetime.isEnabled = true
-		}
+		licenseContentViewBinder.bindProductPrices(subscriptionPrice, lifetimePrice)
 	}
 
 	fun prefillLicense(license: String) {

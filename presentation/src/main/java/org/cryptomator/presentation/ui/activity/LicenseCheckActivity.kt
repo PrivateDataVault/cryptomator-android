@@ -87,33 +87,22 @@ class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityL
 
 	private fun setupIapView() {
 		supportActionBar?.title = getString(R.string.screen_license_check_title_full_version)
-		binding.licenseContent.licenseEntryGroup.visibility = View.GONE
-		binding.licenseContent.btnPurchase.visibility = View.GONE
-		binding.licenseContent.purchaseOptionsGroup.visibility = View.VISIBLE
-		binding.licenseContent.tvRestorePurchase.visibility = View.VISIBLE
-		binding.licenseContent.legalLinksGroup.visibility = View.VISIBLE
+		licenseContentViewBinder.bindInitialIapLayout()
+		licenseContentViewBinder.bindLegalLinks()
 
 		binding.licenseContent.btnTrial.setOnClickListener {
 			licenseEnforcer.startTrial()
 			updatePurchaseState()
 		}
-		binding.licenseContent.btnSubscription.isEnabled = false
 		binding.licenseContent.btnSubscription.setOnClickListener {
 			(application as CryptomatorApp).launchPurchaseFlow(WeakReference(this), ProductInfo.PRODUCT_YEARLY_SUBSCRIPTION)
 		}
-		binding.licenseContent.btnLifetime.isEnabled = false
 		binding.licenseContent.btnLifetime.setOnClickListener {
 			(application as CryptomatorApp).launchPurchaseFlow(WeakReference(this), ProductInfo.PRODUCT_FULL_VERSION)
 		}
 		binding.licenseContent.tvRestorePurchase.setOnClickListener {
 			(application as CryptomatorApp).restorePurchases()
 			Toast.makeText(this, getString(R.string.screen_license_check_restore_purchase), Toast.LENGTH_SHORT).show()
-		}
-		binding.licenseContent.tvTerms.setOnClickListener {
-			startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://cryptomator.org/terms/")))
-		}
-		binding.licenseContent.tvPrivacy.setOnClickListener {
-			startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://cryptomator.org/privacy/")))
 		}
 	}
 
@@ -137,14 +126,7 @@ class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityL
 		(application as CryptomatorApp).queryProductDetails { products ->
 			val prices = products.resolveProductPrices()
 			runOnUiThread {
-				if (prices.subscriptionPrice != null) {
-					binding.licenseContent.btnSubscription.text = prices.subscriptionPrice
-					binding.licenseContent.btnSubscription.isEnabled = true
-				}
-				if (prices.lifetimePrice != null) {
-					binding.licenseContent.btnLifetime.text = prices.lifetimePrice
-					binding.licenseContent.btnLifetime.isEnabled = true
-				}
+				licenseContentViewBinder.bindProductPrices(prices.subscriptionPrice, prices.lifetimePrice)
 			}
 		}
 	}
