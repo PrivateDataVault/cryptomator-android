@@ -103,6 +103,9 @@ class WelcomeLicenseFragment : BaseFragment<FragmentWelcomeLicenseBinding>(Fragm
 		if (isIapFlavor) {
 			binding.licenseContent.purchaseOptionsGroup.visibility = if (hasPaidLicense) View.GONE else View.VISIBLE
 			binding.licenseContent.tvRestorePurchase.visibility = if (hasPaidLicense) View.GONE else View.VISIBLE
+			if (hasPaidLicense) {
+				binding.licenseContent.tvInfoText.visibility = View.GONE
+			}
 		} else {
 			binding.licenseContent.btnPurchase.isEnabled = !unlocked
 		}
