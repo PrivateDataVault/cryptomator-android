@@ -179,6 +179,8 @@
 					style="@style/Widget.Material3.Button.TonalButton"
 					android:layout_width="wrap_content"
 					android:layout_height="36dp"
+					android:insetTop="0dp"
+					android:insetBottom="0dp"
 					android:minWidth="85dp"
 					android:text="@string/screen_license_check_trial_price"
 					android:textSize="14sp" />
@@ -234,6 +236,8 @@
 					style="@style/Widget.Material3.Button.TonalButton"
 					android:layout_width="wrap_content"
 					android:layout_height="36dp"
+					android:insetTop="0dp"
+					android:insetBottom="0dp"
 					android:minWidth="85dp"
 					android:text="…"
 					android:textSize="14sp" />
@@ -280,6 +284,8 @@
 					style="@style/Widget.Material3.Button.TonalButton"
 					android:layout_width="wrap_content"
 					android:layout_height="36dp"
+					android:insetTop="0dp"
+					android:insetBottom="0dp"
 					android:minWidth="85dp"
 					android:text="…"
 					android:textSize="14sp" />
