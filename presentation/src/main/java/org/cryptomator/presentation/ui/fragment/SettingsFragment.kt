@@ -185,18 +185,17 @@ class SettingsFragment : PreferenceFragmentCompatLayout() {
 			}
 			"playstoreiap" -> {
 				val licenseEnforcer = LicenseEnforcer(sharedPreferencesHandler)
+				val uiState = licenseEnforcer.evaluateUiState(requireContext())
 				val hasSubscription = sharedPreferencesHandler.hasRunningSubscription()
-				val hasPaidLicense = licenseEnforcer.hasPaidLicense()
-				val trialState = licenseEnforcer.evaluateTrialState()
 				licensePref?.let { pref ->
-					if (hasPaidLicense) {
+					if (uiState.hasPaidLicense) {
 						pref.title = getString(R.string.screen_settings_license_title_unlocked)
 						pref.summary = getString(R.string.screen_settings_license_summary_write_access)
 						pref.onPreferenceClickListener = null
 					} else {
 						pref.title = getString(R.string.screen_settings_license_title_unlock)
-						pref.summary = if (trialState.isActive) {
-							getString(R.string.screen_settings_license_summary_trial_expires, trialState.formattedExpirationDate)
+						pref.summary = if (uiState.trialState.isActive) {
+							getString(R.string.screen_settings_license_summary_trial_expires, uiState.trialState.formattedExpirationDate)
 						} else {
 							getString(R.string.screen_settings_license_summary_tap_to_unlock)
 						}

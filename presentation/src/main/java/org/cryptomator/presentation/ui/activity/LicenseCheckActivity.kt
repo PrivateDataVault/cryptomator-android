@@ -36,7 +36,8 @@ class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityL
 
 	private var exitOnCancel = true
 	private var lockedAction: LicenseEnforcer.LockedAction? = null
-	private val isIapFlavor = BuildConfig.FLAVOR == "playstoreiap"
+	private val isIapFlavor: Boolean
+		get() = LicenseEnforcer.isIapFlavor
 	private val licenseContentViewBinder by lazy { LicenseContentViewBinder(binding.licenseContent, isIapFlavor) }
 
 	private val licenseChangeListener = Consumer<String> { _ -> updatePurchaseState() }

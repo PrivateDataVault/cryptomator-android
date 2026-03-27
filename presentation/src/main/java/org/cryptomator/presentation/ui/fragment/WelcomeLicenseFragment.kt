@@ -6,9 +6,9 @@ import android.text.Editable
 import android.text.TextWatcher
 import android.view.View
 import org.cryptomator.generator.Fragment
-import org.cryptomator.presentation.BuildConfig
 import org.cryptomator.presentation.R
 import org.cryptomator.presentation.databinding.FragmentWelcomeLicenseBinding
+import org.cryptomator.presentation.licensing.LicenseEnforcer
 import org.cryptomator.presentation.ui.layout.LicenseContentViewBinder
 
 @Fragment
@@ -25,7 +25,8 @@ class WelcomeLicenseFragment : BaseFragment<FragmentWelcomeLicenseBinding>(Fragm
 		fun onSkipLicense()
 	}
 
-	private val isIapFlavor = BuildConfig.FLAVOR == "playstoreiap"
+	private val isIapFlavor: Boolean
+		get() = LicenseEnforcer.isIapFlavor
 	private val licenseContentViewBinder by lazy { LicenseContentViewBinder(binding.licenseContent, isIapFlavor) }
 	private var listener: Listener? = null
 	private val debounceHandler = Handler(Looper.getMainLooper())

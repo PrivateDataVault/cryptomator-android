@@ -41,7 +41,6 @@ import org.cryptomator.presentation.R
 import org.cryptomator.presentation.exception.ExceptionHandlers
 import org.cryptomator.presentation.intent.Intents
 import org.cryptomator.presentation.intent.UnlockVaultIntent
-import org.cryptomator.presentation.licensing.LicenseEnforcer
 import org.cryptomator.presentation.model.CloudModel
 import org.cryptomator.presentation.model.CloudTypeModel
 import org.cryptomator.presentation.model.ProgressModel
@@ -91,7 +90,6 @@ class VaultListPresenter @Inject constructor( //
 	private val authenticationExceptionHandler: AuthenticationExceptionHandler,  //
 	private val cloudFolderModelMapper: CloudFolderModelMapper,  //
 	private val sharedPreferencesHandler: SharedPreferencesHandler,  //
-	private val licenseEnforcer: LicenseEnforcer, //
 	exceptionMappings: ExceptionHandlers
 ) : Presenter<VaultListView>(exceptionMappings) {
 
@@ -523,9 +521,6 @@ class VaultListPresenter @Inject constructor( //
 	}
 
 	fun onCreateVault() {
-		if (!licenseEnforcer.ensureWriteAccess(activity(), LicenseEnforcer.LockedAction.CREATE_VAULT)) {
-			return
-		}
 		createNewVaultWorkflow.start()
 	}
 

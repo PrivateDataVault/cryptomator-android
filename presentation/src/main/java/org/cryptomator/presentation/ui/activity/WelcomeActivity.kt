@@ -51,7 +51,7 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 		get() = BuildConfig.FLAVOR != "playstore"
 
 	private val isIapFlavor: Boolean
-		get() = BuildConfig.FLAVOR == "playstoreiap"
+		get() = LicenseEnforcer.isIapFlavor
 
 	private val keyguardManager by lazy { getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager }
 

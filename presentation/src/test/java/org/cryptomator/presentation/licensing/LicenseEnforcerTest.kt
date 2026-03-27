@@ -1,6 +1,8 @@
 package org.cryptomator.presentation.licensing
 
+import android.content.Context
 import org.cryptomator.presentation.BuildConfig
+import org.cryptomator.presentation.R
 import org.cryptomator.util.SharedPreferencesHandler
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -131,33 +133,11 @@ class LicenseEnforcerTest {
 		assertFalse(licenseEnforcer.hasActiveTrial())
 	}
 
-	// -- hasExpiredTrial --
-
-	@Test
-	fun `hasExpiredTrial returns true when trial expiration is in the past`() {
-		`when`(sharedPreferencesHandler.trialExpirationDate()).thenReturn(System.currentTimeMillis() - 1000L)
-
-		assertTrue(licenseEnforcer.hasExpiredTrial())
-	}
-
-	@Test
-	fun `hasExpiredTrial returns false when trial is still active`() {
-		`when`(sharedPreferencesHandler.trialExpirationDate()).thenReturn(System.currentTimeMillis() + 86400000L)
-
-		assertFalse(licenseEnforcer.hasExpiredTrial())
-	}
-
-	@Test
-	fun `hasExpiredTrial returns false when no trial was started`() {
-		`when`(sharedPreferencesHandler.trialExpirationDate()).thenReturn(0L)
-
-		assertFalse(licenseEnforcer.hasExpiredTrial())
-	}
-
 	// -- startTrial --
 
 	@Test
 	fun `startTrial sets trial expiration date 30 days in the future`() {
+		`when`(sharedPreferencesHandler.trialExpirationDate()).thenReturn(0L)
 		val before = System.currentTimeMillis()
 		licenseEnforcer.startTrial()
 		val after = System.currentTimeMillis()
@@ -168,6 +148,24 @@ class LicenseEnforcerTest {
 		val thirtyDaysMs = 30L * 24 * 60 * 60 * 1000
 		assertTrue(captor.value >= before + thirtyDaysMs)
 		assertTrue(captor.value <= after + thirtyDaysMs)
+	}
+
+	@Test
+	fun `startTrial does not overwrite existing active trial`() {
+		`when`(sharedPreferencesHandler.trialExpirationDate()).thenReturn(System.currentTimeMillis() + 86400000L)
+
+		licenseEnforcer.startTrial()
+
+		org.mockito.Mockito.verify(sharedPreferencesHandler, org.mockito.Mockito.never()).setTrialExpirationDate(org.mockito.ArgumentMatchers.anyLong())
+	}
+
+	@Test
+	fun `startTrial does not overwrite expired trial`() {
+		`when`(sharedPreferencesHandler.trialExpirationDate()).thenReturn(System.currentTimeMillis() - 1000L)
+
+		licenseEnforcer.startTrial()
+
+		org.mockito.Mockito.verify(sharedPreferencesHandler, org.mockito.Mockito.never()).setTrialExpirationDate(org.mockito.ArgumentMatchers.anyLong())
 	}
 
 	// -- evaluateTrialState --
@@ -204,5 +202,58 @@ class LicenseEnforcerTest {
 		assertFalse(state.isActive)
 		assertFalse(state.isExpired)
 		assertNull(state.formattedExpirationDate)
+	}
+
+	// -- evaluateUiState --
+
+	@Test
+	fun `evaluateUiState returns active trial with expiration text`() {
+		assumeTrue(BuildConfig.FLAVOR != "playstore" && BuildConfig.FLAVOR != "accrescent", "Licensing logic is bypassed on this flavor")
+		val context: Context = mock()
+		`when`(sharedPreferencesHandler.licenseToken()).thenReturn("")
+		`when`(sharedPreferencesHandler.hasRunningSubscription()).thenReturn(false)
+		`when`(sharedPreferencesHandler.trialExpirationDate()).thenReturn(System.currentTimeMillis() + 86400000L)
+		`when`(context.getString(org.mockito.ArgumentMatchers.eq(R.string.screen_license_check_trial_expiration), org.mockito.ArgumentMatchers.any())).thenReturn("Expiration Date: Mar 28, 2026")
+
+		val uiState = licenseEnforcer.evaluateUiState(context)
+
+		assertTrue(uiState.hasWriteAccess)
+		assertFalse(uiState.hasPaidLicense)
+		assertTrue(uiState.trialState.isActive)
+		assertNotNull(uiState.trialExpirationText)
+	}
+
+	@Test
+	fun `evaluateUiState returns expired trial with expired info text`() {
+		assumeTrue(BuildConfig.FLAVOR != "playstore" && BuildConfig.FLAVOR != "accrescent", "Licensing logic is bypassed on this flavor")
+		val context: Context = mock()
+		`when`(sharedPreferencesHandler.licenseToken()).thenReturn("")
+		`when`(sharedPreferencesHandler.hasRunningSubscription()).thenReturn(false)
+		`when`(sharedPreferencesHandler.trialExpirationDate()).thenReturn(System.currentTimeMillis() - 1000L)
+		`when`(context.getString(R.string.screen_license_check_trial_expired_info)).thenReturn("Your trial has expired.")
+
+		val uiState = licenseEnforcer.evaluateUiState(context)
+
+		assertFalse(uiState.hasWriteAccess)
+		assertFalse(uiState.hasPaidLicense)
+		assertTrue(uiState.trialState.isExpired)
+		assertNotNull(uiState.trialExpirationText)
+	}
+
+	@Test
+	fun `evaluateUiState returns null expiration text when no trial started`() {
+		assumeTrue(BuildConfig.FLAVOR != "playstore" && BuildConfig.FLAVOR != "accrescent", "Licensing logic is bypassed on this flavor")
+		val context: Context = mock()
+		`when`(sharedPreferencesHandler.licenseToken()).thenReturn("")
+		`when`(sharedPreferencesHandler.hasRunningSubscription()).thenReturn(false)
+		`when`(sharedPreferencesHandler.trialExpirationDate()).thenReturn(0L)
+
+		val uiState = licenseEnforcer.evaluateUiState(context)
+
+		assertFalse(uiState.hasWriteAccess)
+		assertFalse(uiState.hasPaidLicense)
+		assertFalse(uiState.trialState.isActive)
+		assertFalse(uiState.trialState.isExpired)
+		assertNull(uiState.trialExpirationText)
 	}
 }

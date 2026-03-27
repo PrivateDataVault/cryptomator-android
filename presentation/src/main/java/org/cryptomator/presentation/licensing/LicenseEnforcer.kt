@@ -1,6 +1,7 @@
 package org.cryptomator.presentation.licensing
 
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
@@ -61,6 +62,7 @@ class LicenseEnforcer @Inject constructor(private val sharedPreferencesHandler: 
 	}
 
 	fun startTrial() {
+		if (sharedPreferencesHandler.trialExpirationDate() > 0) return
 		val trialExpiration = System.currentTimeMillis() + TRIAL_DURATION_MS
 		sharedPreferencesHandler.setTrialExpirationDate(trialExpiration)
 	}
@@ -68,11 +70,6 @@ class LicenseEnforcer @Inject constructor(private val sharedPreferencesHandler: 
 	fun hasActiveTrial(): Boolean {
 		val trialExpiration = sharedPreferencesHandler.trialExpirationDate()
 		return trialExpiration > 0 && trialExpiration > System.currentTimeMillis()
-	}
-
-	fun hasExpiredTrial(): Boolean {
-		val trialExpiration = sharedPreferencesHandler.trialExpirationDate()
-		return trialExpiration > 0 && trialExpiration <= System.currentTimeMillis()
 	}
 
 	fun evaluateTrialState(): TrialState {
@@ -87,6 +84,28 @@ class LicenseEnforcer @Inject constructor(private val sharedPreferencesHandler: 
 	}
 
 	data class TrialState(val isActive: Boolean, val isExpired: Boolean, val formattedExpirationDate: String?)
+
+	data class LicenseUiState(
+		val hasWriteAccess: Boolean,
+		val hasPaidLicense: Boolean,
+		val trialState: TrialState,
+		val trialExpirationText: String?
+	)
+
+	fun evaluateUiState(context: Context): LicenseUiState {
+		val trialState = evaluateTrialState()
+		val expirationText = when {
+			trialState.isActive -> context.getString(R.string.screen_license_check_trial_expiration, trialState.formattedExpirationDate)
+			trialState.isExpired -> context.getString(R.string.screen_license_check_trial_expired_info)
+			else -> null
+		}
+		return LicenseUiState(
+			hasWriteAccess = hasWriteAccess(),
+			hasPaidLicense = hasPaidLicense(),
+			trialState = trialState,
+			trialExpirationText = expirationText
+		)
+	}
 
 	@StringRes
 	fun defaultReasonRes(): Int = R.string.read_only_banner
@@ -103,7 +122,7 @@ class LicenseEnforcer @Inject constructor(private val sharedPreferencesHandler: 
 		}
 
 		val intent = Intent(activity, LicenseCheckActivity::class.java).apply {
-			flags = Intent.FLAG_ACTIVITY_NEW_TASK
+			flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
 			data = Uri.parse("app://cryptomator/")
 			putExtra(LicenseCheckActivity.EXTRA_EXIT_ON_CANCEL, false)
 			putExtra(LicenseCheckActivity.EXTRA_LOCKED_ACTION, action.name)
@@ -113,6 +132,9 @@ class LicenseEnforcer @Inject constructor(private val sharedPreferencesHandler: 
 	}
 
 	companion object {
+		val isIapFlavor: Boolean
+			get() = BuildConfig.FLAVOR == "playstoreiap"
+
 		private const val TRIAL_DURATION_MS = 30L * 24 * 60 * 60 * 1000
 	}
 }
