@@ -1,5 +1,6 @@
 package org.cryptomator.presentation.ui.fragment
 
+import android.content.Context
 import android.view.View
 import org.cryptomator.generator.Fragment
 import org.cryptomator.presentation.databinding.FragmentWelcomeScreenLockBinding
@@ -13,8 +14,9 @@ class WelcomeScreenLockFragment : BaseFragment<FragmentWelcomeScreenLockBinding>
 
 	private var listener: Listener? = null
 
-	fun setListener(listener: Listener) {
-		this.listener = listener
+	override fun onAttach(context: Context) {
+		super.onAttach(context)
+		listener = context as? Listener
 	}
 
 	override fun setupView() {

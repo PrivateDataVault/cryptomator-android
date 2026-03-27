@@ -1,5 +1,6 @@
 package org.cryptomator.presentation.ui.fragment
 
+import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.text.Editable
@@ -17,7 +18,6 @@ class WelcomeLicenseFragment : BaseFragment<FragmentWelcomeLicenseBinding>(Fragm
 	interface Listener {
 		fun onLicenseTextChanged(license: String?)
 		fun onOpenLicenseLink()
-		fun onPurchaseClick()
 		fun onStartTrial()
 		fun onPurchaseSubscription()
 		fun onPurchaseLifetime()
@@ -32,8 +32,9 @@ class WelcomeLicenseFragment : BaseFragment<FragmentWelcomeLicenseBinding>(Fragm
 	private val debounceHandler = Handler(Looper.getMainLooper())
 	private var debounceRunnable: Runnable? = null
 
-	fun setListener(listener: Listener) {
-		this.listener = listener
+	override fun onAttach(context: Context) {
+		super.onAttach(context)
+		listener = context as? Listener
 	}
 
 	override fun setupView() {

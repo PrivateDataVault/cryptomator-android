@@ -23,18 +23,6 @@ class WelcomePresenter @Inject internal constructor(
 	sharedPreferencesHandler: SharedPreferencesHandler
 ) : BaseLicensePresenter<WelcomeView>(exceptionHandlers, doLicenseCheckUseCase, sharedPreferencesHandler) {
 
-	private val onLicenseStateChanged: (String) -> Unit = this::onLicenseChanged
-
-	override fun resumed() {
-		super.resumed()
-		sharedPreferencesHandler.addLicenseChangedListeners(onLicenseStateChanged);
-	}
-
-	override fun destroyed() {
-		super.destroyed()
-		sharedPreferencesHandler.removeLicenseChangedListeners(onLicenseStateChanged)
-	}
-
 	fun requestNotificationPermission() {
 		if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.S_V2) {
 			view?.onNotificationPermissionResult(true)
@@ -63,10 +51,6 @@ class WelcomePresenter @Inject internal constructor(
 				Timber.tag("WelcomePresenter").d(e, "Device Policy Manager not found")
 			}
 		}
-	}
-
-	private fun onLicenseChanged(license: String) {
-		view?.onLicenseStateChanged()
 	}
 
 }

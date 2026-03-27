@@ -34,12 +34,16 @@ import org.cryptomator.presentation.ui.fragment.WelcomeNotificationsFragment
 import org.cryptomator.presentation.ui.fragment.WelcomeScreenLockFragment
 import org.cryptomator.presentation.ui.layout.ObscuredAwareCoordinatorLayout
 import java.lang.ref.WeakReference
+import java.util.function.Consumer
 import javax.inject.Inject
 
 @Activity
 class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBinding::inflate), //
 	UpdateLicenseView, //
-	WelcomeView {
+	WelcomeView, //
+	WelcomeLicenseFragment.Listener, //
+	WelcomeNotificationsFragment.Listener, //
+	WelcomeScreenLockFragment.Listener {
 
 	@Inject
 	lateinit var welcomePresenter: WelcomePresenter
@@ -48,11 +52,12 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 	lateinit var licenseEnforcer: LicenseEnforcer
 
 	private val shouldShowLicenseSection: Boolean
-		get() = BuildConfig.FLAVOR != "playstore"
+		get() = BuildConfig.FLAVOR != "playstore" && BuildConfig.FLAVOR != "accrescent"
 
 	private val isIapFlavor: Boolean
 		get() = LicenseEnforcer.isIapFlavor
 
+	private val licenseChangeListener = Consumer<String> { _ -> updateLicenseSectionState() }
 	private val keyguardManager by lazy { getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager }
 
 	private lateinit var pagerAdapter: WelcomePagerAdapter
@@ -108,12 +113,18 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 			openVaultList()
 			return
 		}
+		sharedPreferencesHandler.addLicenseChangedListeners(licenseChangeListener)
 		updateNotificationPermissionState()
 		updateLicenseSectionState()
 		updateScreenLockState()
 		if (isIapFlavor) {
 			loadProductPrices()
 		}
+	}
+
+	override fun onPause() {
+		super.onPause()
+		sharedPreferencesHandler.removeLicenseChangedListeners(licenseChangeListener)
 	}
 
 	private fun setupPages() {
@@ -145,12 +156,7 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 			if (pos > 0) binding.welcomePager.currentItem = pos - 1
 		}
 		binding.btnNext.setOnClickListener {
-			val pos = binding.welcomePager.currentItem
-			if (pos < pagerAdapter.itemCount - 1) {
-				binding.welcomePager.currentItem = pos + 1
-			} else {
-				completeWelcomeFlow()
-			}
+			advanceOrComplete()
 		}
 	}
 
@@ -167,15 +173,13 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 		if (!this::pagerAdapter.isInitialized) {
 			return
 		}
-		val unlocked = licenseEnforcer.hasWriteAccess()
-		val hasPaidLicense = licenseEnforcer.hasPaidLicense()
-		pagerAdapter.licenseFragment?.updateUnlocked(unlocked, hasPaidLicense)
-		if (isIapFlavor && !hasPaidLicense) {
-			val state = licenseEnforcer.evaluateTrialState()
-			val expirationText = if (state.isActive || state.isExpired) {
-				getString(R.string.screen_license_check_trial_expiration, state.formattedExpirationDate)
-			} else null
-			pagerAdapter.licenseFragment?.updateTrialState(state.isActive, state.isExpired, expirationText)
+		val fragment = pagerAdapter.licenseFragment ?: return
+		val uiState = licenseEnforcer.evaluateUiState(this)
+		fragment.updateUnlocked(uiState.hasWriteAccess, uiState.hasPaidLicense)
+		if (isIapFlavor && !uiState.hasPaidLicense) {
+			fragment.updateTrialState(
+				uiState.trialState.isActive, uiState.trialState.isExpired, uiState.trialExpirationText
+			)
 		}
 	}
 
@@ -255,8 +259,58 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 		updateNotificationPermissionState(granted)
 	}
 
-	override fun onLicenseStateChanged() {
+	// WelcomeLicenseFragment.Listener
+
+	override fun onLicenseTextChanged(license: String?) {
+		welcomePresenter.validateDialogAware(license)
+	}
+
+	override fun onOpenLicenseLink() {
+		startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://cryptomator.org/android/")))
+	}
+
+	override fun onStartTrial() {
+		licenseEnforcer.startTrial()
 		updateLicenseSectionState()
+		autoAdvanceToNextPage()
+	}
+
+	override fun onPurchaseSubscription() {
+		(application as CryptomatorApp).launchPurchaseFlow(WeakReference(this), ProductInfo.PRODUCT_YEARLY_SUBSCRIPTION)
+	}
+
+	override fun onPurchaseLifetime() {
+		(application as CryptomatorApp).launchPurchaseFlow(WeakReference(this), ProductInfo.PRODUCT_FULL_VERSION)
+	}
+
+	override fun onRestorePurchases() {
+		(application as CryptomatorApp).restorePurchases()
+		Toast.makeText(this, getString(R.string.screen_license_check_restore_purchase), Toast.LENGTH_SHORT).show()
+	}
+
+	override fun onSkipLicense() {
+		advanceOrComplete()
+	}
+
+	// WelcomeNotificationsFragment.Listener
+
+	override fun onRequestNotifications() {
+		welcomePresenter.requestNotificationPermission()
+	}
+
+	// WelcomeScreenLockFragment.Listener
+
+	override fun onSetScreenLock(setScreenLock: Boolean) {
+		welcomePresenter.onSetScreenLock(setScreenLock)
+	}
+
+	private fun advanceOrComplete() {
+		val pos = binding.welcomePager.currentItem
+		if (pos < pagerAdapter.itemCount - 1) {
+			binding.welcomePager.currentItem = pos + 1
+		} else {
+			completeWelcomeFlow()
+		}
 	}
 
 	private fun autoAdvanceToNextPage() {
@@ -276,77 +330,29 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 	}
 
 	private inner class WelcomePagerAdapter(activity: AppCompatActivity, private val pages: List<FragmentPage>) : androidx.viewpager2.adapter.FragmentStateAdapter(activity) {
-		var licenseFragment: WelcomeLicenseFragment? = null
-		var notificationsFragment: WelcomeNotificationsFragment? = null
-		var screenLockFragment: WelcomeScreenLockFragment? = null
+
+		val licenseFragment: WelcomeLicenseFragment?
+			get() = findPageFragment<FragmentPage.License, WelcomeLicenseFragment>()
+
+		val notificationsFragment: WelcomeNotificationsFragment?
+			get() = findPageFragment<FragmentPage.Notifications, WelcomeNotificationsFragment>()
+
+		val screenLockFragment: WelcomeScreenLockFragment?
+			get() = findPageFragment<FragmentPage.ScreenLock, WelcomeScreenLockFragment>()
+
+		private inline fun <reified P : FragmentPage, reified F : Fragment> findPageFragment(): F? {
+			val pos = pages.indexOfFirst { it is P }
+			return if (pos >= 0) supportFragmentManager.findFragmentByTag("f$pos") as? F else null
+		}
 
 		override fun getItemCount(): Int = pages.size
 
 		override fun createFragment(position: Int): Fragment {
 			return when (pages[position]) {
 				is FragmentPage.Intro -> WelcomeIntroFragment()
-				is FragmentPage.License -> WelcomeLicenseFragment().also { fragment ->
-					fragment.setListener(object : WelcomeLicenseFragment.Listener {
-						override fun onLicenseTextChanged(license: String?) {
-							welcomePresenter.validateDialogAware(license)
-						}
-
-						override fun onOpenLicenseLink() {
-							startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://cryptomator.org/android/")))
-						}
-
-						override fun onPurchaseClick() {
-							(application as CryptomatorApp).launchPurchaseFlow(WeakReference(this@WelcomeActivity), ProductInfo.PRODUCT_FULL_VERSION)
-						}
-
-						override fun onStartTrial() {
-							licenseEnforcer.startTrial()
-							updateLicenseSectionState()
-							autoAdvanceToNextPage()
-						}
-
-						override fun onPurchaseSubscription() {
-							(application as CryptomatorApp).launchPurchaseFlow(WeakReference(this@WelcomeActivity), ProductInfo.PRODUCT_YEARLY_SUBSCRIPTION)
-						}
-
-						override fun onPurchaseLifetime() {
-							(application as CryptomatorApp).launchPurchaseFlow(WeakReference(this@WelcomeActivity), ProductInfo.PRODUCT_FULL_VERSION)
-						}
-
-						override fun onRestorePurchases() {
-							(application as CryptomatorApp).restorePurchases()
-							Toast.makeText(this@WelcomeActivity, getString(R.string.screen_license_check_restore_purchase), Toast.LENGTH_SHORT).show()
-						}
-
-						override fun onSkipLicense() {
-							val current = binding.welcomePager.currentItem
-							if (current < pagerAdapter.itemCount - 1) {
-								binding.welcomePager.currentItem = current + 1
-							} else {
-								completeWelcomeFlow()
-							}
-						}
-					})
-					licenseFragment = fragment
-				}
-
-				is FragmentPage.Notifications -> WelcomeNotificationsFragment().also { fragment ->
-					fragment.setListener(object : WelcomeNotificationsFragment.Listener {
-						override fun onRequestNotifications() {
-							welcomePresenter.requestNotificationPermission()
-						}
-					})
-					notificationsFragment = fragment
-				}
-
-				is FragmentPage.ScreenLock -> WelcomeScreenLockFragment().also { fragment ->
-					fragment.setListener(object : WelcomeScreenLockFragment.Listener {
-						override fun onSetScreenLock(setScreenLock: Boolean) {
-							welcomePresenter.onSetScreenLock(setScreenLock)
-						}
-					})
-					screenLockFragment = fragment
-				}
+				is FragmentPage.License -> WelcomeLicenseFragment()
+				is FragmentPage.Notifications -> WelcomeNotificationsFragment()
+				is FragmentPage.ScreenLock -> WelcomeScreenLockFragment()
 			}
 		}
 	}
