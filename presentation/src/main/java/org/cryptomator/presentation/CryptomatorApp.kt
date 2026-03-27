@@ -154,7 +154,9 @@ class CryptomatorApp : MultiDexApplication(), HasComponent<ApplicationComponent>
 			if (binder != null) {
 				binder.queryProductDetails(callback)
 			} else {
-				pendingProductDetailsCallbacks.add(callback)
+				synchronized(pendingProductDetailsCallbacks) {
+					pendingProductDetailsCallbacks.add(callback)
+				}
 			}
 		} else {
 			callback(emptyList())
@@ -162,9 +164,12 @@ class CryptomatorApp : MultiDexApplication(), HasComponent<ApplicationComponent>
 	}
 
 	private fun drainPendingProductDetailsCallbacks() {
-		if (pendingProductDetailsCallbacks.isEmpty()) return
-		val callbacks = ArrayList(pendingProductDetailsCallbacks)
-		pendingProductDetailsCallbacks.clear()
+		val callbacks: List<(List<ProductInfo>) -> Unit>
+		synchronized(pendingProductDetailsCallbacks) {
+			if (pendingProductDetailsCallbacks.isEmpty()) return
+			callbacks = ArrayList(pendingProductDetailsCallbacks)
+			pendingProductDetailsCallbacks.clear()
+		}
 		iapBillingServiceBinder?.queryProductDetails { products ->
 			callbacks.forEach { it(products) }
 		}
