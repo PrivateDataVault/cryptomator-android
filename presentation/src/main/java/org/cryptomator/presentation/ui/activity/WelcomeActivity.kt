@@ -8,7 +8,6 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.view.View
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
@@ -24,8 +23,6 @@ import org.cryptomator.presentation.R
 import org.cryptomator.presentation.databinding.ActivityWelcomeBinding
 import org.cryptomator.presentation.licensing.LicenseEnforcer
 import org.cryptomator.presentation.presenter.WelcomePresenter
-import org.cryptomator.presentation.service.ProductInfo
-import org.cryptomator.presentation.service.resolveProductPrices
 import org.cryptomator.presentation.ui.activity.view.UpdateLicenseView
 import org.cryptomator.presentation.ui.activity.view.WelcomeView
 import org.cryptomator.presentation.ui.fragment.WelcomeIntroFragment
@@ -33,7 +30,6 @@ import org.cryptomator.presentation.ui.fragment.WelcomeLicenseFragment
 import org.cryptomator.presentation.ui.fragment.WelcomeNotificationsFragment
 import org.cryptomator.presentation.ui.fragment.WelcomeScreenLockFragment
 import org.cryptomator.presentation.ui.layout.ObscuredAwareCoordinatorLayout
-import java.lang.ref.WeakReference
 import java.util.function.Consumer
 import javax.inject.Inject
 
@@ -184,18 +180,8 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 	}
 
 	private fun loadProductPrices() {
-		if (!this::pagerAdapter.isInitialized) {
-			return
-		}
-		(application as CryptomatorApp).queryProductDetails { products ->
-			val prices = products.resolveProductPrices()
-			runOnUiThread {
-				pagerAdapter.licenseFragment?.updateProductPrices(
-					prices.subscriptionPrice ?: "",
-					prices.lifetimePrice ?: ""
-				)
-			}
-		}
+		if (!this::pagerAdapter.isInitialized) return
+		pagerAdapter.licenseFragment?.loadAndBindPrices(application as CryptomatorApp)
 	}
 
 	private fun needsNotificationPermission(): Boolean {
@@ -245,7 +231,7 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 		}
 	}
 
-	override fun showOrUpdateLicenseDialog(license: String) {
+	override fun showOrUpdateLicenseEntry(license: String) {
 		pagerAdapter.licenseFragment?.prefillLicense(license)
 	}
 
@@ -273,19 +259,6 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 		licenseEnforcer.startTrial()
 		updateLicenseSectionState()
 		autoAdvanceToNextPage()
-	}
-
-	override fun onPurchaseSubscription() {
-		(application as CryptomatorApp).launchPurchaseFlow(WeakReference(this), ProductInfo.PRODUCT_YEARLY_SUBSCRIPTION)
-	}
-
-	override fun onPurchaseLifetime() {
-		(application as CryptomatorApp).launchPurchaseFlow(WeakReference(this), ProductInfo.PRODUCT_FULL_VERSION)
-	}
-
-	override fun onRestorePurchases() {
-		(application as CryptomatorApp).restorePurchases()
-		Toast.makeText(this, getString(R.string.screen_license_check_restore_purchase), Toast.LENGTH_SHORT).show()
 	}
 
 	override fun onSkipLicense() {

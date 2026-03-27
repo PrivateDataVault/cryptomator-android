@@ -7,6 +7,7 @@ import android.text.Editable
 import android.text.TextWatcher
 import android.view.View
 import org.cryptomator.generator.Fragment
+import org.cryptomator.presentation.CryptomatorApp
 import org.cryptomator.presentation.R
 import org.cryptomator.presentation.databinding.FragmentWelcomeLicenseBinding
 import org.cryptomator.presentation.licensing.LicenseEnforcer
@@ -19,9 +20,6 @@ class WelcomeLicenseFragment : BaseFragment<FragmentWelcomeLicenseBinding>(Fragm
 		fun onLicenseTextChanged(license: String?)
 		fun onOpenLicenseLink()
 		fun onStartTrial()
-		fun onPurchaseSubscription()
-		fun onPurchaseLifetime()
-		fun onRestorePurchases()
 		fun onSkipLicense()
 	}
 
@@ -57,11 +55,11 @@ class WelcomeLicenseFragment : BaseFragment<FragmentWelcomeLicenseBinding>(Fragm
 	private fun setupIapUi() {
 		licenseContentViewBinder.bindInitialIapLayout()
 		licenseContentViewBinder.bindLegalLinks()
-
-		binding.licenseContent.btnTrial.setOnClickListener { listener?.onStartTrial() }
-		binding.licenseContent.btnSubscription.setOnClickListener { listener?.onPurchaseSubscription() }
-		binding.licenseContent.btnLifetime.setOnClickListener { listener?.onPurchaseLifetime() }
-		binding.licenseContent.tvRestorePurchase.setOnClickListener { listener?.onRestorePurchases() }
+		licenseContentViewBinder.bindPurchaseButtons(
+			activity = requireActivity(),
+			app = requireActivity().application as CryptomatorApp,
+			onTrialClicked = { listener?.onStartTrial() }
+		)
 	}
 
 	private fun setupLicenseEntryUi() {
@@ -93,9 +91,9 @@ class WelcomeLicenseFragment : BaseFragment<FragmentWelcomeLicenseBinding>(Fragm
 		licenseContentViewBinder.bindTrialState(active, expired, expirationText)
 	}
 
-	fun updateProductPrices(subscriptionPrice: String, lifetimePrice: String) {
+	fun loadAndBindPrices(app: CryptomatorApp) {
 		if (!isAdded) return
-		licenseContentViewBinder.bindProductPrices(subscriptionPrice, lifetimePrice)
+		licenseContentViewBinder.loadAndBindPrices(app)
 	}
 
 	fun prefillLicense(license: String) {

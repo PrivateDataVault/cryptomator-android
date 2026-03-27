@@ -19,22 +19,28 @@ import javax.inject.Inject
 class LicenseEnforcer @Inject constructor(private val sharedPreferencesHandler: SharedPreferencesHandler) {
 
 	enum class LockedAction(
-		@StringRes val toastMessageRes: Int
+		@StringRes val toastMessageRes: Int,
+		@StringRes val headerMessageRes: Int
 	) {
 		CREATE_VAULT(
 			R.string.read_only_reason_create_vault,
+			R.string.screen_license_check_locked_create_vault,
 		),
 		UPLOAD_FILES(
 			R.string.read_only_reason_add_file,
+			R.string.screen_license_check_locked_upload_files,
 		),
 		CREATE_FOLDER(
 			R.string.read_only_reason_create_folder,
+			R.string.screen_license_check_locked_create_folder,
 		),
 		CREATE_TEXT_FILE(
 			R.string.read_only_reason_create_text_file,
+			R.string.screen_license_check_locked_create_text_file,
 		),
 		SHARE_NODE(
 			R.string.read_only_reason_share_node,
+			R.string.screen_license_check_locked_share_node,
 		);
 
 		companion object {
@@ -94,11 +100,9 @@ class LicenseEnforcer @Inject constructor(private val sharedPreferencesHandler: 
 
 	fun evaluateUiState(context: Context): LicenseUiState {
 		val trialState = evaluateTrialState()
-		val expirationText = when {
-			trialState.isActive -> context.getString(R.string.screen_license_check_trial_expiration, trialState.formattedExpirationDate)
-			trialState.isExpired -> context.getString(R.string.screen_license_check_trial_expired_info)
-			else -> null
-		}
+		val expirationText = if (trialState.isActive || trialState.isExpired) {
+			context.getString(R.string.screen_license_check_trial_expiration, trialState.formattedExpirationDate)
+		} else null
 		return LicenseUiState(
 			hasWriteAccess = hasWriteAccess(),
 			hasPaidLicense = hasPaidLicense(),

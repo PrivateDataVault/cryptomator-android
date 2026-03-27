@@ -224,13 +224,13 @@ class LicenseEnforcerTest {
 	}
 
 	@Test
-	fun `evaluateUiState returns expired trial with expired info text`() {
+	fun `evaluateUiState returns expired trial with expiration date text`() {
 		assumeTrue(BuildConfig.FLAVOR != "playstore" && BuildConfig.FLAVOR != "accrescent", "Licensing logic is bypassed on this flavor")
 		val context: Context = mock()
 		`when`(sharedPreferencesHandler.licenseToken()).thenReturn("")
 		`when`(sharedPreferencesHandler.hasRunningSubscription()).thenReturn(false)
 		`when`(sharedPreferencesHandler.trialExpirationDate()).thenReturn(System.currentTimeMillis() - 1000L)
-		`when`(context.getString(R.string.screen_license_check_trial_expired_info)).thenReturn("Your trial has expired.")
+		`when`(context.getString(org.mockito.ArgumentMatchers.eq(R.string.screen_license_check_trial_expiration), org.mockito.ArgumentMatchers.any())).thenReturn("Expiration Date: Mar 26, 2026")
 
 		val uiState = licenseEnforcer.evaluateUiState(context)
 

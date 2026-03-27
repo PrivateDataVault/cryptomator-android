@@ -4,22 +4,17 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
-import android.widget.Toast
 import org.cryptomator.generator.Activity
-import org.cryptomator.presentation.BuildConfig
 import org.cryptomator.presentation.CryptomatorApp
 import org.cryptomator.presentation.R
 import org.cryptomator.presentation.databinding.ActivityLicenseCheckBinding
 import org.cryptomator.presentation.intent.Intents.vaultListIntent
 import org.cryptomator.presentation.licensing.LicenseEnforcer
 import org.cryptomator.presentation.presenter.LicenseCheckPresenter
-import org.cryptomator.presentation.service.ProductInfo
-import org.cryptomator.presentation.service.resolveProductPrices
 import org.cryptomator.presentation.ui.activity.view.UpdateLicenseView
 import org.cryptomator.presentation.ui.dialog.LicenseConfirmationDialog
 import org.cryptomator.presentation.ui.layout.LicenseContentViewBinder
 import org.cryptomator.presentation.ui.layout.ObscuredAwareCoordinatorLayout
-import java.lang.ref.WeakReference
 import java.util.function.Consumer
 import javax.inject.Inject
 
@@ -79,6 +74,11 @@ class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityL
 		supportActionBar?.setHomeAsUpIndicator(R.drawable.ic_clear)
 		binding.mtToolbar.toolbar.setNavigationOnClickListener { finish() }
 
+		lockedAction?.let { action ->
+			binding.licenseContent.tvInfoText.visibility = View.VISIBLE
+			binding.licenseContent.tvInfoText.text = getString(action.headerMessageRes)
+		}
+
 		if (isIapFlavor) {
 			setupIapView()
 		} else {
@@ -90,21 +90,14 @@ class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityL
 		supportActionBar?.title = getString(R.string.screen_license_check_title_full_version)
 		licenseContentViewBinder.bindInitialIapLayout()
 		licenseContentViewBinder.bindLegalLinks()
-
-		binding.licenseContent.btnTrial.setOnClickListener {
-			licenseEnforcer.startTrial()
-			updatePurchaseState()
-		}
-		binding.licenseContent.btnSubscription.setOnClickListener {
-			(application as CryptomatorApp).launchPurchaseFlow(WeakReference(this), ProductInfo.PRODUCT_YEARLY_SUBSCRIPTION)
-		}
-		binding.licenseContent.btnLifetime.setOnClickListener {
-			(application as CryptomatorApp).launchPurchaseFlow(WeakReference(this), ProductInfo.PRODUCT_FULL_VERSION)
-		}
-		binding.licenseContent.tvRestorePurchase.setOnClickListener {
-			(application as CryptomatorApp).restorePurchases()
-			Toast.makeText(this, getString(R.string.screen_license_check_restore_purchase), Toast.LENGTH_SHORT).show()
-		}
+		licenseContentViewBinder.bindPurchaseButtons(
+			activity = this,
+			app = application as CryptomatorApp,
+			onTrialClicked = {
+				licenseEnforcer.startTrial()
+				updatePurchaseState()
+			}
+		)
 	}
 
 	private fun setupLicenseEntryView() {
@@ -119,29 +112,17 @@ class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityL
 	}
 
 	private fun loadProductPrices() {
-		(application as CryptomatorApp).queryProductDetails { products ->
-			val prices = products.resolveProductPrices()
-			runOnUiThread {
-				licenseContentViewBinder.bindProductPrices(prices.subscriptionPrice, prices.lifetimePrice)
-			}
-		}
+		licenseContentViewBinder.loadAndBindPrices(application as CryptomatorApp)
 	}
 
 	private fun updatePurchaseState() {
-		val unlocked = licenseEnforcer.hasWriteAccess()
-		val hasPaidLicense = licenseEnforcer.hasPaidLicense()
-		licenseContentViewBinder.bindPurchaseState(unlocked, hasPaidLicense)
-		if (isIapFlavor && !hasPaidLicense) {
-			updateTrialState()
+		val uiState = licenseEnforcer.evaluateUiState(this)
+		licenseContentViewBinder.bindPurchaseState(uiState.hasWriteAccess, uiState.hasPaidLicense)
+		if (isIapFlavor && !uiState.hasPaidLicense) {
+			licenseContentViewBinder.bindTrialState(
+				uiState.trialState.isActive, uiState.trialState.isExpired, uiState.trialExpirationText
+			)
 		}
-	}
-
-	private fun updateTrialState() {
-		val state = licenseEnforcer.evaluateTrialState()
-		val expirationText = if (state.isActive || state.isExpired) {
-			getString(R.string.screen_license_check_trial_expiration, state.formattedExpirationDate)
-		} else null
-		licenseContentViewBinder.bindTrialState(state.isActive, state.isExpired, expirationText)
 	}
 
 	override fun onNewIntent(intent: Intent) {
@@ -157,7 +138,7 @@ class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityL
 		licenseCheckPresenter.validate(data)
 	}
 
-	override fun showOrUpdateLicenseDialog(license: String) {
+	override fun showOrUpdateLicenseEntry(license: String) {
 		binding.licenseContent.etLicense.setText(license)
 		binding.licenseContent.licenseEntryGroup.visibility = View.VISIBLE
 	}

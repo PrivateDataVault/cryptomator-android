@@ -60,6 +60,11 @@
 	<string name="read_only_reason_create_text_file">Creating files requires an active license.</string>
 	<string name="read_only_reason_share_node">Sharing files or folders is only available with write access.</string>
 	<string name="read_only_reason_hub_inactive">Upgrade your Hub license to enable writing for this vault.</string>
+	<string name="screen_license_check_locked_create_vault">Unlock full version to create vaults</string>
+	<string name="screen_license_check_locked_upload_files">Unlock full version to upload files</string>
+	<string name="screen_license_check_locked_create_folder">Unlock full version to create folders</string>
+	<string name="screen_license_check_locked_create_text_file">Unlock full version to create text files</string>
+	<string name="screen_license_check_locked_share_node">Unlock full version to share files or folders</string>
 	<string name="screen_license_check_title">Unlock write access</string>
 	<string name="screen_license_check_benefit_title">Your benefits</string>
 	<string name="screen_license_check_benefit_family_sharing">Family sharing</string>

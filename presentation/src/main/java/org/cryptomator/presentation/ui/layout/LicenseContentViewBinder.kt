@@ -1,10 +1,16 @@
 package org.cryptomator.presentation.ui.layout
 
+import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.view.View
+import android.widget.Toast
+import org.cryptomator.presentation.CryptomatorApp
 import org.cryptomator.presentation.R
 import org.cryptomator.presentation.databinding.ViewLicenseCheckContentBinding
+import org.cryptomator.presentation.service.ProductInfo
+import org.cryptomator.presentation.service.resolveProductPrices
+import java.lang.ref.WeakReference
 
 /** Shared visibility-toggling logic for the license check content included layout. */
 class LicenseContentViewBinder(
@@ -46,6 +52,35 @@ class LicenseContentViewBinder(
 		}
 	}
 
+	/** Wires trial, subscription, lifetime, and restore button click listeners. */
+	fun bindPurchaseButtons(
+		activity: Activity,
+		app: CryptomatorApp,
+		onTrialClicked: () -> Unit
+	) {
+		binding.btnTrial.setOnClickListener { onTrialClicked() }
+		binding.btnSubscription.setOnClickListener {
+			app.launchPurchaseFlow(WeakReference(activity), ProductInfo.PRODUCT_YEARLY_SUBSCRIPTION)
+		}
+		binding.btnLifetime.setOnClickListener {
+			app.launchPurchaseFlow(WeakReference(activity), ProductInfo.PRODUCT_FULL_VERSION)
+		}
+		binding.tvRestorePurchase.setOnClickListener {
+			app.restorePurchases()
+			Toast.makeText(activity, R.string.screen_license_check_restore_purchase, Toast.LENGTH_SHORT).show()
+		}
+	}
+
+	/** Queries product details and updates price buttons on the UI thread. */
+	fun loadAndBindPrices(app: CryptomatorApp) {
+		app.queryProductDetails { products ->
+			val prices = products.resolveProductPrices()
+			binding.root.post {
+				bindProductPrices(prices.subscriptionPrice, prices.lifetimePrice)
+			}
+		}
+	}
+
 	/** Updates subscription and lifetime button text and enabled state from resolved prices. */
 	fun bindProductPrices(subscriptionPrice: String?, lifetimePrice: String?) {
 		if (!subscriptionPrice.isNullOrEmpty()) {
@@ -65,6 +100,8 @@ class LicenseContentViewBinder(
 			binding.tvRestorePurchase.visibility = if (hasPaidLicense) View.GONE else View.VISIBLE
 			if (hasPaidLicense) {
 				binding.tvInfoText.visibility = View.GONE
+				binding.tvTrialStatusBadge.visibility = View.GONE
+				binding.tvTrialExpiration.visibility = View.GONE
 			}
 		} else {
 			binding.btnPurchase.isEnabled = !unlocked
@@ -92,7 +129,6 @@ class LicenseContentViewBinder(
 			binding.trialButtonGroup.visibility = View.VISIBLE
 			binding.tvTrialStatusBadge.visibility = View.GONE
 			binding.tvTrialExpiration.visibility = View.GONE
-			binding.tvInfoText.visibility = View.GONE
 			binding.btnTrial.isEnabled = true
 		}
 	}

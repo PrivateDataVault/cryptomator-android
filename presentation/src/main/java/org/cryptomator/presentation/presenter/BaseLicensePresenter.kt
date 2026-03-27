@@ -13,7 +13,7 @@ import javax.inject.Inject
 open class BaseLicensePresenter<V : UpdateLicenseView> @Inject internal constructor(
 	exceptionHandlers: ExceptionHandlers,
 	private val doLicenseCheckUseCase: DoLicenseCheckUseCase,
-	val sharedPreferencesHandler: SharedPreferencesHandler
+	protected val sharedPreferencesHandler: SharedPreferencesHandler
 ) : Presenter<V>(exceptionHandlers) {
 
 	fun validate(data: Uri?) {
@@ -22,7 +22,7 @@ open class BaseLicensePresenter<V : UpdateLicenseView> @Inject internal construc
 			if (license.isNullOrEmpty()) {
 				return
 			}
-			view?.showOrUpdateLicenseDialog(license)
+			view?.showOrUpdateLicenseEntry(license)
 			doLicenseCheckUseCase
 				.withLicense(license)
 				.run(CheckLicenseStatusSubscriber())
