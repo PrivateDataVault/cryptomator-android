@@ -14,9 +14,11 @@ import androidx.preference.Preference
 import androidx.preference.PreferenceCategory
 import androidx.preference.SwitchPreference
 import org.cryptomator.presentation.BuildConfig
+import org.cryptomator.presentation.CryptomatorApp
 import org.cryptomator.presentation.R
 import org.cryptomator.presentation.licensing.LicenseEnforcer
 import org.cryptomator.presentation.service.PhotoContentJob
+import org.cryptomator.presentation.service.ProductInfo
 import org.cryptomator.presentation.ui.activity.AutoUploadChooseVaultActivity
 import org.cryptomator.presentation.ui.activity.BiometricAuthSettingsActivity
 import org.cryptomator.presentation.ui.activity.CloudSettingsActivity
@@ -35,6 +37,7 @@ import org.cryptomator.util.file.LruFileCacheUtil
 import java.lang.Boolean.FALSE
 import java.lang.Boolean.TRUE
 import java.lang.String.format
+import java.lang.ref.WeakReference
 import java.text.DecimalFormat
 import kotlin.math.log10
 import timber.log.Timber
@@ -206,19 +209,40 @@ class SettingsFragment : PreferenceFragmentCompatLayout() {
 					}
 				}
 				licenseCategory?.let { category ->
+					val hasLifetimeLicense = sharedPreferencesHandler.licenseToken().isNotEmpty()
 					if (hasSubscription) {
 						if (category.findPreference<Preference>(MANAGE_SUBSCRIPTION_KEY) == null) {
 							category.addPreference(Preference(requireContext()).apply {
 								key = MANAGE_SUBSCRIPTION_KEY
 								title = getString(R.string.screen_settings_manage_subscription)
 								setOnPreferenceClickListener {
-									startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/account/subscriptions")))
+									val url = "https://play.google.com/store/account/subscriptions" +
+										"?sku=${ProductInfo.PRODUCT_YEARLY_SUBSCRIPTION}" +
+										"&package=${requireContext().packageName}"
+									startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
 									true
 								}
 							})
 						}
 					} else {
 						category.findPreference<Preference>(MANAGE_SUBSCRIPTION_KEY)?.let {
+							category.removePreference(it)
+						}
+					}
+					if (hasSubscription && !hasLifetimeLicense) {
+						if (category.findPreference<Preference>(UPGRADE_LIFETIME_KEY) == null) {
+							category.addPreference(Preference(requireContext()).apply {
+								key = UPGRADE_LIFETIME_KEY
+								title = getString(R.string.screen_settings_upgrade_to_lifetime)
+								setOnPreferenceClickListener {
+									val app = requireActivity().application as CryptomatorApp
+									app.launchPurchaseFlow(WeakReference(requireActivity()), ProductInfo.PRODUCT_FULL_VERSION)
+									true
+								}
+							})
+						}
+					} else {
+						category.findPreference<Preference>(UPGRADE_LIFETIME_KEY)?.let {
 							category.removePreference(it)
 						}
 					}
@@ -385,6 +409,7 @@ class SettingsFragment : PreferenceFragmentCompatLayout() {
 		private const val BIOMETRIC_AUTHENTICATION_ITEM_KEY = "biometricAuthentication"
 		private const val LICENSE_ITEM_KEY = "license"
 		private const val MANAGE_SUBSCRIPTION_KEY = "manageSubscription"
+		private const val UPGRADE_LIFETIME_KEY = "upgradeLifetime"
 		private const val UPDATE_CHECK_ITEM_KEY = "updateCheck"
 		private const val UPDATE_INTERVAL_ITEM_KEY = "updateInterval"
 		private const val DISPLAY_LRU_CACHE_SIZE_ITEM_KEY = "displayLruCacheSize"

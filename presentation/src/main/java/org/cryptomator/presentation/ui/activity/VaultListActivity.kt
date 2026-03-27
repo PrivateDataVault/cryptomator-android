@@ -28,6 +28,7 @@ import org.cryptomator.presentation.ui.callback.VaultListCallback
 import org.cryptomator.presentation.ui.dialog.AskForLockScreenDialog
 import org.cryptomator.presentation.ui.dialog.BetaConfirmationDialog
 import org.cryptomator.presentation.ui.dialog.CBCPasswordVaultsMigrationDialog
+import org.cryptomator.presentation.ui.dialog.TrialExpiredDialog
 import org.cryptomator.presentation.ui.dialog.UpdateAppAvailableDialog
 import org.cryptomator.presentation.ui.dialog.UpdateAppDialog
 import org.cryptomator.presentation.ui.dialog.VaultDeleteConfirmationDialog
@@ -46,7 +47,8 @@ class VaultListActivity : BaseActivity<ActivityLayoutObscureAwareBinding>(Activi
 	UpdateAppDialog.Callback, //
 	BetaConfirmationDialog.Callback, //
 	CBCPasswordVaultsMigrationDialog.Callback, //
-	BiometricAuthenticationMigration.Callback {
+	BiometricAuthenticationMigration.Callback, //
+	TrialExpiredDialog.Callback {
 
 	@Inject
 	lateinit var vaultListPresenter: VaultListPresenter
@@ -217,6 +219,10 @@ class VaultListActivity : BaseActivity<ActivityLayoutObscureAwareBinding>(Activi
 
 	override fun onAskForLockScreenFinished(setScreenLock: Boolean) {
 		vaultListPresenter.onAskForLockScreenFinished(setScreenLock)
+	}
+
+	override fun onUnlockFullVersionClicked() {
+		startActivity(Intent(this, LicenseCheckActivity::class.java))
 	}
 
 	private fun vaultListFragment(): VaultListFragment = //

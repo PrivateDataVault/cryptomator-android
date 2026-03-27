@@ -41,6 +41,7 @@ import org.cryptomator.presentation.R
 import org.cryptomator.presentation.exception.ExceptionHandlers
 import org.cryptomator.presentation.intent.Intents
 import org.cryptomator.presentation.intent.UnlockVaultIntent
+import org.cryptomator.presentation.licensing.LicenseEnforcer
 import org.cryptomator.presentation.model.CloudModel
 import org.cryptomator.presentation.model.CloudTypeModel
 import org.cryptomator.presentation.model.ProgressModel
@@ -51,6 +52,7 @@ import org.cryptomator.presentation.ui.dialog.AppIsObscuredInfoDialog
 import org.cryptomator.presentation.ui.dialog.AskForLockScreenDialog
 import org.cryptomator.presentation.ui.dialog.CBCPasswordVaultsMigrationDialog
 import org.cryptomator.presentation.ui.dialog.EnterPasswordDialog
+import org.cryptomator.presentation.ui.dialog.TrialExpiredDialog
 import org.cryptomator.presentation.ui.dialog.UpdateAppAvailableDialog
 import org.cryptomator.presentation.ui.dialog.UpdateAppDialog
 import org.cryptomator.presentation.ui.dialog.VaultsRemovedDuringMigrationDialog
@@ -89,14 +91,26 @@ class VaultListPresenter @Inject constructor( //
 	private val fileUtil: FileUtil,  //
 	private val authenticationExceptionHandler: AuthenticationExceptionHandler,  //
 	private val cloudFolderModelMapper: CloudFolderModelMapper,  //
+	private val licenseEnforcer: LicenseEnforcer,  //
 	private val sharedPreferencesHandler: SharedPreferencesHandler,  //
 	exceptionMappings: ExceptionHandlers
 ) : Presenter<VaultListView>(exceptionMappings) {
 
 	private var vaultAction: VaultAction? = null
+	private var hasShownTrialExpiredDialog = false
 
 	override fun workflows(): Iterable<Workflow<*>> {
 		return listOf(addExistingVaultWorkflow, createNewVaultWorkflow)
+	}
+
+	override fun resumed() {
+		if (!hasShownTrialExpiredDialog && LicenseEnforcer.isIapFlavor) {
+			val trialState = licenseEnforcer.evaluateTrialState()
+			if (trialState.isExpired && !licenseEnforcer.hasPaidLicense()) {
+				hasShownTrialExpiredDialog = true
+				view?.showDialog(TrialExpiredDialog.newInstance())
+			}
+		}
 	}
 
 	fun onWindowFocusChanged(hasFocus: Boolean) {
