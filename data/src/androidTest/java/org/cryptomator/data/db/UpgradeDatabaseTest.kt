@@ -1034,11 +1034,7 @@ class UpgradeDatabaseTest {
 
 		Upgrade13To14(sharedPreferencesHandler).applyTo(db, 12)
 
-		if(BuildConfig.FLAVOR == "playstore" || BuildConfig.FLAVOR == "accrescent") {
-			Assert.assertThat(sharedPreferencesHandler.hasCompletedWelcomeFlow(), CoreMatchers.`is`(true))
-		} else {
-			Assert.assertThat(sharedPreferencesHandler.hasCompletedWelcomeFlow(), CoreMatchers.`is`(false))
-		}
+		Assert.assertThat(sharedPreferencesHandler.hasCompletedWelcomeFlow(), CoreMatchers.`is`(true))
 
 		Sql.query("UPDATE_CHECK_ENTITY").executeOn(db).use {
 			it.moveToFirst()

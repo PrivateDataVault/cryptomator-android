@@ -262,6 +262,7 @@ class CryptomatorApp : MultiDexApplication(), HasComponent<ApplicationComponent>
 	private val serviceNotifier: ActivityLifecycleCallbacks = object : NoOpActivityLifecycleCallbacks() {
 		override fun onActivityResumed(activity: Activity) {
 			updateService(resumedActivities.incrementAndGet())
+			restorePurchases()
 		}
 
 		override fun onActivityPaused(activity: Activity) {

@@ -12,14 +12,12 @@ internal class Upgrade13To14 @Inject constructor(private val sharedPreferencesHa
 
 	override fun internalApplyTo(db: Database, origin: Int) {
 		if (origin > 0) {
-			// Only skip welcome for genuine upgrades, not fresh installs
-			if (nonLicenseKeyVariant()) {
-				setWelcomeFlowCompleted()
-			} else {
+			// Any user going through a schema migration is an existing user — skip welcome
+			setWelcomeFlowCompleted()
+			if (!nonLicenseKeyVariant()) {
 				val licenseToken = getExistingLicenseToken(db)
 				if (licenseToken != null) {
 					sharedPreferencesHandler.setLicenseToken(licenseToken)
-					setWelcomeFlowCompleted()
 				}
 			}
 		}
