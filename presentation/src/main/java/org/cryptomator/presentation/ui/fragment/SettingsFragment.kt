@@ -19,6 +19,7 @@ import org.cryptomator.presentation.R
 import org.cryptomator.presentation.licensing.LicenseEnforcer
 import org.cryptomator.presentation.service.PhotoContentJob
 import org.cryptomator.presentation.service.ProductInfo
+import org.cryptomator.presentation.service.resolveProductPrices
 import org.cryptomator.presentation.ui.activity.AutoUploadChooseVaultActivity
 import org.cryptomator.presentation.ui.activity.BiometricAuthSettingsActivity
 import org.cryptomator.presentation.ui.activity.CloudSettingsActivity
@@ -240,6 +241,18 @@ class SettingsFragment : PreferenceFragmentCompatLayout() {
 									true
 								}
 							})
+							val app = requireActivity().application as CryptomatorApp
+							app.queryProductDetails { products ->
+								val prices = products.resolveProductPrices()
+								activity?.runOnUiThread {
+									if (!isAdded) return@runOnUiThread
+									category.findPreference<Preference>(UPGRADE_LIFETIME_KEY)?.let { pref ->
+										if (!prices.lifetimePrice.isNullOrEmpty()) {
+											pref.summary = prices.lifetimePrice
+										}
+									}
+								}
+							}
 						}
 					} else {
 						category.findPreference<Preference>(UPGRADE_LIFETIME_KEY)?.let {

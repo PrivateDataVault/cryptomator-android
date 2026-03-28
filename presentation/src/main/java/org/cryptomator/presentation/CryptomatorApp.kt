@@ -150,11 +150,11 @@ class CryptomatorApp : MultiDexApplication(), HasComponent<ApplicationComponent>
 
 	fun queryProductDetails(callback: (List<ProductInfo>) -> Unit) {
 		if (BuildConfig.FLAVOR == "playstoreiap") {
-			val binder = iapBillingServiceBinder
-			if (binder != null) {
-				binder.queryProductDetails(callback)
-			} else {
-				synchronized(pendingProductDetailsCallbacks) {
+			synchronized(pendingProductDetailsCallbacks) {
+				val binder = iapBillingServiceBinder
+				if (binder != null) {
+					binder.queryProductDetails(callback)
+				} else {
 					pendingProductDetailsCallbacks.add(callback)
 				}
 			}
@@ -164,14 +164,13 @@ class CryptomatorApp : MultiDexApplication(), HasComponent<ApplicationComponent>
 	}
 
 	private fun drainPendingProductDetailsCallbacks() {
-		val callbacks: List<(List<ProductInfo>) -> Unit>
 		synchronized(pendingProductDetailsCallbacks) {
 			if (pendingProductDetailsCallbacks.isEmpty()) return
-			callbacks = ArrayList(pendingProductDetailsCallbacks)
+			val callbacks = ArrayList(pendingProductDetailsCallbacks)
 			pendingProductDetailsCallbacks.clear()
-		}
-		iapBillingServiceBinder?.queryProductDetails { products ->
-			callbacks.forEach { it(products) }
+			iapBillingServiceBinder?.queryProductDetails { products ->
+				callbacks.forEach { it(products) }
+			}
 		}
 	}
 

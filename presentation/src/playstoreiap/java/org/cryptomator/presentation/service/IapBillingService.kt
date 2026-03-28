@@ -31,12 +31,14 @@ class IapBillingService : Service(), PurchasesUpdatedListener {
 
 	private lateinit var billingClient: BillingClient
 	private lateinit var sharedPreferencesHandler: SharedPreferencesHandler
+	private lateinit var purchaseManager: PurchaseManager
 
 	private val productDetailsMap = ConcurrentHashMap<String, ProductDetails>()
 	private val pendingProductDetailsCallbacks = mutableListOf<(List<ProductInfo>) -> Unit>()
 
 	private fun initBillingClient(context: Context) {
 		this.sharedPreferencesHandler = SharedPreferencesHandler(context)
+		this.purchaseManager = PurchaseManager(sharedPreferencesHandler)
 		val pendingPurchasesParams = PendingPurchasesParams.newBuilder()
 			.enableOneTimeProducts()
 			.enablePrepaidPlans()
@@ -77,12 +79,16 @@ class IapBillingService : Service(), PurchasesUpdatedListener {
 	}
 
 	fun queryExistingPurchases() {
+		if (!billingClient.isReady) {
+			Timber.tag("IapBillingService").w("queryExistingPurchases skipped, billing client not ready")
+			return
+		}
 		val inappParams = QueryPurchasesParams.newBuilder()
 			.setProductType(BillingClient.ProductType.INAPP)
 			.build()
 		billingClient.queryPurchasesAsync(inappParams) { billingResult: BillingResult, purchases: List<Purchase> ->
 			if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-				handleInAppPurchases(purchases, clearIfNotFound = true)
+				purchaseManager.handleInAppPurchases(purchases, clearIfNotFound = true) { token -> acknowledgePurchase(token) }
 			}
 		}
 		val subsParams = QueryPurchasesParams.newBuilder()
@@ -90,57 +96,8 @@ class IapBillingService : Service(), PurchasesUpdatedListener {
 			.build()
 		billingClient.queryPurchasesAsync(subsParams) { billingResult: BillingResult, purchases: List<Purchase> ->
 			if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-				handleSubscriptionPurchases(purchases, clearIfNotFound = true)
+				purchaseManager.handleSubscriptionPurchases(purchases, clearIfNotFound = true) { token -> acknowledgePurchase(token) }
 			}
-		}
-	}
-
-	private fun handleInAppPurchases(purchases: List<Purchase>, clearIfNotFound: Boolean = false) {
-		for (purchase in purchases) {
-			if (!purchase.products.contains(fullVersionProductId)) {
-				continue
-			}
-			if (purchase.purchaseState == Purchase.PurchaseState.PENDING) {
-				Timber.tag("IapBillingService").d("In-app purchase pending, skipping")
-				return
-			}
-			if (purchase.purchaseState == Purchase.PurchaseState.PURCHASED) {
-				Timber.tag("IapBillingService").d("In-app purchase found: %s", purchase.signature)
-				if (sharedPreferencesHandler.licenseToken().isEmpty()) {
-					sharedPreferencesHandler.setLicenseToken(purchase.purchaseToken)
-				}
-				if (!purchase.isAcknowledged) {
-					acknowledgePurchase(purchase.purchaseToken)
-				}
-				return
-			}
-		}
-		if (clearIfNotFound && sharedPreferencesHandler.licenseToken().isNotEmpty()) {
-			Timber.tag("IapBillingService").i("Remove license, purchase does not exist anymore")
-			sharedPreferencesHandler.setLicenseToken("")
-		}
-	}
-
-	private fun handleSubscriptionPurchases(purchases: List<Purchase>, clearIfNotFound: Boolean = false) {
-		for (purchase in purchases) {
-			if (!purchase.products.contains(yearlySubscriptionProductId)) {
-				continue
-			}
-			if (purchase.purchaseState == Purchase.PurchaseState.PENDING) {
-				Timber.tag("IapBillingService").d("Subscription purchase pending, skipping")
-				return
-			}
-			if (purchase.purchaseState == Purchase.PurchaseState.PURCHASED) {
-				Timber.tag("IapBillingService").d("Subscription found: %s", purchase.signature)
-				sharedPreferencesHandler.setHasRunningSubscription(true)
-				if (!purchase.isAcknowledged) {
-					acknowledgePurchase(purchase.purchaseToken)
-				}
-				return
-			}
-		}
-		if (clearIfNotFound) {
-			sharedPreferencesHandler.setHasRunningSubscription(false)
 		}
 	}
 
@@ -274,8 +231,8 @@ class IapBillingService : Service(), PurchasesUpdatedListener {
 
 	override fun onPurchasesUpdated(billingResult: BillingResult, purchases: List<Purchase>?) {
 		if (billingResult.responseCode == BillingClient.BillingResponseCode.OK && purchases != null) {
-			handleInAppPurchases(purchases)
-			handleSubscriptionPurchases(purchases)
+			purchaseManager.handleInAppPurchases(purchases) { token -> acknowledgePurchase(token) }
+			purchaseManager.handleSubscriptionPurchases(purchases) { token -> acknowledgePurchase(token) }
 		} else if (billingResult.responseCode == BillingClient.BillingResponseCode.USER_CANCELED) {
 			Timber.tag("IapBillingService").i("User canceled purchase flow")
 		} else {

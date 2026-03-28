@@ -128,7 +128,6 @@ class LicenseEnforcer @Inject constructor(private val sharedPreferencesHandler: 
 		val intent = Intent(activity, LicenseCheckActivity::class.java).apply {
 			flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
 			data = Uri.parse("app://cryptomator/")
-			putExtra(LicenseCheckActivity.EXTRA_EXIT_ON_CANCEL, false)
 			putExtra(LicenseCheckActivity.EXTRA_LOCKED_ACTION, action.name)
 		}
 		activity.startActivity(intent)

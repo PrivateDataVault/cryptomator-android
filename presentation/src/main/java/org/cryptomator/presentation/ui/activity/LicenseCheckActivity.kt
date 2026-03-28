@@ -29,7 +29,6 @@ class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityL
 	@Inject
 	lateinit var licenseEnforcer: LicenseEnforcer
 
-	private var exitOnCancel = true
 	private var lockedAction: LicenseEnforcer.LockedAction? = null
 	private val isIapFlavor: Boolean
 		get() = LicenseEnforcer.isIapFlavor
@@ -39,7 +38,6 @@ class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityL
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
-		exitOnCancel = intent.getBooleanExtra(EXTRA_EXIT_ON_CANCEL, true)
 		lockedAction = LicenseEnforcer.LockedAction.fromName(intent.getStringExtra(EXTRA_LOCKED_ACTION))
 		binding.activityRootView.setOnFilteredTouchEventForSecurityListener(object : ObscuredAwareCoordinatorLayout.Listener {
 			override fun onFilteredTouchEventForSecurity() {
@@ -127,7 +125,6 @@ class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityL
 
 	override fun onNewIntent(intent: Intent) {
 		super.onNewIntent(intent)
-		exitOnCancel = intent.getBooleanExtra(EXTRA_EXIT_ON_CANCEL, true)
 		lockedAction = LicenseEnforcer.LockedAction.fromName(intent.getStringExtra(EXTRA_LOCKED_ACTION)) ?: lockedAction
 		setupUpsellView()
 		validate(intent)
@@ -158,7 +155,6 @@ class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityL
 	}
 
 	companion object {
-		const val EXTRA_EXIT_ON_CANCEL = "exitOnCancel"
 		const val EXTRA_LOCKED_ACTION = "lockedAction"
 	}
 }
