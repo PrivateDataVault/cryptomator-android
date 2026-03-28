@@ -9,7 +9,6 @@ import androidx.fragment.app.Fragment
 import org.cryptomator.generator.Activity
 import org.cryptomator.presentation.R
 import org.cryptomator.presentation.databinding.ActivityLayoutBinding
-import org.cryptomator.presentation.licensing.LicenseEnforcer
 import org.cryptomator.presentation.model.CloudFolderModel
 import org.cryptomator.presentation.model.ProgressModel.Companion.COMPLETED
 import org.cryptomator.presentation.model.SharedFileModel
@@ -34,16 +33,9 @@ class SharedFilesActivity : BaseActivity<ActivityLayoutBinding>(ActivityLayoutBi
 	@Inject
 	lateinit var presenter: SharedFilesPresenter
 
-	@Inject
-	lateinit var licenseEnforcer: LicenseEnforcer
-
 	private var contentName: String? = null
 
 	override fun setupView() {
-		if (!licenseEnforcer.ensureWriteAccess(this, LicenseEnforcer.LockedAction.UPLOAD_FILES)) {
-			finish()
-			return
-		}
 		handleIncomingContent(intent)
 		setupToolbar()
 	}
@@ -185,6 +177,10 @@ class SharedFilesActivity : BaseActivity<ActivityLayoutBinding>(ActivityLayoutBi
 				startActivity(it)
 			}
 		finish()
+	}
+
+	override fun setUploadEnabled(enabled: Boolean) {
+		sharedFilesFragment().setUploadEnabled(enabled)
 	}
 
 	override fun onUploadCanceled() {

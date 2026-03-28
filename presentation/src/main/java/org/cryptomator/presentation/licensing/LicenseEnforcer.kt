@@ -7,9 +7,10 @@ import android.net.Uri
 import android.widget.Toast
 import androidx.annotation.StringRes
 import org.cryptomator.domain.di.PerView
-import org.cryptomator.presentation.BuildConfig
 import org.cryptomator.presentation.R
+import org.cryptomator.presentation.model.VaultModel
 import org.cryptomator.presentation.ui.activity.LicenseCheckActivity
+import org.cryptomator.util.FlavorConfig
 import org.cryptomator.util.SharedPreferencesHandler
 import java.text.DateFormat
 import java.util.Date
@@ -67,7 +68,7 @@ class LicenseEnforcer @Inject constructor(private val sharedPreferencesHandler: 
 	}
 
 	fun hasPaidLicense(): Boolean {
-		if (BuildConfig.FLAVOR == "playstore" || BuildConfig.FLAVOR == "accrescent") {
+		if (FlavorConfig.isPremiumFlavor) {
 			return true
 		}
 		if (sharedPreferencesHandler.licenseToken().isNotEmpty()) {
@@ -133,7 +134,7 @@ class LicenseEnforcer @Inject constructor(private val sharedPreferencesHandler: 
 
 		Toast.makeText(activity, activity.getString(action.toastMessageRes), Toast.LENGTH_LONG).show()
 
-		if (BuildConfig.FLAVOR == "playstore" || BuildConfig.FLAVOR == "accrescent") {
+		if (FlavorConfig.isPremiumFlavor) {
 			return false
 		}
 
@@ -146,9 +147,14 @@ class LicenseEnforcer @Inject constructor(private val sharedPreferencesHandler: 
 		return false
 	}
 
+	fun hasWriteAccessForVault(vault: VaultModel?): Boolean {
+		if (vault?.isHubVault == true) return vault.hasHubPaidLicense
+		return hasWriteAccess()
+	}
+
 	companion object {
-		val isIapFlavor: Boolean
-			get() = BuildConfig.FLAVOR == "playstoreiap"
+		val isFreemiumFlavor: Boolean
+			get() = FlavorConfig.isFreemiumFlavor
 
 		private const val TRIAL_DURATION_MS = 30L * 24 * 60 * 60 * 1000
 	}

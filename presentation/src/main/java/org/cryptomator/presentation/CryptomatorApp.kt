@@ -27,6 +27,7 @@ import org.cryptomator.presentation.service.AutoUploadService
 import org.cryptomator.presentation.service.CryptorsService
 import org.cryptomator.presentation.service.IapBillingService
 import org.cryptomator.presentation.service.ProductInfo
+import org.cryptomator.util.FlavorConfig
 import org.cryptomator.util.NoOpActivityLifecycleCallbacks
 import org.cryptomator.util.SharedPreferencesHandler
 import java.lang.ref.WeakReference
@@ -123,7 +124,7 @@ class CryptomatorApp : MultiDexApplication(), HasComponent<ApplicationComponent>
 	}
 
 	private fun startIapBillingService() {
-		if (BuildConfig.FLAVOR != "playstoreiap") {
+		if (!FlavorConfig.isFreemiumFlavor) {
 			Timber.tag("App").d("IAP billing service skipped for flavor %s", BuildConfig.FLAVOR)
 			return
 		}
@@ -143,13 +144,13 @@ class CryptomatorApp : MultiDexApplication(), HasComponent<ApplicationComponent>
 	}
 
 	fun launchPurchaseFlow(activity: WeakReference<Activity>, productId: String) {
-		if (BuildConfig.FLAVOR == "playstoreiap") {
+		if (FlavorConfig.isFreemiumFlavor) {
 			iapBillingServiceBinder?.startPurchaseFlow(activity, productId)
 		}
 	}
 
 	fun queryProductDetails(callback: (List<ProductInfo>) -> Unit) {
-		if (BuildConfig.FLAVOR == "playstoreiap") {
+		if (FlavorConfig.isFreemiumFlavor) {
 			synchronized(pendingProductDetailsCallbacks) {
 				val binder = iapBillingServiceBinder
 				if (binder != null) {
@@ -175,7 +176,7 @@ class CryptomatorApp : MultiDexApplication(), HasComponent<ApplicationComponent>
 	}
 
 	fun restorePurchases() {
-		if (BuildConfig.FLAVOR == "playstoreiap") {
+		if (FlavorConfig.isFreemiumFlavor) {
 			iapBillingServiceBinder?.restorePurchases()
 		}
 	}

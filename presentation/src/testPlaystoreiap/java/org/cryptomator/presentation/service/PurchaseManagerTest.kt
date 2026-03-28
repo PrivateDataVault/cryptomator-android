@@ -110,6 +110,72 @@ class PurchaseManagerTest {
 		assertEquals(listOf("sub-token"), acknowledgedTokens)
 	}
 
+	// -- UNSPECIFIED_STATE handling --
+
+	@Test
+	fun `handleInAppPurchases with UNSPECIFIED_STATE does not set token or acknowledge`() {
+		val purchase = mockPurchase(ProductInfo.PRODUCT_FULL_VERSION, Purchase.PurchaseState.UNSPECIFIED_STATE, "token-1", isAcknowledged = false)
+
+		purchaseManager.handleInAppPurchases(listOf(purchase), acknowledgePurchase = acknowledgePurchase)
+
+		verify(sharedPreferencesHandler, never()).setLicenseToken(org.mockito.ArgumentMatchers.anyString())
+		assertEquals(emptyList<String>(), acknowledgedTokens)
+	}
+
+	@Test
+	fun `handleSubscriptionPurchases with UNSPECIFIED_STATE does not set subscription`() {
+		val purchase = mockPurchase(ProductInfo.PRODUCT_YEARLY_SUBSCRIPTION, Purchase.PurchaseState.UNSPECIFIED_STATE, "sub-token", isAcknowledged = false)
+
+		purchaseManager.handleSubscriptionPurchases(listOf(purchase), acknowledgePurchase = acknowledgePurchase)
+
+		verify(sharedPreferencesHandler, never()).setHasRunningSubscription(org.mockito.ArgumentMatchers.anyBoolean())
+	}
+
+	@Test
+	fun `handleInAppPurchases clears token when clearIfNotFound and only UNSPECIFIED purchase`() {
+		val purchase = mockPurchase(ProductInfo.PRODUCT_FULL_VERSION, Purchase.PurchaseState.UNSPECIFIED_STATE, "token-1", isAcknowledged = false)
+		`when`(sharedPreferencesHandler.licenseToken()).thenReturn("existing-token")
+
+		purchaseManager.handleInAppPurchases(listOf(purchase), clearIfNotFound = true, acknowledgePurchase = acknowledgePurchase)
+
+		verify(sharedPreferencesHandler).setLicenseToken("")
+	}
+
+	// -- Mixed/multiple purchase lists --
+
+	@Test
+	fun `handleInAppPurchases skips non-matching product then processes matching PURCHASED`() {
+		val otherProduct = mockPurchase("other_product", Purchase.PurchaseState.PURCHASED, "token-other", isAcknowledged = true)
+		val fullVersion = mockPurchase(ProductInfo.PRODUCT_FULL_VERSION, Purchase.PurchaseState.PURCHASED, "token-full", isAcknowledged = true)
+		`when`(sharedPreferencesHandler.licenseToken()).thenReturn("")
+
+		purchaseManager.handleInAppPurchases(listOf(otherProduct, fullVersion), acknowledgePurchase = acknowledgePurchase)
+
+		verify(sharedPreferencesHandler).setLicenseToken("token-full")
+	}
+
+	@Test
+	fun `handleInAppPurchases returns on PENDING before reaching PURCHASED for same product`() {
+		val pending = mockPurchase(ProductInfo.PRODUCT_FULL_VERSION, Purchase.PurchaseState.PENDING, "token-pending", isAcknowledged = false)
+		val purchased = mockPurchase(ProductInfo.PRODUCT_FULL_VERSION, Purchase.PurchaseState.PURCHASED, "token-purchased", isAcknowledged = true)
+
+		purchaseManager.handleInAppPurchases(listOf(pending, purchased), acknowledgePurchase = acknowledgePurchase)
+
+		verify(sharedPreferencesHandler, never()).setLicenseToken(org.mockito.ArgumentMatchers.anyString())
+	}
+
+	// -- Unknown state --
+
+	@Test
+	fun `handleInAppPurchases with unknown state 99 does not set token`() {
+		val purchase = mockPurchase(ProductInfo.PRODUCT_FULL_VERSION, 99, "token-1", isAcknowledged = false)
+
+		purchaseManager.handleInAppPurchases(listOf(purchase), acknowledgePurchase = acknowledgePurchase)
+
+		verify(sharedPreferencesHandler, never()).setLicenseToken(org.mockito.ArgumentMatchers.anyString())
+		assertEquals(emptyList<String>(), acknowledgedTokens)
+	}
+
 	private fun mockPurchase(productId: String, purchaseState: Int, token: String, isAcknowledged: Boolean): Purchase {
 		val purchase: Purchase = mock()
 		`when`(purchase.products).thenReturn(listOf(productId))

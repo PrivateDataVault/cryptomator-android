@@ -10,12 +10,12 @@ import org.cryptomator.presentation.R
 import org.cryptomator.presentation.databinding.ActivityLicenseCheckBinding
 import org.cryptomator.presentation.intent.Intents.vaultListIntent
 import org.cryptomator.presentation.licensing.LicenseEnforcer
+import org.cryptomator.presentation.licensing.LicenseStateOrchestrator
 import org.cryptomator.presentation.presenter.LicenseCheckPresenter
 import org.cryptomator.presentation.ui.activity.view.UpdateLicenseView
 import org.cryptomator.presentation.ui.dialog.LicenseConfirmationDialog
 import org.cryptomator.presentation.ui.layout.LicenseContentViewBinder
 import org.cryptomator.presentation.ui.layout.ObscuredAwareCoordinatorLayout
-import java.util.function.Consumer
 import javax.inject.Inject
 
 @Activity
@@ -30,11 +30,24 @@ class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityL
 	lateinit var licenseEnforcer: LicenseEnforcer
 
 	private var lockedAction: LicenseEnforcer.LockedAction? = null
-	private val isIapFlavor: Boolean
-		get() = LicenseEnforcer.isIapFlavor
-	private val licenseContentViewBinder by lazy { LicenseContentViewBinder(binding.licenseContent, isIapFlavor) }
+	private val isFreemiumFlavor: Boolean
+		get() = LicenseEnforcer.isFreemiumFlavor
+	private val licenseContentViewBinder by lazy { LicenseContentViewBinder(binding.licenseContent, isFreemiumFlavor) }
 
-	private val licenseChangeListener = Consumer<String> { _ -> updatePurchaseState() }
+	private val orchestrator by lazy {
+		LicenseStateOrchestrator(
+			sharedPreferencesHandler, licenseEnforcer, { this },
+			target = object : LicenseStateOrchestrator.Target {
+				override fun onPurchaseStateChanged(hasWriteAccess: Boolean, hasPaidLicense: Boolean) {
+					licenseContentViewBinder.bindPurchaseState(hasWriteAccess, hasPaidLicense)
+				}
+				override fun onTrialStateChanged(active: Boolean, expired: Boolean, expirationText: String?) {
+					licenseContentViewBinder.bindTrialState(active, expired, expirationText)
+				}
+			},
+			priceLoader = { licenseContentViewBinder.loadAndBindPrices(application as CryptomatorApp) }
+		)
+	}
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
@@ -50,16 +63,12 @@ class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityL
 
 	override fun onResume() {
 		super.onResume()
-		sharedPreferencesHandler.addLicenseChangedListeners(licenseChangeListener)
-		updatePurchaseState()
-		if (isIapFlavor) {
-			loadProductPrices()
-		}
+		orchestrator.onResume()
 	}
 
 	override fun onPause() {
 		super.onPause()
-		sharedPreferencesHandler.removeLicenseChangedListeners(licenseChangeListener)
+		orchestrator.onPause()
 	}
 
 	override fun setupView() {
@@ -77,7 +86,7 @@ class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityL
 			binding.licenseContent.tvInfoText.text = getString(action.headerMessageRes)
 		}
 
-		if (isIapFlavor) {
+		if (isFreemiumFlavor) {
 			setupIapView()
 		} else {
 			setupLicenseEntryView()
@@ -93,7 +102,7 @@ class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityL
 			app = application as CryptomatorApp,
 			onTrialClicked = {
 				licenseEnforcer.startTrial()
-				updatePurchaseState()
+				orchestrator.updateState()
 			}
 		)
 	}
@@ -106,20 +115,6 @@ class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityL
 		binding.licenseContent.btnPurchase.setOnClickListener { onLicenseSubmit() }
 		binding.licenseContent.tvLicenseLink.setOnClickListener {
 			startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://cryptomator.org/android/")))
-		}
-	}
-
-	private fun loadProductPrices() {
-		licenseContentViewBinder.loadAndBindPrices(application as CryptomatorApp)
-	}
-
-	private fun updatePurchaseState() {
-		val uiState = licenseEnforcer.evaluateUiState(this)
-		licenseContentViewBinder.bindPurchaseState(uiState.hasWriteAccess, uiState.hasPaidLicense)
-		if (isIapFlavor && !uiState.hasPaidLicense) {
-			licenseContentViewBinder.bindTrialState(
-				uiState.trialState.isActive, uiState.trialState.isExpired, uiState.trialExpirationText
-			)
 		}
 	}
 

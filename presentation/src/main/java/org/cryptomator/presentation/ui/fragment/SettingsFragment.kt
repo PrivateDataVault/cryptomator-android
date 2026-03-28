@@ -15,6 +15,7 @@ import androidx.preference.PreferenceCategory
 import androidx.preference.SwitchPreference
 import org.cryptomator.presentation.BuildConfig
 import org.cryptomator.presentation.CryptomatorApp
+import org.cryptomator.util.FlavorConfig
 import org.cryptomator.presentation.R
 import org.cryptomator.presentation.licensing.LicenseEnforcer
 import org.cryptomator.presentation.service.PhotoContentJob
@@ -178,8 +179,8 @@ class SettingsFragment : PreferenceFragmentCompatLayout() {
 		val licensePref = findPreference(SharedPreferencesHandler.MAIL) as Preference?
 		licenseCategory?.title = getString(R.string.screen_settings_license)
 		licensePref?.isEnabled = true
-		when (BuildConfig.FLAVOR) {
-			"playstore", "accrescent" -> {
+		when {
+			FlavorConfig.isPremiumFlavor -> {
 				licensePref?.let { pref ->
 					pref.title = getString(R.string.screen_settings_license_title_unlocked)
 					pref.summary = getString(R.string.screen_settings_license_summary_write_access)
@@ -187,7 +188,7 @@ class SettingsFragment : PreferenceFragmentCompatLayout() {
 				}
 				removeUpdateCheck()
 			}
-			"playstoreiap" -> {
+			FlavorConfig.isFreemiumFlavor -> {
 				val licenseEnforcer = LicenseEnforcer(sharedPreferencesHandler)
 				val uiState = licenseEnforcer.evaluateUiState(requireContext())
 				val hasSubscription = sharedPreferencesHandler.hasRunningSubscription()
@@ -278,7 +279,7 @@ class SettingsFragment : PreferenceFragmentCompatLayout() {
 						pref.onPreferenceClickListener = null
 					}
 				}
-				if (BuildConfig.FLAVOR == "apkstore") {
+				if (FlavorConfig.isApkStoreFlavor) {
 					setupUpdateCheck()
 				} else {
 					removeUpdateCheck()
@@ -317,7 +318,7 @@ class SettingsFragment : PreferenceFragmentCompatLayout() {
 	}
 
 	private fun setupCryptomatorVariants() {
-		if (BuildConfig.FLAVOR == "playstore" || BuildConfig.FLAVOR == "accrescent") {
+		if (FlavorConfig.isPremiumFlavor) {
 			(findPreference(CRYPTOMATOR_VARIANTS) as Preference?)?.let { preference ->
 				(findPreference(getString(R.string.screen_settings_section_general)) as PreferenceCategory?)?.removePreference(preference)
 			}
@@ -336,13 +337,13 @@ class SettingsFragment : PreferenceFragmentCompatLayout() {
 		(findPreference(SharedPreferencesHandler.USE_LRU_CACHE) as Preference?)?.onPreferenceChangeListener = useLruChangedListener
 		(findPreference(SharedPreferencesHandler.LRU_CACHE_SIZE) as Preference?)?.onPreferenceChangeListener = useLruChangedListener
 		(findPreference(SharedPreferencesHandler.MICROSOFT_WORKAROUND) as Preference?)?.onPreferenceChangeListener = microsoftWorkaroundChangeListener
-		if (BuildConfig.FLAVOR == "apkstore") {
+		if (FlavorConfig.isApkStoreFlavor) {
 			(findPreference(UPDATE_CHECK_ITEM_KEY) as Preference?)?.onPreferenceClickListener = updateCheckClickListener
 		}
 
 		(findPreference(SharedPreferencesHandler.CLOUD_SETTINGS) as Preference?)?.intent = Intent(context, CloudSettingsActivity::class.java)
 		(findPreference(SharedPreferencesHandler.BIOMETRIC_AUTHENTICATION) as Preference?)?.intent = Intent(context, BiometricAuthSettingsActivity::class.java)
-		if (BuildConfig.FLAVOR != "playstore") {
+		if (!FlavorConfig.isPremiumFlavor) {
 			(findPreference(SharedPreferencesHandler.CRYPTOMATOR_VARIANTS) as Preference?)?.intent = Intent(context, CryptomatorVariantsActivity::class.java)
 		}
 		(findPreference(SharedPreferencesHandler.PHOTO_UPLOAD_VAULT) as Preference?)?.intent = Intent(context, AutoUploadChooseVaultActivity::class.java)

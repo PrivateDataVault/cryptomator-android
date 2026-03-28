@@ -16,6 +16,8 @@ android {
 		buildConfigField "String", "VERSION_NAME", "\"${globalConfiguration["androidVersionName"]}\""
 
 		testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
+
+		missingDimensionStrategy 'version', 'playstore'
 	}
 
 	compileOptions {

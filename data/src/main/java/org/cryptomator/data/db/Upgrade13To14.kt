@@ -1,6 +1,6 @@
 package org.cryptomator.data.db
 
-import org.cryptomator.data.BuildConfig
+import org.cryptomator.util.FlavorConfig
 import org.cryptomator.util.SharedPreferencesHandler
 import org.greenrobot.greendao.database.Database
 import javax.inject.Inject
@@ -25,7 +25,7 @@ internal class Upgrade13To14 @Inject constructor(private val sharedPreferencesHa
 	}
 
 	private fun nonLicenseKeyVariant(): Boolean {
-		return BuildConfig.FLAVOR == "playstore" || BuildConfig.FLAVOR == "accrescent"
+		return FlavorConfig.isPremiumFlavor
 	}
 
 	private fun removeLicenseFromDb(db: Database) {

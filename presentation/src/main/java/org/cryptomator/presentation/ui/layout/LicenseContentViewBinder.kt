@@ -15,7 +15,7 @@ import java.lang.ref.WeakReference
 /** Shared visibility-toggling logic for the license check content included layout. */
 class LicenseContentViewBinder(
 	private val binding: ViewLicenseCheckContentBinding,
-	private val isIapFlavor: Boolean
+	private val isFreemiumFlavor: Boolean
 ) {
 
 	private val context get() = binding.root.context
@@ -95,7 +95,7 @@ class LicenseContentViewBinder(
 
 	/** Updates purchase-related view visibility based on license state. */
 	fun bindPurchaseState(unlocked: Boolean, hasPaidLicense: Boolean) {
-		if (isIapFlavor) {
+		if (isFreemiumFlavor) {
 			binding.purchaseOptionsGroup.visibility = if (hasPaidLicense) View.GONE else View.VISIBLE
 			binding.tvRestorePurchase.visibility = if (hasPaidLicense) View.GONE else View.VISIBLE
 			if (hasPaidLicense) {

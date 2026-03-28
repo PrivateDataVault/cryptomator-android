@@ -17,11 +17,11 @@ import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import androidx.viewpager2.widget.ViewPager2
 import org.cryptomator.generator.Activity
-import org.cryptomator.presentation.BuildConfig
 import org.cryptomator.presentation.CryptomatorApp
 import org.cryptomator.presentation.R
 import org.cryptomator.presentation.databinding.ActivityWelcomeBinding
 import org.cryptomator.presentation.licensing.LicenseEnforcer
+import org.cryptomator.presentation.licensing.LicenseStateOrchestrator
 import org.cryptomator.presentation.presenter.WelcomePresenter
 import org.cryptomator.presentation.ui.activity.view.UpdateLicenseView
 import org.cryptomator.presentation.ui.activity.view.WelcomeView
@@ -30,7 +30,7 @@ import org.cryptomator.presentation.ui.fragment.WelcomeLicenseFragment
 import org.cryptomator.presentation.ui.fragment.WelcomeNotificationsFragment
 import org.cryptomator.presentation.ui.fragment.WelcomeScreenLockFragment
 import org.cryptomator.presentation.ui.layout.ObscuredAwareCoordinatorLayout
-import java.util.function.Consumer
+import org.cryptomator.util.FlavorConfig
 import javax.inject.Inject
 
 @Activity
@@ -48,13 +48,33 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 	lateinit var licenseEnforcer: LicenseEnforcer
 
 	private val shouldShowLicenseSection: Boolean
-		get() = BuildConfig.FLAVOR != "playstore" && BuildConfig.FLAVOR != "accrescent"
+		get() = !FlavorConfig.isPremiumFlavor
 
-	private val isIapFlavor: Boolean
-		get() = LicenseEnforcer.isIapFlavor
+	private val isFreemiumFlavor: Boolean
+		get() = LicenseEnforcer.isFreemiumFlavor
 
-	private val licenseChangeListener = Consumer<String> { _ -> updateLicenseSectionState() }
 	private val keyguardManager by lazy { getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager }
+
+	private val orchestrator by lazy {
+		LicenseStateOrchestrator(
+			sharedPreferencesHandler, licenseEnforcer, { this },
+			target = object : LicenseStateOrchestrator.Target {
+				override fun onPurchaseStateChanged(hasWriteAccess: Boolean, hasPaidLicense: Boolean) {
+					if (!this@WelcomeActivity::pagerAdapter.isInitialized) return
+					pagerAdapter.licenseFragment?.updateUnlocked(hasWriteAccess, hasPaidLicense)
+				}
+				override fun onTrialStateChanged(active: Boolean, expired: Boolean, expirationText: String?) {
+					if (!this@WelcomeActivity::pagerAdapter.isInitialized) return
+					pagerAdapter.licenseFragment?.updateTrialState(active, expired, expirationText)
+				}
+			},
+			priceLoader = {
+				if (this@WelcomeActivity::pagerAdapter.isInitialized) {
+					pagerAdapter.licenseFragment?.loadAndBindPrices(application as CryptomatorApp)
+				}
+			}
+		)
+	}
 
 	private lateinit var pagerAdapter: WelcomePagerAdapter
 	private val pages = mutableListOf<FragmentPage>()
@@ -99,7 +119,7 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 
 		validate(intent)
 		updateNotificationPermissionState()
-		updateLicenseSectionState()
+		orchestrator.updateState()
 		updateScreenLockState()
 	}
 
@@ -109,18 +129,14 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 			openVaultList()
 			return
 		}
-		sharedPreferencesHandler.addLicenseChangedListeners(licenseChangeListener)
+		orchestrator.onResume()
 		updateNotificationPermissionState()
-		updateLicenseSectionState()
 		updateScreenLockState()
-		if (isIapFlavor) {
-			loadProductPrices()
-		}
 	}
 
 	override fun onPause() {
 		super.onPause()
-		sharedPreferencesHandler.removeLicenseChangedListeners(licenseChangeListener)
+		orchestrator.onPause()
 	}
 
 	private fun setupPages() {
@@ -141,8 +157,8 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 		binding.welcomePager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
 			override fun onPageSelected(position: Int) {
 				updateNavigationButtons(position)
-				if (isIapFlavor && pages[position] is FragmentPage.License) {
-					loadProductPrices()
+				if (isFreemiumFlavor && pages[position] is FragmentPage.License) {
+					orchestrator.updateState()
 				}
 			}
 		})
@@ -163,25 +179,6 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 		} else {
 			getString(R.string.next)
 		}
-	}
-
-	private fun updateLicenseSectionState() {
-		if (!this::pagerAdapter.isInitialized) {
-			return
-		}
-		val fragment = pagerAdapter.licenseFragment ?: return
-		val uiState = licenseEnforcer.evaluateUiState(this)
-		fragment.updateUnlocked(uiState.hasWriteAccess, uiState.hasPaidLicense)
-		if (isIapFlavor && !uiState.hasPaidLicense) {
-			fragment.updateTrialState(
-				uiState.trialState.isActive, uiState.trialState.isExpired, uiState.trialExpirationText
-			)
-		}
-	}
-
-	private fun loadProductPrices() {
-		if (!this::pagerAdapter.isInitialized) return
-		pagerAdapter.licenseFragment?.loadAndBindPrices(application as CryptomatorApp)
 	}
 
 	private fun needsNotificationPermission(): Boolean {
@@ -237,7 +234,7 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 
 	// In onboarding, a valid license auto-advances to the next page instead of showing a dialog
 	override fun showConfirmationDialog(mail: String) {
-		updateLicenseSectionState()
+		orchestrator.updateState()
 		autoAdvanceToNextPage()
 	}
 
@@ -257,7 +254,7 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 
 	override fun onStartTrial() {
 		licenseEnforcer.startTrial()
-		updateLicenseSectionState()
+		orchestrator.updateState()
 		autoAdvanceToNextPage()
 	}
 

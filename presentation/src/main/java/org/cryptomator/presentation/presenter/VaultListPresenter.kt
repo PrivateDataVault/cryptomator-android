@@ -37,6 +37,7 @@ import org.cryptomator.domain.usecases.vault.UpdateVaultParameterIfChangedRemote
 import org.cryptomator.generator.Callback
 import org.cryptomator.presentation.BuildConfig
 import org.cryptomator.presentation.CryptomatorApp
+import org.cryptomator.util.FlavorConfig
 import org.cryptomator.presentation.R
 import org.cryptomator.presentation.exception.ExceptionHandlers
 import org.cryptomator.presentation.intent.Intents
@@ -104,7 +105,7 @@ class VaultListPresenter @Inject constructor( //
 	}
 
 	override fun resumed() {
-		if (!hasShownTrialExpiredDialog && LicenseEnforcer.isIapFlavor) {
+		if (!hasShownTrialExpiredDialog && LicenseEnforcer.isFreemiumFlavor) {
 			val trialState = licenseEnforcer.evaluateTrialState()
 			if (trialState.isExpired && !licenseEnforcer.hasPaidLicense()) {
 				hasShownTrialExpiredDialog = true
@@ -134,7 +135,7 @@ class VaultListPresenter @Inject constructor( //
 			sharedPreferencesHandler.vaultsRemovedDuringMigration(null)
 		}
 
-		if (BuildConfig.FLAVOR == "apkstore" && sharedPreferencesHandler.doUpdate()) {
+		if (FlavorConfig.isApkStoreFlavor && sharedPreferencesHandler.doUpdate()) {
 			checkForAppUpdates()
 		}
 

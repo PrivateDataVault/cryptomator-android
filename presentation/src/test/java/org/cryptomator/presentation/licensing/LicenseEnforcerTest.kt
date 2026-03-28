@@ -1,8 +1,8 @@
 package org.cryptomator.presentation.licensing
 
 import android.content.Context
-import org.cryptomator.presentation.BuildConfig
 import org.cryptomator.presentation.R
+import org.cryptomator.util.FlavorConfig
 import org.cryptomator.util.SharedPreferencesHandler
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -55,7 +55,7 @@ class LicenseEnforcerTest {
 
 	@Test
 	fun `hasWriteAccess returns false when trial is expired`() {
-		assumeTrue(BuildConfig.FLAVOR != "playstore" && BuildConfig.FLAVOR != "accrescent", "Licensing logic is bypassed on this flavor")
+		assumeTrue(!FlavorConfig.isPremiumFlavor, "Licensing logic is bypassed on this flavor")
 		`when`(sharedPreferencesHandler.licenseToken()).thenReturn("")
 		`when`(sharedPreferencesHandler.hasRunningSubscription()).thenReturn(false)
 		`when`(sharedPreferencesHandler.trialExpirationDate()).thenReturn(System.currentTimeMillis() - 1000L)
@@ -65,7 +65,7 @@ class LicenseEnforcerTest {
 
 	@Test
 	fun `hasWriteAccess returns false when no license and no trial and no subscription`() {
-		assumeTrue(BuildConfig.FLAVOR != "playstore" && BuildConfig.FLAVOR != "accrescent", "Licensing logic is bypassed on this flavor")
+		assumeTrue(!FlavorConfig.isPremiumFlavor, "Licensing logic is bypassed on this flavor")
 		`when`(sharedPreferencesHandler.licenseToken()).thenReturn("")
 		`when`(sharedPreferencesHandler.hasRunningSubscription()).thenReturn(false)
 		`when`(sharedPreferencesHandler.trialExpirationDate()).thenReturn(0L)
@@ -93,7 +93,7 @@ class LicenseEnforcerTest {
 
 	@Test
 	fun `hasPaidLicense returns false when only trial is active`() {
-		assumeTrue(BuildConfig.FLAVOR != "playstore" && BuildConfig.FLAVOR != "accrescent", "Licensing logic is bypassed on this flavor")
+		assumeTrue(!FlavorConfig.isPremiumFlavor, "Licensing logic is bypassed on this flavor")
 		`when`(sharedPreferencesHandler.licenseToken()).thenReturn("")
 		`when`(sharedPreferencesHandler.hasRunningSubscription()).thenReturn(false)
 		`when`(sharedPreferencesHandler.trialExpirationDate()).thenReturn(System.currentTimeMillis() + 86400000L)
@@ -103,7 +103,7 @@ class LicenseEnforcerTest {
 
 	@Test
 	fun `hasPaidLicense returns false when no license and no subscription`() {
-		assumeTrue(BuildConfig.FLAVOR != "playstore" && BuildConfig.FLAVOR != "accrescent", "Licensing logic is bypassed on this flavor")
+		assumeTrue(!FlavorConfig.isPremiumFlavor, "Licensing logic is bypassed on this flavor")
 		`when`(sharedPreferencesHandler.licenseToken()).thenReturn("")
 		`when`(sharedPreferencesHandler.hasRunningSubscription()).thenReturn(false)
 
@@ -208,7 +208,7 @@ class LicenseEnforcerTest {
 
 	@Test
 	fun `evaluateUiState returns active trial with expiration text`() {
-		assumeTrue(BuildConfig.FLAVOR != "playstore" && BuildConfig.FLAVOR != "accrescent", "Licensing logic is bypassed on this flavor")
+		assumeTrue(!FlavorConfig.isPremiumFlavor, "Licensing logic is bypassed on this flavor")
 		val context: Context = mock()
 		`when`(sharedPreferencesHandler.licenseToken()).thenReturn("")
 		`when`(sharedPreferencesHandler.hasRunningSubscription()).thenReturn(false)
@@ -225,7 +225,7 @@ class LicenseEnforcerTest {
 
 	@Test
 	fun `evaluateUiState returns expired trial with expiration date text`() {
-		assumeTrue(BuildConfig.FLAVOR != "playstore" && BuildConfig.FLAVOR != "accrescent", "Licensing logic is bypassed on this flavor")
+		assumeTrue(!FlavorConfig.isPremiumFlavor, "Licensing logic is bypassed on this flavor")
 		val context: Context = mock()
 		`when`(sharedPreferencesHandler.licenseToken()).thenReturn("")
 		`when`(sharedPreferencesHandler.hasRunningSubscription()).thenReturn(false)
@@ -242,7 +242,7 @@ class LicenseEnforcerTest {
 
 	@Test
 	fun `evaluateUiState returns null expiration text when no trial started`() {
-		assumeTrue(BuildConfig.FLAVOR != "playstore" && BuildConfig.FLAVOR != "accrescent", "Licensing logic is bypassed on this flavor")
+		assumeTrue(!FlavorConfig.isPremiumFlavor, "Licensing logic is bypassed on this flavor")
 		val context: Context = mock()
 		`when`(sharedPreferencesHandler.licenseToken()).thenReturn("")
 		`when`(sharedPreferencesHandler.hasRunningSubscription()).thenReturn(false)

@@ -23,9 +23,9 @@ class WelcomeLicenseFragment : BaseFragment<FragmentWelcomeLicenseBinding>(Fragm
 		fun onSkipLicense()
 	}
 
-	private val isIapFlavor: Boolean
-		get() = LicenseEnforcer.isIapFlavor
-	private val licenseContentViewBinder by lazy { LicenseContentViewBinder(binding.licenseContent, isIapFlavor) }
+	private val isFreemiumFlavor: Boolean
+		get() = LicenseEnforcer.isFreemiumFlavor
+	private val licenseContentViewBinder by lazy { LicenseContentViewBinder(binding.licenseContent, isFreemiumFlavor) }
 	private var listener: Listener? = null
 	private val debounceHandler = Handler(Looper.getMainLooper())
 	private var debounceRunnable: Runnable? = null
@@ -45,7 +45,7 @@ class WelcomeLicenseFragment : BaseFragment<FragmentWelcomeLicenseBinding>(Fragm
 	}
 
 	private fun setupUi() {
-		if (isIapFlavor) {
+		if (isFreemiumFlavor) {
 			setupIapUi()
 		} else {
 			setupLicenseEntryUi()
@@ -99,7 +99,7 @@ class WelcomeLicenseFragment : BaseFragment<FragmentWelcomeLicenseBinding>(Fragm
 	fun prefillLicense(license: String) {
 		if (!isAdded) return
 		binding.licenseContent.etLicense.setText(license)
-		binding.licenseContent.licenseEntryGroup.visibility = if (isIapFlavor) View.GONE else View.VISIBLE
+		binding.licenseContent.licenseEntryGroup.visibility = if (isFreemiumFlavor) View.GONE else View.VISIBLE
 	}
 
 	companion object {

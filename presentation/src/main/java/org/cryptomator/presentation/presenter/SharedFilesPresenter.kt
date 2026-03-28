@@ -20,6 +20,7 @@ import org.cryptomator.generator.Callback
 import org.cryptomator.generator.InstanceState
 import org.cryptomator.presentation.R
 import org.cryptomator.presentation.exception.ExceptionHandlers
+import org.cryptomator.presentation.licensing.LicenseEnforcer
 import org.cryptomator.presentation.intent.ChooseCloudNodeSettings
 import org.cryptomator.presentation.intent.Intents
 import org.cryptomator.presentation.intent.UnlockVaultIntent
@@ -51,6 +52,7 @@ class SharedFilesPresenter @Inject constructor( //
 	private val authenticationExceptionHandler: AuthenticationExceptionHandler,  //
 	private val cloudFolderModelMapper: CloudFolderModelMapper,  //
 	private val progressModelMapper: ProgressModelMapper,  //
+	private val licenseEnforcer: LicenseEnforcer,  //
 	exceptionMappings: ExceptionHandlers
 ) : Presenter<SharedFilesView>(exceptionMappings) {
 
@@ -304,6 +306,15 @@ class SharedFilesPresenter @Inject constructor( //
 	}
 
 	fun onSaveButtonPressed(filesForUpload: List<SharedFileModel>) {
+		if (selectedVault != null && !licenseEnforcer.hasWriteAccessForVault(selectedVault)) {
+			if (selectedVault!!.isHubVault) {
+				view?.showMessage(R.string.read_only_reason_hub_inactive)
+			} else {
+				licenseEnforcer.ensureWriteAccess(view!!.activity(), LicenseEnforcer.LockedAction.UPLOAD_FILES)
+				view?.finish()
+			}
+			return
+		}
 		updateFileNames(filesForUpload)
 		when {
 			hasFileNameConflict() -> {
@@ -379,7 +390,20 @@ class SharedFilesPresenter @Inject constructor( //
 	}
 
 	fun onVaultSelected(vault: VaultModel?) {
+		if (vault != null && !licenseEnforcer.hasWriteAccessForVault(vault)) {
+			if (vault.isHubVault) {
+				view?.showMessage(R.string.read_only_reason_hub_inactive)
+			} else {
+				licenseEnforcer.ensureWriteAccess(view!!.activity(), LicenseEnforcer.LockedAction.UPLOAD_FILES)
+				view?.finish()
+				return
+			}
+			selectedVault = null
+			view?.setUploadEnabled(false)
+			return
+		}
 		selectedVault = vault
+		view?.setUploadEnabled(vault != null)
 	}
 
 	private fun setAuthenticationState(authenticationState: AuthenticationState) {
