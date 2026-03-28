@@ -65,6 +65,7 @@ import org.cryptomator.presentation.model.mappers.CloudNodeModelMapper
 import org.cryptomator.presentation.model.mappers.ProgressModelMapper
 import org.cryptomator.presentation.model.mappers.ProgressStateModelMapper
 import org.cryptomator.presentation.service.OpenWritableFileNotification
+import org.cryptomator.presentation.ui.activity.TextEditorActivity
 import org.cryptomator.presentation.ui.activity.view.BrowseFilesView
 import org.cryptomator.presentation.ui.dialog.ExportCloudFilesDialog
 import org.cryptomator.presentation.ui.dialog.FileNameDialog
@@ -506,13 +507,19 @@ class BrowseFilesPresenter @Inject constructor( //
 			})
 	}
 
+	private fun isHubVaultWriteAllowed(): Boolean {
+		val vault = view?.folder?.vault() ?: return false
+		return vault.isHubVault && vault.hasHubPaidLicense
+	}
+
 	private fun viewFile(cloudFile: CloudFileModel) {
 		val lowerFileName = cloudFile.name.lowercase()
 		if (lowerFileName.endsWith(".txt") || lowerFileName.endsWith(".md") || lowerFileName.endsWith(".todo")) {
-			startIntent(
-				Intents.textEditorIntent() //
-					.withTextFile(cloudFile)
-			)
+			val intent = Intents.textEditorIntent()
+				.withTextFile(cloudFile)
+				.build(this)
+			intent.putExtra(TextEditorActivity.EXTRA_HUB_WRITE_ALLOWED, isHubVaultWriteAllowed())
+			startIntent(intent)
 		} else if (!lowerFileName.endsWith(".gif") && isImageMediaType(cloudFile.name)) {
 			val cloudFileNodes = previewCloudFileNodes
 			val imagePreviewStore = ImagePreviewFilesStore( //
@@ -551,7 +558,7 @@ class BrowseFilesPresenter @Inject constructor( //
 						openedCloudFileMd5 = hash
 						viewFileIntent.setDataAndType(it, mimeTypes.fromFilename(cloudFile.name)?.toString())
 						var permissionFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION
-						if (licenseEnforcer.hasWriteAccess()) {
+						if (licenseEnforcer.hasWriteAccess() || isHubVaultWriteAllowed()) {
 							permissionFlags = permissionFlags or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
 						}
 						viewFileIntent.addFlags(permissionFlags)
@@ -1153,10 +1160,11 @@ class BrowseFilesPresenter @Inject constructor( //
 						view?.hideProgress(textFile)
 					}
 					if (internalEditor) {
-						startIntent(
-							Intents.textEditorIntent() //
-								.withTextFile(textFile)
-						)
+						val editorIntent = Intents.textEditorIntent()
+							.withTextFile(textFile)
+							.build(this@BrowseFilesPresenter)
+						editorIntent.putExtra(TextEditorActivity.EXTRA_HUB_WRITE_ALLOWED, isHubVaultWriteAllowed())
+						startIntent(editorIntent)
 					} else {
 						viewExternalFile(textFile)
 					}

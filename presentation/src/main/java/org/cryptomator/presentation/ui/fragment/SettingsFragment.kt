@@ -278,7 +278,11 @@ class SettingsFragment : PreferenceFragmentCompatLayout() {
 						pref.onPreferenceClickListener = null
 					}
 				}
-				setupUpdateCheck()
+				if (BuildConfig.FLAVOR == "apkstore") {
+					setupUpdateCheck()
+				} else {
+					removeUpdateCheck()
+				}
 			}
 		}
 	}

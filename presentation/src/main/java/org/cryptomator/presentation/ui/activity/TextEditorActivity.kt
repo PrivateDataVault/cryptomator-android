@@ -31,6 +31,10 @@ class TextEditorActivity : BaseActivity<ActivityLayoutBinding>(ActivityLayoutBin
 	@InjectIntent
 	lateinit var textEditorIntent: TextEditorIntent
 
+	private fun hasWriteAccess(): Boolean {
+		return licenseEnforcer.hasWriteAccess() || intent.getBooleanExtra(EXTRA_HUB_WRITE_ALLOWED, false)
+	}
+
 	override val textFileContent: String
 		get() = textEditorFragment().textFileContent
 
@@ -42,7 +46,7 @@ class TextEditorActivity : BaseActivity<ActivityLayoutBinding>(ActivityLayoutBin
 	override fun createFragment(): Fragment = TextEditorFragment()
 
 	override fun onBackPressed() {
-		if (!licenseEnforcer.hasWriteAccess()) {
+		if (!hasWriteAccess()) {
 			super.onBackPressed()
 			return
 		}
@@ -105,7 +109,7 @@ class TextEditorActivity : BaseActivity<ActivityLayoutBinding>(ActivityLayoutBin
 		val searchView = menu.findItem(R.id.action_search).actionView as SearchView
 		searchView.setOnQueryTextListener(this)
 
-		menu.findItem(R.id.action_save_changes).isVisible = licenseEnforcer.hasWriteAccess()
+		menu.findItem(R.id.action_save_changes).isVisible = hasWriteAccess()
 
 		return super.onPrepareOptionsMenu(menu)
 	}
@@ -125,13 +129,13 @@ class TextEditorActivity : BaseActivity<ActivityLayoutBinding>(ActivityLayoutBin
 
 	override fun displayTextFileContent(textFileContent: String) {
 		textEditorFragment().displayTextFileContent(textFileContent)
-		if (!licenseEnforcer.hasWriteAccess()) {
+		if (!hasWriteAccess()) {
 			textEditorFragment().setReadOnly()
 		}
 	}
 
 	override fun onSaveChangesClicked() {
-		if (!licenseEnforcer.hasWriteAccess()) return
+		if (!hasWriteAccess()) return
 		textEditorPresenter.saveChanges()
 	}
 
@@ -145,4 +149,7 @@ class TextEditorActivity : BaseActivity<ActivityLayoutBinding>(ActivityLayoutBin
 
 	private fun textEditorFragment(): TextEditorFragment = getCurrentFragment(R.id.fragment_container) as TextEditorFragment
 
+	companion object {
+		const val EXTRA_HUB_WRITE_ALLOWED = "hubWriteAllowed"
+	}
 }

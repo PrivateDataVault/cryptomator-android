@@ -66,7 +66,8 @@ public class HubRepositoryImpl implements HubRepository {
 				case HttpURLConnection.HTTP_OK:
 					if (response.body() != null) {
 						String subscriptionHeader = response.header("Hub-Subscription-State");
-						HubRepository.SubscriptionState state = "ACTIVE".equalsIgnoreCase(subscriptionHeader) ? HubRepository.SubscriptionState.ACTIVE : HubRepository.SubscriptionState.INACTIVE;
+						// Absent header means an older Hub server that predates subscriptions — treat as ACTIVE for backward compatibility
+						HubRepository.SubscriptionState state = (subscriptionHeader == null || "ACTIVE".equalsIgnoreCase(subscriptionHeader)) ? HubRepository.SubscriptionState.ACTIVE : HubRepository.SubscriptionState.INACTIVE;
 						return new HubRepository.VaultAccess(response.body().string(), state);
 					} else {
 						throw new FatalBackendException("Failed to load JWE, response code good but no body");

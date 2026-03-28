@@ -41,6 +41,18 @@ class LicenseEnforcer @Inject constructor(private val sharedPreferencesHandler: 
 		SHARE_NODE(
 			R.string.read_only_reason_share_node,
 			R.string.screen_license_check_locked_share_node,
+		),
+		RENAME_NODE(
+			R.string.read_only_reason_rename_node,
+			R.string.screen_license_check_locked_rename_node,
+		),
+		MOVE_NODE(
+			R.string.read_only_reason_move_node,
+			R.string.screen_license_check_locked_move_node,
+		),
+		DELETE_NODE(
+			R.string.read_only_reason_delete_node,
+			R.string.screen_license_check_locked_delete_node,
 		);
 
 		companion object {
