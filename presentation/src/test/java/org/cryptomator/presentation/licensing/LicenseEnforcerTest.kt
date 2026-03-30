@@ -1,7 +1,10 @@
 package org.cryptomator.presentation.licensing
 
+import android.app.Activity
 import android.content.Context
+import android.widget.Toast
 import org.cryptomator.presentation.R
+import org.cryptomator.presentation.model.VaultModel
 import org.cryptomator.util.FlavorConfig
 import org.cryptomator.util.SharedPreferencesHandler
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -12,6 +15,7 @@ import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.mockStatic
 import org.mockito.Mockito.`when`
 
 class LicenseEnforcerTest {
@@ -71,6 +75,96 @@ class LicenseEnforcerTest {
 		`when`(sharedPreferencesHandler.trialExpirationDate()).thenReturn(0L)
 
 		assertFalse(licenseEnforcer.hasWriteAccess())
+	}
+
+	// -- hasWriteAccessForVault --
+
+	@Test
+	fun `hasWriteAccessForVault returns true for non-hub vault with write access`() {
+		`when`(sharedPreferencesHandler.licenseToken()).thenReturn("some-token")
+		`when`(sharedPreferencesHandler.hasRunningSubscription()).thenReturn(false)
+		`when`(sharedPreferencesHandler.trialExpirationDate()).thenReturn(0L)
+		val vault: VaultModel = mock()
+		`when`(vault.isHubVault).thenReturn(false)
+
+		assertTrue(licenseEnforcer.hasWriteAccessForVault(vault))
+	}
+
+	@Test
+	fun `hasWriteAccessForVault returns false for non-hub vault without write access`() {
+		assumeTrue(!FlavorConfig.isPremiumFlavor, "Licensing logic is bypassed on this flavor")
+		`when`(sharedPreferencesHandler.licenseToken()).thenReturn("")
+		`when`(sharedPreferencesHandler.hasRunningSubscription()).thenReturn(false)
+		`when`(sharedPreferencesHandler.trialExpirationDate()).thenReturn(0L)
+		val vault: VaultModel = mock()
+		`when`(vault.isHubVault).thenReturn(false)
+
+		assertFalse(licenseEnforcer.hasWriteAccessForVault(vault))
+	}
+
+	@Test
+	fun `hasWriteAccessForVault returns true for hub vault with paid license`() {
+		val vault: VaultModel = mock()
+		`when`(vault.isHubVault).thenReturn(true)
+		`when`(vault.hasHubPaidLicense).thenReturn(true)
+
+		assertTrue(licenseEnforcer.hasWriteAccessForVault(vault))
+	}
+
+	@Test
+	fun `hasWriteAccessForVault returns false for hub vault without paid license`() {
+		val vault: VaultModel = mock()
+		`when`(vault.isHubVault).thenReturn(true)
+		`when`(vault.hasHubPaidLicense).thenReturn(false)
+
+		assertFalse(licenseEnforcer.hasWriteAccessForVault(vault))
+	}
+
+	@Test
+	fun `hasWriteAccessForVault returns true when vault is null and has write access`() {
+		`when`(sharedPreferencesHandler.licenseToken()).thenReturn("some-token")
+		`when`(sharedPreferencesHandler.hasRunningSubscription()).thenReturn(false)
+		`when`(sharedPreferencesHandler.trialExpirationDate()).thenReturn(0L)
+
+		assertTrue(licenseEnforcer.hasWriteAccessForVault(null))
+	}
+
+	@Test
+	fun `hasWriteAccessForVault returns false when vault is null and has no write access`() {
+		assumeTrue(!FlavorConfig.isPremiumFlavor, "Licensing logic is bypassed on this flavor")
+		`when`(sharedPreferencesHandler.licenseToken()).thenReturn("")
+		`when`(sharedPreferencesHandler.hasRunningSubscription()).thenReturn(false)
+		`when`(sharedPreferencesHandler.trialExpirationDate()).thenReturn(0L)
+
+		assertFalse(licenseEnforcer.hasWriteAccessForVault(null))
+	}
+
+	// -- ensureWriteAccessForVault --
+
+	@Test
+	fun `ensureWriteAccessForVault returns true for hub vault with paid license`() {
+		val activity: Activity = mock()
+		val vault: VaultModel = mock()
+		`when`(vault.isHubVault).thenReturn(true)
+		`when`(vault.hasHubPaidLicense).thenReturn(true)
+
+		assertTrue(licenseEnforcer.ensureWriteAccessForVault(activity, vault, LicenseEnforcer.LockedAction.UPLOAD_FILES))
+	}
+
+	@Test
+	fun `ensureWriteAccessForVault returns false for hub vault without paid license`() {
+		val activity: Activity = mock()
+		val vault: VaultModel = mock()
+		`when`(vault.isHubVault).thenReturn(true)
+		`when`(vault.hasHubPaidLicense).thenReturn(false)
+
+		mockStatic(Toast::class.java).use { toastMock ->
+			val toast: Toast = mock()
+			toastMock.`when`<Toast> { Toast.makeText(activity, R.string.read_only_reason_hub_inactive, Toast.LENGTH_LONG) }.thenReturn(toast)
+
+			assertFalse(licenseEnforcer.ensureWriteAccessForVault(activity, vault, LicenseEnforcer.LockedAction.UPLOAD_FILES))
+			org.mockito.Mockito.verify(toast).show()
+		}
 	}
 
 	// -- hasPaidLicense --

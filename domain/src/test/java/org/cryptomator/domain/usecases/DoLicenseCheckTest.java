@@ -55,6 +55,7 @@ public class DoLicenseCheckTest {
 			DoLicenseCheck inTest = testCandidate("");
 
 			assertThrows(LicenseNotValidException.class, inTest::execute);
+			verify(sharedPreferencesHandler, never()).setLicenseToken(any());
 		}
 
 		@Test
@@ -96,6 +97,7 @@ public class DoLicenseCheckTest {
 			DoLicenseCheck inTest = testCandidate("this-is-not-a-jwt");
 
 			assertThrows(LicenseNotValidException.class, inTest::execute);
+			verify(sharedPreferencesHandler, never()).setLicenseToken(any());
 		}
 
 		@Test
@@ -107,6 +109,7 @@ public class DoLicenseCheckTest {
 			DoLicenseCheck inTest = testCandidate(token);
 
 			assertThrows(LicenseNotValidException.class, inTest::execute);
+			verify(sharedPreferencesHandler, never()).setLicenseToken(any());
 		}
 
 		@Test
@@ -122,6 +125,7 @@ public class DoLicenseCheckTest {
 			DoLicenseCheck inTest = testCandidate(corruptedToken);
 
 			assertThrows(LicenseNotValidException.class, inTest::execute);
+			verify(sharedPreferencesHandler, never()).setLicenseToken(any());
 		}
 
 		@Test
@@ -130,6 +134,7 @@ public class DoLicenseCheckTest {
 			DoLicenseCheck inTest = testCandidate("a.b.c");
 
 			assertThrows(LicenseNotValidException.class, inTest::execute);
+			verify(sharedPreferencesHandler, never()).setLicenseToken(any());
 		}
 	}
 
