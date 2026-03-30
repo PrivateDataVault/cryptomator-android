@@ -121,8 +121,15 @@ configurations.all {
 dependencies {
 	def dependencies = rootProject.ext.dependencies
 	def cloudFlavors = ['playstore', 'playstoreiap', 'apkstore', 'fdroid', 'accrescent']
-	def addToFlavors = { flavors, dep ->
-		flavors.each { flavor -> add("${flavor}Implementation", dep) }
+	def googleFlavors = ['playstore', 'playstoreiap', 'apkstore']
+	def addToFlavors = { flavors, dep, Closure config = null ->
+		flavors.each { flavor ->
+			if (config) {
+				add("${flavor}Implementation", dep, config)
+			} else {
+				add("${flavor}Implementation", dep)
+			}
+		}
 	}
 
 	implementation project(':domain')
@@ -153,69 +160,19 @@ dependencies {
 	implementation dependencies.stax
 	api dependencies.minIo
 
-	playstoreImplementation(dependencies.googlePlayServicesAuth) {
+	addToFlavors(googleFlavors, dependencies.googlePlayServicesAuth) {
 		exclude module: 'guava-jdk5'
 		exclude module: 'httpclient'
 		exclude module: 'googlehttpclient'
 		exclude group: "com.google.http-client", module: "google-http-client"
 	}
-	playstoreiapImplementation(dependencies.googlePlayServicesAuth) {
+	addToFlavors(googleFlavors, dependencies.googleApiServicesDrive) {
 		exclude module: 'guava-jdk5'
 		exclude module: 'httpclient'
 		exclude module: 'googlehttpclient'
 		exclude group: "com.google.http-client", module: "google-http-client"
 	}
-	apkstoreImplementation(dependencies.googlePlayServicesAuth) {
-		exclude module: 'guava-jdk5'
-		exclude module: 'httpclient'
-		exclude module: "google-http-client"
-		exclude group: "com.google.http-client", module: "google-http-client"
-	}
-
-	playstoreImplementation(dependencies.googleApiServicesDrive) {
-		exclude module: 'guava-jdk5'
-		exclude module: 'httpclient'
-		exclude module: 'googlehttpclient'
-		exclude group: "com.google.http-client", module: "google-http-client"
-	}
-	playstoreiapImplementation(dependencies.googleApiServicesDrive) {
-		exclude module: 'guava-jdk5'
-		exclude module: 'httpclient'
-		exclude module: 'googlehttpclient'
-		exclude group: "com.google.http-client", module: "google-http-client"
-	}
-	apkstoreImplementation(dependencies.googleApiServicesDrive) {
-		exclude module: 'guava-jdk5'
-		exclude module: 'httpclient'
-		exclude module: "google-http-client"
-		exclude group: "com.google.http-client", module: "google-http-client"
-	}
-
-	playstoreImplementation(dependencies.googleApiClientAndroid) {
-		exclude module: 'guava-jdk5'
-		exclude module: 'httpclient'
-		exclude module: "google-http-client"
-		exclude module: "jetified-google-http-client"
-		exclude group: "com.google.http-client", module: "google-http-client"
-		exclude group: "com.google.http-client", module: "jetified-google-http-client"
-	}
-	playstoreiapImplementation(dependencies.googleApiClientAndroid) {
-		exclude module: 'guava-jdk5'
-		exclude module: 'httpclient'
-		exclude module: "google-http-client"
-		exclude module: "jetified-google-http-client"
-		exclude group: "com.google.http-client", module: "google-http-client"
-		exclude group: "com.google.http-client", module: "jetified-google-http-client"
-	}
-	apkstoreImplementation(dependencies.googleApiClientAndroid) {
-		exclude module: 'guava-jdk5'
-		exclude module: 'httpclient'
-		exclude module: "google-http-client"
-		exclude module: "jetified-google-http-client"
-		exclude group: "com.google.http-client", module: "google-http-client"
-		exclude group: "com.google.http-client", module: "jetified-google-http-client"
-	}
-	accrescentImplementation(dependencies.googleApiClientAndroid) {
+	addToFlavors(googleFlavors + ['accrescent'], dependencies.googleApiClientAndroid) {
 		exclude module: 'guava-jdk5'
 		exclude module: 'httpclient'
 		exclude module: "google-http-client"
@@ -224,13 +181,8 @@ dependencies {
 		exclude group: "com.google.http-client", module: "jetified-google-http-client"
 	}
 
-	playstoreImplementation dependencies.trackingFreeGoogleCLient
-	playstoreiapImplementation dependencies.trackingFreeGoogleCLient
-	apkstoreImplementation dependencies.trackingFreeGoogleCLient
-	playstoreImplementation dependencies.trackingFreeGoogleAndroidCLient
-	playstoreiapImplementation dependencies.trackingFreeGoogleAndroidCLient
-	apkstoreImplementation dependencies.trackingFreeGoogleAndroidCLient
-	accrescentImplementation dependencies.trackingFreeGoogleAndroidCLient
+	addToFlavors(googleFlavors, dependencies.trackingFreeGoogleCLient)
+	addToFlavors(googleFlavors + ['accrescent'], dependencies.trackingFreeGoogleAndroidCLient)
 
 	// rest
 	implementation dependencies.rxJava

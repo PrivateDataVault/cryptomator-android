@@ -14,8 +14,14 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.mockito.ArgumentCaptor
+import org.mockito.ArgumentMatchers.any
+import org.mockito.ArgumentMatchers.anyLong
+import org.mockito.ArgumentMatchers.eq
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.mockStatic
+import org.mockito.Mockito.never
+import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 
 class LicenseEnforcerTest {
@@ -163,7 +169,7 @@ class LicenseEnforcerTest {
 			toastMock.`when`<Toast> { Toast.makeText(activity, R.string.read_only_reason_hub_inactive, Toast.LENGTH_LONG) }.thenReturn(toast)
 
 			assertFalse(licenseEnforcer.ensureWriteAccessForVault(activity, vault, LicenseEnforcer.LockedAction.UPLOAD_FILES))
-			org.mockito.Mockito.verify(toast).show()
+			verify(toast).show()
 		}
 	}
 
@@ -236,8 +242,8 @@ class LicenseEnforcerTest {
 		licenseEnforcer.startTrial()
 		val after = System.currentTimeMillis()
 
-		val captor = org.mockito.ArgumentCaptor.forClass(Long::class.java)
-		org.mockito.Mockito.verify(sharedPreferencesHandler).setTrialExpirationDate(captor.capture())
+		val captor = ArgumentCaptor.forClass(Long::class.java)
+		verify(sharedPreferencesHandler).setTrialExpirationDate(captor.capture())
 
 		val thirtyDaysMs = 30L * 24 * 60 * 60 * 1000
 		assertTrue(captor.value >= before + thirtyDaysMs)
@@ -250,7 +256,7 @@ class LicenseEnforcerTest {
 
 		licenseEnforcer.startTrial()
 
-		org.mockito.Mockito.verify(sharedPreferencesHandler, org.mockito.Mockito.never()).setTrialExpirationDate(org.mockito.ArgumentMatchers.anyLong())
+		verify(sharedPreferencesHandler, never()).setTrialExpirationDate(anyLong())
 	}
 
 	@Test
@@ -259,7 +265,7 @@ class LicenseEnforcerTest {
 
 		licenseEnforcer.startTrial()
 
-		org.mockito.Mockito.verify(sharedPreferencesHandler, org.mockito.Mockito.never()).setTrialExpirationDate(org.mockito.ArgumentMatchers.anyLong())
+		verify(sharedPreferencesHandler, never()).setTrialExpirationDate(anyLong())
 	}
 
 	// -- evaluateTrialState --
@@ -307,7 +313,7 @@ class LicenseEnforcerTest {
 		`when`(sharedPreferencesHandler.licenseToken()).thenReturn("")
 		`when`(sharedPreferencesHandler.hasRunningSubscription()).thenReturn(false)
 		`when`(sharedPreferencesHandler.trialExpirationDate()).thenReturn(System.currentTimeMillis() + 86400000L)
-		`when`(context.getString(org.mockito.ArgumentMatchers.eq(R.string.screen_license_check_trial_expiration), org.mockito.ArgumentMatchers.any())).thenReturn("Expiration Date: Mar 28, 2026")
+		`when`(context.getString(eq(R.string.screen_license_check_trial_expiration), any())).thenReturn("Expiration Date: Mar 28, 2026")
 
 		val uiState = licenseEnforcer.evaluateUiState(context)
 
@@ -324,7 +330,7 @@ class LicenseEnforcerTest {
 		`when`(sharedPreferencesHandler.licenseToken()).thenReturn("")
 		`when`(sharedPreferencesHandler.hasRunningSubscription()).thenReturn(false)
 		`when`(sharedPreferencesHandler.trialExpirationDate()).thenReturn(System.currentTimeMillis() - 1000L)
-		`when`(context.getString(org.mockito.ArgumentMatchers.eq(R.string.screen_license_check_trial_expiration), org.mockito.ArgumentMatchers.any())).thenReturn("Expiration Date: Mar 26, 2026")
+		`when`(context.getString(eq(R.string.screen_license_check_trial_expiration), any())).thenReturn("Expiration Date: Mar 26, 2026")
 
 		val uiState = licenseEnforcer.evaluateUiState(context)
 

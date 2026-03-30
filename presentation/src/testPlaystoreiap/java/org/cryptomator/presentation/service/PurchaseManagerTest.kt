@@ -5,6 +5,8 @@ import org.cryptomator.util.SharedPreferencesHandler
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.mockito.ArgumentMatchers.anyBoolean
+import org.mockito.ArgumentMatchers.anyString
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.never
 import org.mockito.Mockito.verify
@@ -42,7 +44,7 @@ class PurchaseManagerTest {
 
 		purchaseManager.handleInAppPurchases(listOf(purchase), acknowledgePurchase = acknowledgePurchase)
 
-		verify(sharedPreferencesHandler, never()).setLicenseToken(org.mockito.ArgumentMatchers.anyString())
+		verify(sharedPreferencesHandler, never()).setLicenseToken(anyString())
 	}
 
 	@Test
@@ -71,7 +73,7 @@ class PurchaseManagerTest {
 
 		purchaseManager.handleInAppPurchases(listOf(purchase), acknowledgePurchase = acknowledgePurchase)
 
-		verify(sharedPreferencesHandler, never()).setLicenseToken(org.mockito.ArgumentMatchers.anyString())
+		verify(sharedPreferencesHandler, never()).setLicenseToken(anyString())
 	}
 
 	// -- handleSubscriptionPurchases --
@@ -91,7 +93,7 @@ class PurchaseManagerTest {
 
 		purchaseManager.handleSubscriptionPurchases(listOf(purchase), acknowledgePurchase = acknowledgePurchase)
 
-		verify(sharedPreferencesHandler, never()).setHasRunningSubscription(org.mockito.ArgumentMatchers.anyBoolean())
+		verify(sharedPreferencesHandler, never()).setHasRunningSubscription(anyBoolean())
 	}
 
 	@Test
@@ -118,7 +120,7 @@ class PurchaseManagerTest {
 
 		purchaseManager.handleInAppPurchases(listOf(purchase), acknowledgePurchase = acknowledgePurchase)
 
-		verify(sharedPreferencesHandler, never()).setLicenseToken(org.mockito.ArgumentMatchers.anyString())
+		verify(sharedPreferencesHandler, never()).setLicenseToken(anyString())
 		assertEquals(emptyList<String>(), acknowledgedTokens)
 	}
 
@@ -128,7 +130,7 @@ class PurchaseManagerTest {
 
 		purchaseManager.handleSubscriptionPurchases(listOf(purchase), acknowledgePurchase = acknowledgePurchase)
 
-		verify(sharedPreferencesHandler, never()).setHasRunningSubscription(org.mockito.ArgumentMatchers.anyBoolean())
+		verify(sharedPreferencesHandler, never()).setHasRunningSubscription(anyBoolean())
 	}
 
 	@Test
@@ -161,7 +163,7 @@ class PurchaseManagerTest {
 
 		purchaseManager.handleInAppPurchases(listOf(pending, purchased), acknowledgePurchase = acknowledgePurchase)
 
-		verify(sharedPreferencesHandler, never()).setLicenseToken(org.mockito.ArgumentMatchers.anyString())
+		verify(sharedPreferencesHandler, never()).setLicenseToken(anyString())
 	}
 
 	// -- Unknown state --
@@ -172,7 +174,7 @@ class PurchaseManagerTest {
 
 		purchaseManager.handleInAppPurchases(listOf(purchase), acknowledgePurchase = acknowledgePurchase)
 
-		verify(sharedPreferencesHandler, never()).setLicenseToken(org.mockito.ArgumentMatchers.anyString())
+		verify(sharedPreferencesHandler, never()).setLicenseToken(anyString())
 		assertEquals(emptyList<String>(), acknowledgedTokens)
 	}
 
