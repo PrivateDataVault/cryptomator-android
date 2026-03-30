@@ -152,10 +152,16 @@ class LicenseEnforcer @Inject constructor(private val sharedPreferencesHandler: 
 		return hasWriteAccess()
 	}
 
-	companion object {
-		val isFreemiumFlavor: Boolean
-			get() = FlavorConfig.isFreemiumFlavor
+	fun ensureWriteAccessForVault(activity: Activity, vault: VaultModel?, action: LockedAction): Boolean {
+		if (vault?.isHubVault == true) {
+			if (hasWriteAccessForVault(vault)) return true
+			Toast.makeText(activity, R.string.read_only_reason_hub_inactive, Toast.LENGTH_LONG).show()
+			return false
+		}
+		return ensureWriteAccess(activity, action)
+	}
 
+	companion object {
 		private const val TRIAL_DURATION_MS = 30L * 24 * 60 * 60 * 1000
 	}
 }

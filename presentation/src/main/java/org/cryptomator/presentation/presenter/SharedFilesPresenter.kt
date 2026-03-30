@@ -307,11 +307,9 @@ class SharedFilesPresenter @Inject constructor( //
 
 	fun onSaveButtonPressed(filesForUpload: List<SharedFileModel>) {
 		if (selectedVault != null && !licenseEnforcer.hasWriteAccessForVault(selectedVault)) {
-			if (selectedVault!!.isHubVault) {
-				view?.showMessage(R.string.read_only_reason_hub_inactive)
-			} else {
-				licenseEnforcer.ensureWriteAccess(view!!.activity(), LicenseEnforcer.LockedAction.UPLOAD_FILES)
-				view?.finish()
+			view?.let { v ->
+				licenseEnforcer.ensureWriteAccessForVault(v.activity(), selectedVault, LicenseEnforcer.LockedAction.UPLOAD_FILES)
+				if (selectedVault?.isHubVault != true) v.finish()
 			}
 			return
 		}
@@ -391,12 +389,12 @@ class SharedFilesPresenter @Inject constructor( //
 
 	fun onVaultSelected(vault: VaultModel?) {
 		if (vault != null && !licenseEnforcer.hasWriteAccessForVault(vault)) {
-			if (vault.isHubVault) {
-				view?.showMessage(R.string.read_only_reason_hub_inactive)
-			} else {
-				licenseEnforcer.ensureWriteAccess(view!!.activity(), LicenseEnforcer.LockedAction.UPLOAD_FILES)
-				view?.finish()
-				return
+			view?.let { v ->
+				licenseEnforcer.ensureWriteAccessForVault(v.activity(), vault, LicenseEnforcer.LockedAction.UPLOAD_FILES)
+				if (!vault.isHubVault) {
+					v.finish()
+					return
+				}
 			}
 			selectedVault = null
 			view?.setUploadEnabled(false)

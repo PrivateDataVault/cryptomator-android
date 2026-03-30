@@ -10,8 +10,8 @@ import org.cryptomator.generator.Fragment
 import org.cryptomator.presentation.CryptomatorApp
 import org.cryptomator.presentation.R
 import org.cryptomator.presentation.databinding.FragmentWelcomeLicenseBinding
-import org.cryptomator.presentation.licensing.LicenseEnforcer
 import org.cryptomator.presentation.ui.layout.LicenseContentViewBinder
+import org.cryptomator.util.FlavorConfig
 
 @Fragment
 class WelcomeLicenseFragment : BaseFragment<FragmentWelcomeLicenseBinding>(FragmentWelcomeLicenseBinding::inflate) {
@@ -24,7 +24,7 @@ class WelcomeLicenseFragment : BaseFragment<FragmentWelcomeLicenseBinding>(Fragm
 	}
 
 	private val isFreemiumFlavor: Boolean
-		get() = LicenseEnforcer.isFreemiumFlavor
+		get() = FlavorConfig.isFreemiumFlavor
 	private val licenseContentViewBinder by lazy { LicenseContentViewBinder(binding.licenseContent, isFreemiumFlavor) }
 	private var listener: Listener? = null
 	private val debounceHandler = Handler(Looper.getMainLooper())

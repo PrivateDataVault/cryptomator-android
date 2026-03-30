@@ -6,7 +6,6 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.view.Menu
 import android.view.View
-import android.widget.Toast
 import androidx.appcompat.widget.SearchView
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
@@ -590,16 +589,7 @@ class BrowseFilesActivity : BaseActivity<ActivityLayoutBinding>(ActivityLayoutBi
 
 	private fun ensureWriteAccessForFolder(folder: CloudFolderModel?, action: LicenseEnforcer.LockedAction): Boolean {
 		val targetFolder = folder ?: browseFilesFragment().folder
-		val vaultModel = targetFolder.vault()
-		if (vaultModel?.isHubVault == true) {
-			return if (vaultModel.hasHubPaidLicense) {
-				true
-			} else {
-				Toast.makeText(this, R.string.read_only_reason_hub_inactive, Toast.LENGTH_LONG).show()
-				false
-			}
-		}
-		return licenseEnforcer.ensureWriteAccess(this, action)
+		return licenseEnforcer.ensureWriteAccessForVault(this, targetFolder.vault(), action)
 	}
 
 	override fun onCreateNewTextFileClicked(fileName: String) {

@@ -49,6 +49,7 @@ public class DoLicenseCheck {
 			Algorithm algorithm = Algorithm.ECDSA512(getPublicKey(ANDROID_PUB_KEY), null);
 			JWTVerifier verifier = JWT.require(algorithm).build();
 			DecodedJWT jwt = verifier.verify(license);
+			sharedPreferencesHandler.setLicenseToken(license);
 			return jwt::getSubject;
 		} catch (SignatureVerificationException | JWTDecodeException | FatalBackendException e) {
 			if (e instanceof SignatureVerificationException && isDesktopSupporterCertificate(license)) {
@@ -62,7 +63,7 @@ public class DoLicenseCheck {
 
 	private String useLicenseOrRetrieveFromPreferences(String license) throws NoLicenseAvailableException {
 		if (!license.isEmpty()) {
-			sharedPreferencesHandler.setLicenseToken(license);
+			return license;
 		} else {
 			license = sharedPreferencesHandler.licenseToken();
 			if (license.isEmpty()) {

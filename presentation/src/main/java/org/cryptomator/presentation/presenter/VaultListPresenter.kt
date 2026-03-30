@@ -37,7 +37,6 @@ import org.cryptomator.domain.usecases.vault.UpdateVaultParameterIfChangedRemote
 import org.cryptomator.generator.Callback
 import org.cryptomator.presentation.BuildConfig
 import org.cryptomator.presentation.CryptomatorApp
-import org.cryptomator.util.FlavorConfig
 import org.cryptomator.presentation.R
 import org.cryptomator.presentation.exception.ExceptionHandlers
 import org.cryptomator.presentation.intent.Intents
@@ -64,6 +63,7 @@ import org.cryptomator.presentation.workflow.AuthenticationExceptionHandler
 import org.cryptomator.presentation.workflow.CreateNewVaultWorkflow
 import org.cryptomator.presentation.workflow.PermissionsResult
 import org.cryptomator.presentation.workflow.Workflow
+import org.cryptomator.util.FlavorConfig
 import org.cryptomator.util.SharedPreferencesHandler
 import org.cryptomator.util.crypto.CryptoMode
 import javax.inject.Inject
@@ -105,7 +105,7 @@ class VaultListPresenter @Inject constructor( //
 	}
 
 	override fun resumed() {
-		if (!hasShownTrialExpiredDialog && LicenseEnforcer.isFreemiumFlavor) {
+		if (!hasShownTrialExpiredDialog && FlavorConfig.isFreemiumFlavor) {
 			val trialState = licenseEnforcer.evaluateTrialState()
 			if (trialState.isExpired && !licenseEnforcer.hasPaidLicense()) {
 				hasShownTrialExpiredDialog = true

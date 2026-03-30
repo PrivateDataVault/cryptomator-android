@@ -15,7 +15,6 @@ import androidx.preference.PreferenceCategory
 import androidx.preference.SwitchPreference
 import org.cryptomator.presentation.BuildConfig
 import org.cryptomator.presentation.CryptomatorApp
-import org.cryptomator.util.FlavorConfig
 import org.cryptomator.presentation.R
 import org.cryptomator.presentation.licensing.LicenseEnforcer
 import org.cryptomator.presentation.service.PhotoContentJob
@@ -33,9 +32,11 @@ import org.cryptomator.presentation.ui.dialog.DisableAppWhenObscuredDisclaimerDi
 import org.cryptomator.presentation.ui.dialog.DisableSecureScreenDisclaimerDialog
 import org.cryptomator.presentation.ui.dialog.MicrosoftWorkaroundDisclaimerDialog
 import org.cryptomator.presentation.ui.layout.PreferenceFragmentCompatLayout
+import org.cryptomator.util.FlavorConfig
 import org.cryptomator.util.SharedPreferencesHandler
 import org.cryptomator.util.SharedPreferencesHandler.Companion.CRYPTOMATOR_VARIANTS
 import org.cryptomator.util.file.LruFileCacheUtil
+import java.util.function.Consumer
 import java.lang.Boolean.FALSE
 import java.lang.Boolean.TRUE
 import java.lang.String.format
@@ -47,6 +48,7 @@ import timber.log.Timber
 class SettingsFragment : PreferenceFragmentCompatLayout() {
 
 	private lateinit var sharedPreferencesHandler: SharedPreferencesHandler
+	private val licenseChangeListener = Consumer<String> { _ -> setupLicense() }
 
 	override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
 		sharedPreferencesHandler = SharedPreferencesHandler(activity())
@@ -348,6 +350,12 @@ class SettingsFragment : PreferenceFragmentCompatLayout() {
 		}
 		(findPreference(SharedPreferencesHandler.PHOTO_UPLOAD_VAULT) as Preference?)?.intent = Intent(context, AutoUploadChooseVaultActivity::class.java)
 		(findPreference(SharedPreferencesHandler.LICENSES_ACTIVITY) as Preference?)?.intent = Intent(context, LicensesActivity::class.java)
+		sharedPreferencesHandler.addLicenseChangedListeners(licenseChangeListener)
+	}
+
+	override fun onPause() {
+		sharedPreferencesHandler.removeLicenseChangedListeners(licenseChangeListener)
+		super.onPause()
 	}
 
 	fun deactivateDebugMode() {

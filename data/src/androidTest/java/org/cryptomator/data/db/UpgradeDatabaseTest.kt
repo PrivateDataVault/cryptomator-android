@@ -11,6 +11,7 @@ import org.cryptomator.data.db.entities.CloudEntityDao
 import org.cryptomator.data.db.entities.UpdateCheckEntityDao
 import org.cryptomator.data.db.entities.VaultEntityDao
 import org.cryptomator.domain.CloudType
+import org.cryptomator.util.FlavorConfig
 import org.cryptomator.util.SharedPreferencesHandler
 import org.cryptomator.util.crypto.CredentialCryptor
 import org.cryptomator.util.crypto.CryptoMode
@@ -990,6 +991,9 @@ class UpgradeDatabaseTest {
 		Upgrade13To14(sharedPreferencesHandler).applyTo(db, 12)
 
 		Assert.assertThat(sharedPreferencesHandler.hasCompletedWelcomeFlow(), CoreMatchers.`is`(true))
+		if (!FlavorConfig.isPremiumFlavor) {
+			Assert.assertThat(sharedPreferencesHandler.licenseToken(), CoreMatchers.`is`(licenseToken))
+		}
 
 		Sql.query("UPDATE_CHECK_ENTITY").executeOn(db).use {
 			it.moveToFirst()
@@ -1035,6 +1039,7 @@ class UpgradeDatabaseTest {
 		Upgrade13To14(sharedPreferencesHandler).applyTo(db, 12)
 
 		Assert.assertThat(sharedPreferencesHandler.hasCompletedWelcomeFlow(), CoreMatchers.`is`(true))
+		Assert.assertThat(sharedPreferencesHandler.licenseToken(), CoreMatchers.`is`(""))
 
 		Sql.query("UPDATE_CHECK_ENTITY").executeOn(db).use {
 			it.moveToFirst()

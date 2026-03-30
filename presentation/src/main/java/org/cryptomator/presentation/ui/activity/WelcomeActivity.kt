@@ -10,7 +10,6 @@ import android.os.Build
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
@@ -51,7 +50,7 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 		get() = !FlavorConfig.isPremiumFlavor
 
 	private val isFreemiumFlavor: Boolean
-		get() = LicenseEnforcer.isFreemiumFlavor
+		get() = FlavorConfig.isFreemiumFlavor
 
 	private val keyguardManager by lazy { getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager }
 
@@ -83,11 +82,6 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 	override fun onNewIntent(intent: Intent) {
 		super.onNewIntent(intent)
 		validate(intent)
-	}
-
-	override fun onCreate(savedInstanceState: android.os.Bundle?) {
-		installSplashScreen()
-		super.onCreate(savedInstanceState)
 	}
 
 	override fun setupView() {

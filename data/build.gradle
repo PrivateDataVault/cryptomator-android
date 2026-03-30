@@ -120,13 +120,13 @@ configurations.all {
 
 dependencies {
 	def dependencies = rootProject.ext.dependencies
+	def cloudFlavors = ['playstore', 'playstoreiap', 'apkstore', 'fdroid', 'accrescent']
+	def addToFlavors = { flavors, dep ->
+		flavors.each { flavor -> add("${flavor}Implementation", dep) }
+	}
 
 	implementation project(':domain')
 	implementation project(':util')
-	playstoreImplementation dependencies.pcloud
-	apkstoreImplementation dependencies.pcloud
-	fdroidImplementation dependencies.pcloud
-	accrescentImplementation dependencies.pcloud
 
 	coreLibraryDesugaring dependencies.coreDesugaring
 
@@ -142,34 +142,13 @@ dependencies {
 	implementation dependencies.jsonWebToken
 
 	// cloud
-	playstoreImplementation dependencies.dropboxCore
-	playstoreImplementation dependencies.dropboxAndroid
-	playstoreiapImplementation dependencies.dropboxCore
-	playstoreiapImplementation dependencies.dropboxAndroid
-	apkstoreImplementation dependencies.dropboxCore
-	apkstoreImplementation dependencies.dropboxAndroid
-	fdroidImplementation dependencies.dropboxCore
-	fdroidImplementation dependencies.dropboxAndroid
-	accrescentImplementation dependencies.dropboxCore
-	accrescentImplementation dependencies.dropboxAndroid
+	addToFlavors(cloudFlavors, dependencies.dropboxCore)
+	addToFlavors(cloudFlavors, dependencies.dropboxAndroid)
 
+	addToFlavors(cloudFlavors, dependencies.msgraphAuth)
+	addToFlavors(cloudFlavors, dependencies.msgraph)
 
-	playstoreImplementation dependencies.msgraphAuth
-	playstoreiapImplementation dependencies.msgraphAuth
-	apkstoreImplementation dependencies.msgraphAuth
-	fdroidImplementation dependencies.msgraphAuth
-	accrescentImplementation dependencies.msgraphAuth
-	playstoreImplementation dependencies.msgraph
-	playstoreiapImplementation dependencies.msgraph
-	apkstoreImplementation dependencies.msgraph
-	fdroidImplementation dependencies.msgraph
-	accrescentImplementation dependencies.msgraph
-
-	playstoreImplementation dependencies.pcloud
-	playstoreiapImplementation dependencies.pcloud
-	apkstoreImplementation dependencies.pcloud
-	fdroidImplementation dependencies.pcloud
-	accrescentImplementation dependencies.pcloud
+	addToFlavors(cloudFlavors, dependencies.pcloud)
 
 	implementation dependencies.stax
 	api dependencies.minIo

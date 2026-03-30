@@ -12,6 +12,7 @@ import org.cryptomator.presentation.intent.Intents.vaultListIntent
 import org.cryptomator.presentation.licensing.LicenseEnforcer
 import org.cryptomator.presentation.licensing.LicenseStateOrchestrator
 import org.cryptomator.presentation.presenter.LicenseCheckPresenter
+import org.cryptomator.util.FlavorConfig
 import org.cryptomator.presentation.ui.activity.view.UpdateLicenseView
 import org.cryptomator.presentation.ui.dialog.LicenseConfirmationDialog
 import org.cryptomator.presentation.ui.layout.LicenseContentViewBinder
@@ -31,7 +32,7 @@ class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityL
 
 	private var lockedAction: LicenseEnforcer.LockedAction? = null
 	private val isFreemiumFlavor: Boolean
-		get() = LicenseEnforcer.isFreemiumFlavor
+		get() = FlavorConfig.isFreemiumFlavor
 	private val licenseContentViewBinder by lazy { LicenseContentViewBinder(binding.licenseContent, isFreemiumFlavor) }
 
 	private val orchestrator by lazy {
