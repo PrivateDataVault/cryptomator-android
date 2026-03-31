@@ -30,6 +30,7 @@ import org.cryptomator.util.SharedPreferencesHandler
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito
+import org.mockito.kotlin.isA
 
 class VaultListPresenterFreemiumTest {
 
@@ -88,7 +89,7 @@ class VaultListPresenterFreemiumTest {
 
 		inTest.resumed()
 
-		Mockito.verify(vaultListView).showDialog(Mockito.isA(TrialExpiredDialog::class.java))
+		Mockito.verify(vaultListView).showDialog(isA<TrialExpiredDialog>())
 	}
 
 	@Test
@@ -98,7 +99,7 @@ class VaultListPresenterFreemiumTest {
 
 		inTest.resumed()
 
-		Mockito.verify(vaultListView, Mockito.never()).showDialog(Mockito.isA(TrialExpiredDialog::class.java))
+		Mockito.verify(vaultListView, Mockito.never()).showDialog(isA<TrialExpiredDialog>())
 	}
 
 	@Test
@@ -108,7 +109,7 @@ class VaultListPresenterFreemiumTest {
 
 		inTest.resumed()
 
-		Mockito.verify(vaultListView, Mockito.never()).showDialog(Mockito.isA(TrialExpiredDialog::class.java))
+		Mockito.verify(vaultListView, Mockito.never()).showDialog(isA<TrialExpiredDialog>())
 	}
 
 	@Test
@@ -118,7 +119,7 @@ class VaultListPresenterFreemiumTest {
 
 		inTest.resumed()
 
-		Mockito.verify(vaultListView, Mockito.never()).showDialog(Mockito.isA(TrialExpiredDialog::class.java))
+		Mockito.verify(vaultListView, Mockito.never()).showDialog(isA<TrialExpiredDialog>())
 	}
 
 	@Test
@@ -129,6 +130,6 @@ class VaultListPresenterFreemiumTest {
 		inTest.resumed()
 		inTest.resumed()
 
-		Mockito.verify(vaultListView, Mockito.times(1)).showDialog(Mockito.isA(TrialExpiredDialog::class.java))
+		Mockito.verify(vaultListView, Mockito.times(1)).showDialog(isA<TrialExpiredDialog>())
 	}
 }
