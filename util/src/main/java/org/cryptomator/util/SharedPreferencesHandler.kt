@@ -332,6 +332,28 @@ override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key
 		defaultSharedPreferences.setValue(WELCOME_FLOW_COMPLETED, true)
 	}
 
+	fun addTrustedHubHosts(host: String) {
+		val hosts = defaultSharedPreferences
+			.getStringSet(TRUSTED_HUB_HOSTS, emptySet())
+			?.toMutableSet() ?: mutableSetOf()
+
+		hosts.add(host)
+
+		defaultSharedPreferences.edit()
+			.putStringSet(TRUSTED_HUB_HOSTS, hosts)
+			.apply()
+	}
+
+	fun getTrustedHubHosts(): Set<String> {
+		return defaultSharedPreferences
+			.getStringSet(TRUSTED_HUB_HOSTS, emptySet())
+			?.toSet() ?: emptySet()
+	}
+
+	fun clearTrustedHubHosts() {
+		defaultSharedPreferences.edit().putStringSet(TRUSTED_HUB_HOSTS, mutableSetOf()).apply()
+	}
+
 	companion object {
 
 		private const val SCREEN_LOCK_DIALOG_SHOWN = "askForScreenLockDialogShown"
@@ -371,6 +393,7 @@ override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key
 		const val BIOMETRIC_AUTHENTICATION = "biometricAuthentication"
 		const val CRYPTOMATOR_VARIANTS = "cryptomatorVariants"
 		const val LICENSES_ACTIVITY = "licensesActivity"
+		const val TRUSTED_HUB_HOSTS = "trustedHubHosts"
 	}
 
 	private inline fun SharedPreferences.edit(operation: (SharedPreferences.Editor) -> Unit) {

@@ -52,6 +52,8 @@
 	<string name="error_hub_invalid_version">Unsupported Hub version.</string>
 	<string name="error_hub_unlock_pre_31">Hub is only supported on Android 12 and above.</string>
 
+	<string name="error_hub_not_trustworthy">Hub is not trustworthy.</string>
+
 	<!-- # read-only & purchases -->
 	<string name="read_only_banner">You are currently in read-only mode.</string>
 	<string name="read_only_reason_create_vault">Creating new vaults requires an active license.</string>
@@ -307,6 +309,7 @@
 	<string name="screen_settings_live_search_summary">Update search results while entering the query</string>
 	<string name="screen_settings_glob_search">Search using glob pattern</string>
 	<string name="screen_settings_glob_search_summary">Use glob pattern matching like alice.*.jpg</string>
+	<string name="screen_hub_reset_unknown_hub_hosts_title">Reset Unknown Hub Hosts</string>
 
 	<string name="screen_settings_section_auto_lock">Automatic locking</string>
 	<string name="screen_settings_auto_lock_timeout">Lock after</string>
@@ -616,6 +619,9 @@
 	<string name="dialog_hub_user_setup_required_neutral_button">Go to Profile</string>
 	<string name="dialog_hub_user_setup_required_negative_button" translatable="false">@string/dialog_button_cancel</string>
 
+	<string name="dialog_hub_check_host_authenticity_title">Trust this hosts?</string>
+	<string name="dialog_hub_check_host_authenticity_neutral_button" translatable="false">@string/dialog_unable_to_share_positive_button</string>
+
 	<string name="permission_snackbar_auth_local_vault">Cryptomator needs storage access to use local vaults</string>
 	<string name="permission_snackbar_auth_auto_upload">Cryptomator needs storage access to use auto photo upload</string>
 	<string name="permission_snackbar_notifications">Cryptomator needs notification permissions to display vault status for example</string>
@@ -690,6 +696,8 @@
 	<string name="notification_update_check_finished_latest">Latest version installed</string>
 
 	<string name="notification_authenticating">Authenticating&#8230;</string>
+
+	<string name="notification_cleared_trusted_hosts">Cleared trusted hosts</string>
 
 	<string name="screen_settings_lru_cache">Cache</string>
 	<string name="screen_settings_lru_cache_toggle" translatable="false">@string/screen_settings_section_auto_photo_upload_toggle</string>
