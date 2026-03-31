@@ -17,7 +17,6 @@ import org.cryptomator.domain.CloudFolder
 import org.cryptomator.domain.CloudType
 import org.cryptomator.domain.Vault
 import org.cryptomator.domain.di.PerView
-import org.cryptomator.domain.usecases.DoLicenseCheckUseCase
 import org.cryptomator.domain.usecases.DoUpdateCheckUseCase
 import org.cryptomator.domain.usecases.DoUpdateUseCase
 import org.cryptomator.domain.usecases.GetDecryptedCloudForVaultUseCase
@@ -81,7 +80,6 @@ class VaultListPresenter @Inject constructor( //
 	private val createNewVaultWorkflow: CreateNewVaultWorkflow,  //
 	private val saveVaultUseCase: SaveVaultUseCase,  //
 	private val moveVaultPositionUseCase: MoveVaultPositionUseCase, //
-	private val licenseCheckUseCase: DoLicenseCheckUseCase,  //
 	private val updateCheckUseCase: DoUpdateCheckUseCase,  //
 	private val updateUseCase: DoUpdateUseCase,  //
 	private val updateVaultParameterIfChangedRemotelyUseCase: UpdateVaultParameterIfChangedRemotelyUseCase, //
@@ -633,7 +631,6 @@ class VaultListPresenter @Inject constructor( //
 			getVaultListUseCase,  //
 			saveVaultUseCase,  //
 			moveVaultPositionUseCase, //
-			licenseCheckUseCase,  //
 			updateCheckUseCase,  //
 			updateUseCase, //
 			listCBCEncryptedPasswordVaultsUseCase, //

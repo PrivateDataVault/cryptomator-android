@@ -2,7 +2,6 @@ package org.cryptomator.presentation.presenter
 
 import android.app.Activity
 import org.cryptomator.data.util.NetworkConnectionCheck
-import org.cryptomator.domain.usecases.DoLicenseCheckUseCase
 import org.cryptomator.domain.usecases.DoUpdateCheckUseCase
 import org.cryptomator.domain.usecases.DoUpdateUseCase
 import org.cryptomator.domain.usecases.GetDecryptedCloudForVaultUseCase
@@ -55,7 +54,6 @@ class VaultListPresenterFreemiumTest {
 			Mockito.mock(CreateNewVaultWorkflow::class.java),
 			Mockito.mock(SaveVaultUseCase::class.java),
 			Mockito.mock(MoveVaultPositionUseCase::class.java),
-			Mockito.mock(DoLicenseCheckUseCase::class.java),
 			Mockito.mock(DoUpdateCheckUseCase::class.java),
 			Mockito.mock(DoUpdateUseCase::class.java),
 			Mockito.mock(UpdateVaultParameterIfChangedRemotelyUseCase::class.java),
