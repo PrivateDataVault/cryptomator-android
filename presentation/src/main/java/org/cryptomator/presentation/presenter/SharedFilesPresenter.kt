@@ -309,7 +309,6 @@ class SharedFilesPresenter @Inject constructor( //
 		if (selectedVault != null && !licenseEnforcer.hasWriteAccessForVault(selectedVault)) {
 			view?.let { v ->
 				licenseEnforcer.ensureWriteAccessForVault(v.activity(), selectedVault, LicenseEnforcer.LockedAction.UPLOAD_FILES)
-				if (selectedVault?.isHubVault != true) v.finish()
 			}
 			return
 		}
@@ -388,18 +387,6 @@ class SharedFilesPresenter @Inject constructor( //
 	}
 
 	fun onVaultSelected(vault: VaultModel?) {
-		if (vault != null && !licenseEnforcer.hasWriteAccessForVault(vault)) {
-			view?.let { v ->
-				licenseEnforcer.ensureWriteAccessForVault(v.activity(), vault, LicenseEnforcer.LockedAction.UPLOAD_FILES)
-				if (!vault.isHubVault) {
-					v.finish()
-					return
-				}
-			}
-			selectedVault = null
-			view?.setUploadEnabled(false)
-			return
-		}
 		selectedVault = vault
 		view?.setUploadEnabled(vault != null)
 	}
