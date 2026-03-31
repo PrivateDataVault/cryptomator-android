@@ -278,10 +278,10 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 	}
 
 	private fun autoAdvanceToNextPage() {
+		val sourcePage = binding.welcomePager.currentItem
 		binding.welcomePager.postDelayed({
-			val pos = binding.welcomePager.currentItem
-			if (pos < pagerAdapter.itemCount - 1) {
-				binding.welcomePager.currentItem = pos + 1
+			if (!isFinishing && binding.welcomePager.currentItem == sourcePage && sourcePage < pagerAdapter.itemCount - 1) {
+				binding.welcomePager.currentItem = sourcePage + 1
 			}
 		}, AUTO_ADVANCE_DELAY_MS)
 	}

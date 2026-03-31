@@ -65,7 +65,6 @@ import org.cryptomator.presentation.model.mappers.CloudNodeModelMapper
 import org.cryptomator.presentation.model.mappers.ProgressModelMapper
 import org.cryptomator.presentation.model.mappers.ProgressStateModelMapper
 import org.cryptomator.presentation.service.OpenWritableFileNotification
-import org.cryptomator.presentation.ui.activity.TextEditorActivity
 import org.cryptomator.presentation.ui.activity.view.BrowseFilesView
 import org.cryptomator.presentation.ui.dialog.ExportCloudFilesDialog
 import org.cryptomator.presentation.ui.dialog.FileNameDialog
@@ -512,8 +511,8 @@ class BrowseFilesPresenter @Inject constructor( //
 		if (lowerFileName.endsWith(".txt") || lowerFileName.endsWith(".md") || lowerFileName.endsWith(".todo")) {
 			val intent = Intents.textEditorIntent()
 				.withTextFile(cloudFile)
+				.withHubWriteAllowed(licenseEnforcer.hasWriteAccessForVault(view?.folder?.vault()))
 				.build(this)
-			intent.putExtra(TextEditorActivity.EXTRA_HUB_WRITE_ALLOWED, licenseEnforcer.hasWriteAccessForVault(view?.folder?.vault()))
 			startIntent(intent)
 		} else if (!lowerFileName.endsWith(".gif") && isImageMediaType(cloudFile.name)) {
 			val cloudFileNodes = previewCloudFileNodes
@@ -1157,8 +1156,8 @@ class BrowseFilesPresenter @Inject constructor( //
 					if (internalEditor) {
 						val editorIntent = Intents.textEditorIntent()
 							.withTextFile(textFile)
+							.withHubWriteAllowed(licenseEnforcer.hasWriteAccessForVault(view?.folder?.vault()))
 							.build(this@BrowseFilesPresenter)
-						editorIntent.putExtra(TextEditorActivity.EXTRA_HUB_WRITE_ALLOWED, licenseEnforcer.hasWriteAccessForVault(view?.folder?.vault()))
 						startIntent(editorIntent)
 					} else {
 						viewExternalFile(textFile)

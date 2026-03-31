@@ -5,18 +5,20 @@ import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import org.cryptomator.generator.Activity
+import org.cryptomator.generator.InjectIntent
 import org.cryptomator.presentation.CryptomatorApp
 import org.cryptomator.presentation.R
 import org.cryptomator.presentation.databinding.ActivityLicenseCheckBinding
 import org.cryptomator.presentation.intent.Intents.vaultListIntent
+import org.cryptomator.presentation.intent.LicenseCheckIntent
 import org.cryptomator.presentation.licensing.LicenseEnforcer
 import org.cryptomator.presentation.licensing.LicenseStateOrchestrator
 import org.cryptomator.presentation.presenter.LicenseCheckPresenter
-import org.cryptomator.util.FlavorConfig
 import org.cryptomator.presentation.ui.activity.view.UpdateLicenseView
 import org.cryptomator.presentation.ui.dialog.LicenseConfirmationDialog
 import org.cryptomator.presentation.ui.layout.LicenseContentViewBinder
 import org.cryptomator.presentation.ui.layout.ObscuredAwareCoordinatorLayout
+import org.cryptomator.util.FlavorConfig
 import javax.inject.Inject
 
 @Activity
@@ -30,10 +32,11 @@ class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityL
 	@Inject
 	lateinit var licenseEnforcer: LicenseEnforcer
 
+	@InjectIntent
+	lateinit var licenseCheckIntent: LicenseCheckIntent
+
 	private var lockedAction: LicenseEnforcer.LockedAction? = null
-	private val isFreemiumFlavor: Boolean
-		get() = FlavorConfig.isFreemiumFlavor
-	private val licenseContentViewBinder by lazy { LicenseContentViewBinder(binding.licenseContent, isFreemiumFlavor) }
+	private val licenseContentViewBinder by lazy { LicenseContentViewBinder(binding.licenseContent, FlavorConfig.isFreemiumFlavor) }
 
 	private val orchestrator by lazy {
 		LicenseStateOrchestrator(
@@ -52,7 +55,7 @@ class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityL
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
-		lockedAction = LicenseEnforcer.LockedAction.fromName(intent.getStringExtra(EXTRA_LOCKED_ACTION))
+		lockedAction = LicenseEnforcer.LockedAction.fromName(licenseCheckIntent.lockedAction())
 		binding.activityRootView.setOnFilteredTouchEventForSecurityListener(object : ObscuredAwareCoordinatorLayout.Listener {
 			override fun onFilteredTouchEventForSecurity() {
 				licenseCheckPresenter.onFilteredTouchEventForSecurity()
@@ -87,7 +90,7 @@ class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityL
 			binding.licenseContent.tvInfoText.text = getString(action.headerMessageRes)
 		}
 
-		if (isFreemiumFlavor) {
+		if (FlavorConfig.isFreemiumFlavor) {
 			setupIapView()
 		} else {
 			setupLicenseEntryView()

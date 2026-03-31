@@ -988,7 +988,7 @@ class UpgradeDatabaseTest {
 			.set("URL_TO_RELEASE_NOTE", Sql.toString(urlReleaseNote))
 			.executeOn(db)
 
-		Upgrade13To14(sharedPreferencesHandler).applyTo(db, 12)
+		Upgrade13To14(sharedPreferencesHandler).applyTo(db, 13)
 
 		Assert.assertThat(sharedPreferencesHandler.hasCompletedWelcomeFlow(), CoreMatchers.`is`(true))
 		if (!FlavorConfig.isPremiumFlavor) {
@@ -1036,7 +1036,7 @@ class UpgradeDatabaseTest {
 			.set("URL_TO_RELEASE_NOTE", Sql.toString(urlReleaseNote))
 			.executeOn(db)
 
-		Upgrade13To14(sharedPreferencesHandler).applyTo(db, 12)
+		Upgrade13To14(sharedPreferencesHandler).applyTo(db, 13)
 
 		Assert.assertThat(sharedPreferencesHandler.hasCompletedWelcomeFlow(), CoreMatchers.`is`(true))
 		Assert.assertThat(sharedPreferencesHandler.licenseToken(), CoreMatchers.`is`(""))

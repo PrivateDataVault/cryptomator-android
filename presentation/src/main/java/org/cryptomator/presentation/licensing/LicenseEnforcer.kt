@@ -81,7 +81,9 @@ class LicenseEnforcer @Inject constructor(private val sharedPreferencesHandler: 
 	}
 
 	fun startTrial() {
-		if (sharedPreferencesHandler.trialExpirationDate() > 0) return
+		if (sharedPreferencesHandler.trialExpirationDate() > 0) {
+			return
+		}
 		val trialExpiration = System.currentTimeMillis() + TRIAL_DURATION_MS
 		sharedPreferencesHandler.setTrialExpirationDate(trialExpiration)
 	}
@@ -162,6 +164,7 @@ class LicenseEnforcer @Inject constructor(private val sharedPreferencesHandler: 
 	}
 
 	companion object {
-		private const val TRIAL_DURATION_MS = 30L * 24 * 60 * 60 * 1000
+		private const val TRIAL_DURATION_DAYS = 30L
+		private const val TRIAL_DURATION_MS = TRIAL_DURATION_DAYS * 24 * 60 * 60 * 1000
 	}
 }

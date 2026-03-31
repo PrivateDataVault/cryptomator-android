@@ -33,9 +33,6 @@ import org.mockito.Mockito
 
 class VaultListPresenterFreemiumTest {
 
-	@Suppress("UNCHECKED_CAST")
-	private fun <T> anyNonNull(): T = Mockito.any<T>() as T
-
 	private val vaultListView: VaultListView = Mockito.mock(VaultListView::class.java)
 	private val activity: Activity = Mockito.mock(Activity::class.java)
 	private val licenseEnforcer: LicenseEnforcer = Mockito.mock(LicenseEnforcer::class.java)
@@ -91,7 +88,7 @@ class VaultListPresenterFreemiumTest {
 
 		inTest.resumed()
 
-		Mockito.verify(vaultListView).showDialog(anyNonNull())
+		Mockito.verify(vaultListView).showDialog(Mockito.isA(TrialExpiredDialog::class.java))
 	}
 
 	@Test
@@ -101,7 +98,7 @@ class VaultListPresenterFreemiumTest {
 
 		inTest.resumed()
 
-		Mockito.verify(vaultListView, Mockito.never()).showDialog(anyNonNull())
+		Mockito.verify(vaultListView, Mockito.never()).showDialog(Mockito.isA(TrialExpiredDialog::class.java))
 	}
 
 	@Test
@@ -111,7 +108,7 @@ class VaultListPresenterFreemiumTest {
 
 		inTest.resumed()
 
-		Mockito.verify(vaultListView, Mockito.never()).showDialog(anyNonNull())
+		Mockito.verify(vaultListView, Mockito.never()).showDialog(Mockito.isA(TrialExpiredDialog::class.java))
 	}
 
 	@Test
@@ -121,7 +118,7 @@ class VaultListPresenterFreemiumTest {
 
 		inTest.resumed()
 
-		Mockito.verify(vaultListView, Mockito.never()).showDialog(anyNonNull())
+		Mockito.verify(vaultListView, Mockito.never()).showDialog(Mockito.isA(TrialExpiredDialog::class.java))
 	}
 
 	@Test
@@ -132,6 +129,6 @@ class VaultListPresenterFreemiumTest {
 		inTest.resumed()
 		inTest.resumed()
 
-		Mockito.verify(vaultListView, Mockito.times(1)).showDialog(anyNonNull())
+		Mockito.verify(vaultListView, Mockito.times(1)).showDialog(Mockito.isA(TrialExpiredDialog::class.java))
 	}
 }

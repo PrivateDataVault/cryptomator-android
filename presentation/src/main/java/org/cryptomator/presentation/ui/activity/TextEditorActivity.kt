@@ -32,7 +32,7 @@ class TextEditorActivity : BaseActivity<ActivityLayoutBinding>(ActivityLayoutBin
 	lateinit var textEditorIntent: TextEditorIntent
 
 	private fun hasWriteAccess(): Boolean {
-		return licenseEnforcer.hasWriteAccess() || intent.getBooleanExtra(EXTRA_HUB_WRITE_ALLOWED, false)
+		return licenseEnforcer.hasWriteAccess() || textEditorIntent.hubWriteAllowed() == true
 	}
 
 	override val textFileContent: String
@@ -135,7 +135,6 @@ class TextEditorActivity : BaseActivity<ActivityLayoutBinding>(ActivityLayoutBin
 	}
 
 	override fun onSaveChangesClicked() {
-		if (!hasWriteAccess()) return
 		textEditorPresenter.saveChanges()
 	}
 
@@ -148,8 +147,4 @@ class TextEditorActivity : BaseActivity<ActivityLayoutBinding>(ActivityLayoutBin
 	}
 
 	private fun textEditorFragment(): TextEditorFragment = getCurrentFragment(R.id.fragment_container) as TextEditorFragment
-
-	companion object {
-		const val EXTRA_HUB_WRITE_ALLOWED = "hubWriteAllowed"
-	}
 }
