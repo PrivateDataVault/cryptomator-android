@@ -128,7 +128,9 @@ class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityL
 
 	override fun onNewIntent(intent: Intent) {
 		super.onNewIntent(intent)
-		lockedAction = LicenseEnforcer.LockedAction.fromName(intent.getStringExtra(EXTRA_LOCKED_ACTION))
+		setIntent(intent)
+		Activities.setIntent(this)
+		lockedAction = LicenseEnforcer.LockedAction.fromName(licenseCheckIntent.lockedAction())
 		setupUpsellView()
 		validate(intent)
 	}
@@ -157,7 +159,4 @@ class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityL
 		licenseCheckPresenter.validateDialogAware(binding.licenseContent.etLicense.text?.toString())
 	}
 
-	companion object {
-		const val EXTRA_LOCKED_ACTION = "lockedAction"
-	}
 }
