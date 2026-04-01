@@ -85,7 +85,7 @@ class LicenseEnforcer @Inject constructor(private val sharedPreferencesHandler: 
 		if (sharedPreferencesHandler.trialExpirationDate() > 0) {
 			return
 		}
-		val trialExpiration = System.currentTimeMillis() + TRIAL_DURATION_MS
+		val trialExpiration = System.currentTimeMillis() + TimeUnit.DAYS.toMillis(30)
 		sharedPreferencesHandler.setTrialExpirationDate(trialExpiration)
 	}
 
@@ -167,7 +167,4 @@ class LicenseEnforcer @Inject constructor(private val sharedPreferencesHandler: 
 		return ensureWriteAccess(activity, action)
 	}
 
-	companion object {
-		private val TRIAL_DURATION_MS = TimeUnit.DAYS.toMillis(30)
-	}
 }
