@@ -157,7 +157,9 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 		updateNavigationButtons(0)
 		binding.btnBack.setOnClickListener {
 			val pos = binding.welcomePager.currentItem
-			if (pos > 0) binding.welcomePager.currentItem = pos - 1
+			if (pos > 0) {
+				binding.welcomePager.currentItem = pos - 1
+			}
 		}
 		binding.btnNext.setOnClickListener {
 			advanceOrComplete()
