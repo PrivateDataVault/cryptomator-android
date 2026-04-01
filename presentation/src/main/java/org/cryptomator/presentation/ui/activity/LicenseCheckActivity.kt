@@ -85,9 +85,13 @@ class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityL
 		supportActionBar?.setHomeAsUpIndicator(R.drawable.ic_clear)
 		binding.mtToolbar.toolbar.setNavigationOnClickListener { finish() }
 
-		lockedAction?.let { action ->
+		val action = lockedAction
+		if (action != null) {
 			binding.licenseContent.tvInfoText.visibility = View.VISIBLE
 			binding.licenseContent.tvInfoText.text = getString(action.headerMessageRes)
+		} else {
+			binding.licenseContent.tvInfoText.visibility = View.GONE
+			binding.licenseContent.tvInfoText.text = null
 		}
 
 		if (FlavorConfig.isFreemiumFlavor) {
@@ -124,7 +128,7 @@ class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityL
 
 	override fun onNewIntent(intent: Intent) {
 		super.onNewIntent(intent)
-		lockedAction = LicenseEnforcer.LockedAction.fromName(intent.getStringExtra(EXTRA_LOCKED_ACTION)) ?: lockedAction
+		lockedAction = LicenseEnforcer.LockedAction.fromName(intent.getStringExtra(EXTRA_LOCKED_ACTION))
 		setupUpsellView()
 		validate(intent)
 	}

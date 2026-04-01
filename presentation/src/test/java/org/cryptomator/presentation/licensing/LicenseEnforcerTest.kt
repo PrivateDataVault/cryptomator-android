@@ -118,12 +118,53 @@ class LicenseEnforcerTest {
 	}
 
 	@Test
-	fun `hasWriteAccessForVault returns false for hub vault without paid license`() {
+	fun `hasWriteAccessForVault returns false for hub vault without paid license and no local license`() {
+		assumeTrue(!FlavorConfig.isPremiumFlavor, "Licensing logic is bypassed on this flavor")
 		val vault: VaultModel = mock()
 		`when`(vault.isHubVault).thenReturn(true)
 		`when`(vault.hasHubPaidLicense).thenReturn(false)
+		`when`(sharedPreferencesHandler.licenseToken()).thenReturn("")
+		`when`(sharedPreferencesHandler.hasRunningSubscription()).thenReturn(false)
+		`when`(sharedPreferencesHandler.trialExpirationDate()).thenReturn(0L)
 
 		assertFalse(licenseEnforcer.hasWriteAccessForVault(vault))
+	}
+
+	@Test
+	fun `hasWriteAccessForVault returns true for hub vault without paid license but with local license`() {
+		val vault: VaultModel = mock()
+		`when`(vault.isHubVault).thenReturn(true)
+		`when`(vault.hasHubPaidLicense).thenReturn(false)
+		`when`(sharedPreferencesHandler.licenseToken()).thenReturn("some-token")
+		`when`(sharedPreferencesHandler.hasRunningSubscription()).thenReturn(false)
+		`when`(sharedPreferencesHandler.trialExpirationDate()).thenReturn(0L)
+
+		assertTrue(licenseEnforcer.hasWriteAccessForVault(vault))
+	}
+
+	@Test
+	fun `hasWriteAccessForVault returns true for hub vault without paid license but with active trial`() {
+		val vault: VaultModel = mock()
+		`when`(vault.isHubVault).thenReturn(true)
+		`when`(vault.hasHubPaidLicense).thenReturn(false)
+		`when`(sharedPreferencesHandler.licenseToken()).thenReturn("")
+		`when`(sharedPreferencesHandler.hasRunningSubscription()).thenReturn(false)
+		`when`(sharedPreferencesHandler.trialExpirationDate()).thenReturn(System.currentTimeMillis() + 86400000L)
+
+		assertTrue(licenseEnforcer.hasWriteAccessForVault(vault))
+	}
+
+	@Test
+	fun `ensureWriteAccessForVault returns true for hub vault without paid license but with local license`() {
+		val activity: Activity = mock()
+		val vault: VaultModel = mock()
+		`when`(vault.isHubVault).thenReturn(true)
+		`when`(vault.hasHubPaidLicense).thenReturn(false)
+		`when`(sharedPreferencesHandler.licenseToken()).thenReturn("some-token")
+		`when`(sharedPreferencesHandler.hasRunningSubscription()).thenReturn(false)
+		`when`(sharedPreferencesHandler.trialExpirationDate()).thenReturn(0L)
+
+		assertTrue(licenseEnforcer.ensureWriteAccessForVault(activity, vault, LicenseEnforcer.LockedAction.UPLOAD_FILES))
 	}
 
 	@Test
@@ -158,11 +199,15 @@ class LicenseEnforcerTest {
 	}
 
 	@Test
-	fun `ensureWriteAccessForVault returns false for hub vault without paid license`() {
+	fun `ensureWriteAccessForVault returns false for hub vault without paid license and no local license`() {
+		assumeTrue(!FlavorConfig.isPremiumFlavor, "Licensing logic is bypassed on this flavor")
 		val activity: Activity = mock()
 		val vault: VaultModel = mock()
 		`when`(vault.isHubVault).thenReturn(true)
 		`when`(vault.hasHubPaidLicense).thenReturn(false)
+		`when`(sharedPreferencesHandler.licenseToken()).thenReturn("")
+		`when`(sharedPreferencesHandler.hasRunningSubscription()).thenReturn(false)
+		`when`(sharedPreferencesHandler.trialExpirationDate()).thenReturn(0L)
 
 		mockStatic(Toast::class.java).use { toastMock ->
 			val toast: Toast = mock()

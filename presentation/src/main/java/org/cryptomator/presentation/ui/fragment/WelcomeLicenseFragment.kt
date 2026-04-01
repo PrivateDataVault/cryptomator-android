@@ -82,22 +82,30 @@ class WelcomeLicenseFragment : BaseFragment<FragmentWelcomeLicenseBinding>(Fragm
 	}
 
 	fun updateUnlocked(unlocked: Boolean, hasPaidLicense: Boolean) {
-		if (!isAdded) return
+		if (!isAdded) {
+			return
+		}
 		licenseContentViewBinder.bindPurchaseState(unlocked, hasPaidLicense)
 	}
 
 	fun updateTrialState(active: Boolean, expired: Boolean, expirationText: String?) {
-		if (!isAdded) return
+		if (!isAdded) {
+			return
+		}
 		licenseContentViewBinder.bindTrialState(active, expired, expirationText)
 	}
 
 	fun loadAndBindPrices(app: CryptomatorApp) {
-		if (!isAdded) return
+		if (!isAdded) {
+			return
+		}
 		licenseContentViewBinder.loadAndBindPrices(app)
 	}
 
 	fun prefillLicense(license: String) {
-		if (!isAdded) return
+		if (!isAdded) {
+			return
+		}
 		binding.licenseContent.etLicense.setText(license)
 		binding.licenseContent.licenseEntryGroup.visibility = if (isFreemiumFlavor) View.GONE else View.VISIBLE
 	}

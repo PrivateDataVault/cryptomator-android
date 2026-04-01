@@ -69,6 +69,7 @@ class VaultListPresenterFreemiumTest {
 			exceptionMappings
 		)
 		Mockito.doReturn(activity).`when`(vaultListView).activity()
+		Mockito.doReturn(true).`when`(sharedPreferencesHandler).hasCompletedWelcomeFlow()
 		inTest.view = vaultListView
 	}
 

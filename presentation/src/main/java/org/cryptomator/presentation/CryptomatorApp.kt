@@ -166,7 +166,9 @@ class CryptomatorApp : MultiDexApplication(), HasComponent<ApplicationComponent>
 
 	private fun drainPendingProductDetailsCallbacks() {
 		synchronized(pendingProductDetailsCallbacks) {
-			if (pendingProductDetailsCallbacks.isEmpty()) return
+			if (pendingProductDetailsCallbacks.isEmpty()) {
+				return
+			}
 			val callbacks = ArrayList(pendingProductDetailsCallbacks)
 			pendingProductDetailsCallbacks.clear()
 			iapBillingServiceBinder?.queryProductDetails { products ->

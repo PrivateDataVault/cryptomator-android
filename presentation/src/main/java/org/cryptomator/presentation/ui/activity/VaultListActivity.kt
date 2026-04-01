@@ -12,6 +12,7 @@ import org.cryptomator.generator.InjectIntent
 import org.cryptomator.presentation.CryptomatorApp
 import org.cryptomator.presentation.R
 import org.cryptomator.presentation.databinding.ActivityLayoutObscureAwareBinding
+import org.cryptomator.presentation.intent.Intents
 import org.cryptomator.presentation.intent.Intents.browseFilesIntent
 import org.cryptomator.presentation.intent.Intents.settingsIntent
 import org.cryptomator.presentation.intent.VaultListIntent
@@ -70,12 +71,6 @@ class VaultListActivity : BaseActivity<ActivityLayoutObscureAwareBinding>(Activi
 	}
 
 	override fun setupView() {
-		if (!sharedPreferencesHandler.hasCompletedWelcomeFlow()) {
-			startActivity(Intent(this, WelcomeActivity::class.java))
-			finish()
-			return
-		}
-
 		setupToolbar()
 		vaultListPresenter.prepareView()
 		binding.activityRootView.setOnFilteredTouchEventForSecurityListener(object : Listener {
@@ -222,7 +217,7 @@ class VaultListActivity : BaseActivity<ActivityLayoutObscureAwareBinding>(Activi
 	}
 
 	override fun onUnlockFullVersionClicked() {
-		startActivity(Intent(this, LicenseCheckActivity::class.java))
+		Intents.licenseCheckIntent().startActivity(this)
 	}
 
 	private fun vaultListFragment(): VaultListFragment = //

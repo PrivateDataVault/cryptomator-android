@@ -46,6 +46,7 @@ import org.cryptomator.presentation.model.CloudTypeModel
 import org.cryptomator.presentation.model.ProgressModel
 import org.cryptomator.presentation.model.VaultModel
 import org.cryptomator.presentation.model.mappers.CloudFolderModelMapper
+import org.cryptomator.presentation.ui.activity.WelcomeActivity
 import org.cryptomator.presentation.ui.activity.view.VaultListView
 import org.cryptomator.presentation.ui.dialog.AppIsObscuredInfoDialog
 import org.cryptomator.presentation.ui.dialog.AskForLockScreenDialog
@@ -103,6 +104,10 @@ class VaultListPresenter @Inject constructor( //
 	}
 
 	override fun resumed() {
+		if (launchWelcomeFlowIfNeeded()) {
+			return
+		}
+
 		if (!hasShownTrialExpiredDialog && FlavorConfig.isFreemiumFlavor) {
 			val trialState = licenseEnforcer.evaluateTrialState()
 			if (trialState.isExpired && !licenseEnforcer.hasPaidLicense()) {
@@ -112,6 +117,17 @@ class VaultListPresenter @Inject constructor( //
 		}
 	}
 
+	private fun launchWelcomeFlowIfNeeded(): Boolean {
+		if (!sharedPreferencesHandler.hasCompletedWelcomeFlow()) {
+			requestActivityResult(
+				ActivityResultCallbacks.welcomeFlowCompleted(),
+				Intent(context(), WelcomeActivity::class.java)
+			)
+			return true
+		}
+		return false
+	}
+
 	fun onWindowFocusChanged(hasFocus: Boolean) {
 		if (hasFocus) {
 			loadVaultList()
@@ -119,6 +135,10 @@ class VaultListPresenter @Inject constructor( //
 	}
 
 	fun prepareView() {
+		if (launchWelcomeFlowIfNeeded()) {
+			return
+		}
+
 		if (!sharedPreferencesHandler.isScreenLockDialogAlreadyShown) {
 			val keyguardManager = context().getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
 			if (!keyguardManager.isKeyguardSecure) {
@@ -488,6 +508,11 @@ class VaultListPresenter @Inject constructor( //
 		} else {
 			browseFilesOf(authenticatedVault)
 		}
+	}
+
+	@Callback
+	fun welcomeFlowCompleted(result: ActivityResult) {
+		prepareView()
 	}
 
 	@Callback

@@ -3,17 +3,18 @@ package org.cryptomator.presentation.licensing
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.widget.Toast
 import androidx.annotation.StringRes
 import org.cryptomator.domain.di.PerView
 import org.cryptomator.presentation.R
+import org.cryptomator.presentation.intent.Intents
 import org.cryptomator.presentation.model.VaultModel
-import org.cryptomator.presentation.ui.activity.LicenseCheckActivity
+import org.cryptomator.presentation.presenter.ContextHolder
 import org.cryptomator.util.FlavorConfig
 import org.cryptomator.util.SharedPreferencesHandler
 import java.text.DateFormat
 import java.util.Date
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 @PerView
@@ -140,23 +141,26 @@ class LicenseEnforcer @Inject constructor(private val sharedPreferencesHandler: 
 			return false
 		}
 
-		val intent = Intent(activity, LicenseCheckActivity::class.java).apply {
-			flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-			data = Uri.parse("app://cryptomator/")
-			putExtra(LicenseCheckActivity.EXTRA_LOCKED_ACTION, action.name)
-		}
+		val intent = Intents.licenseCheckIntent()
+			.withLockedAction(action.name)
+			.build(activity as ContextHolder)
+		intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
 		activity.startActivity(intent)
 		return false
 	}
 
 	fun hasWriteAccessForVault(vault: VaultModel?): Boolean {
-		if (vault?.isHubVault == true) return vault.hasHubPaidLicense
+		if (vault?.isHubVault == true) {
+			return vault.hasHubPaidLicense || hasWriteAccess()
+		}
 		return hasWriteAccess()
 	}
 
 	fun ensureWriteAccessForVault(activity: Activity, vault: VaultModel?, action: LockedAction): Boolean {
 		if (vault?.isHubVault == true) {
-			if (hasWriteAccessForVault(vault)) return true
+			if (hasWriteAccessForVault(vault)) {
+				return true
+			}
 			Toast.makeText(activity, R.string.read_only_reason_hub_inactive, Toast.LENGTH_LONG).show()
 			return false
 		}
@@ -164,7 +168,6 @@ class LicenseEnforcer @Inject constructor(private val sharedPreferencesHandler: 
 	}
 
 	companion object {
-		private const val TRIAL_DURATION_DAYS = 30L
-		private const val TRIAL_DURATION_MS = TRIAL_DURATION_DAYS * 24 * 60 * 60 * 1000
+		private val TRIAL_DURATION_MS = TimeUnit.DAYS.toMillis(30)
 	}
 }

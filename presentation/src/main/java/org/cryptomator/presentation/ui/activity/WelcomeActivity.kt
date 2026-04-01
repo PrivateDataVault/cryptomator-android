@@ -46,12 +46,6 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 	@Inject
 	lateinit var licenseEnforcer: LicenseEnforcer
 
-	private val shouldShowLicenseSection: Boolean
-		get() = !FlavorConfig.isPremiumFlavor
-
-	private val isFreemiumFlavor: Boolean
-		get() = FlavorConfig.isFreemiumFlavor
-
 	private val keyguardManager by lazy { getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager }
 
 	private val orchestrator by lazy {
@@ -59,11 +53,15 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 			sharedPreferencesHandler, licenseEnforcer, { this },
 			target = object : LicenseStateOrchestrator.Target {
 				override fun onPurchaseStateChanged(hasWriteAccess: Boolean, hasPaidLicense: Boolean) {
-					if (!this@WelcomeActivity::pagerAdapter.isInitialized) return
+					if (!this@WelcomeActivity::pagerAdapter.isInitialized) {
+						return
+					}
 					pagerAdapter.licenseFragment?.updateUnlocked(hasWriteAccess, hasPaidLicense)
 				}
 				override fun onTrialStateChanged(active: Boolean, expired: Boolean, expirationText: String?) {
-					if (!this@WelcomeActivity::pagerAdapter.isInitialized) return
+					if (!this@WelcomeActivity::pagerAdapter.isInitialized) {
+						return
+					}
 					pagerAdapter.licenseFragment?.updateTrialState(active, expired, expirationText)
 				}
 			},
@@ -136,7 +134,7 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 	private fun setupPages() {
 		pages.clear()
 		pages.add(FragmentPage.Intro)
-		if (shouldShowLicenseSection) {
+		if (!FlavorConfig.isPremiumFlavor) {
 			pages.add(FragmentPage.License)
 		}
 		pages.add(FragmentPage.Notifications)
@@ -151,7 +149,7 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 		binding.welcomePager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
 			override fun onPageSelected(position: Int) {
 				updateNavigationButtons(position)
-				if (isFreemiumFlavor && pages[position] is FragmentPage.License) {
+				if (FlavorConfig.isFreemiumFlavor && pages[position] is FragmentPage.License) {
 					orchestrator.updateState()
 				}
 			}
@@ -211,13 +209,13 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 	}
 
 	private fun openVaultList() {
-		startActivity(Intent(this, VaultListActivity::class.java))
+		setResult(RESULT_OK)
 		finish()
 	}
 
 	private fun validate(intent: Intent?) {
 		val data = intent?.data
-		if (data != null && shouldShowLicenseSection) {
+		if (data != null && !FlavorConfig.isPremiumFlavor) {
 			welcomePresenter.validate(data)
 		}
 	}

@@ -30,7 +30,9 @@ class WelcomeNotificationsFragment : BaseFragment<FragmentWelcomeNotificationsBi
 	}
 
 	fun updatePermissionState(granted: Boolean) {
-		if (!isAdded) return
+		if (!isAdded) {
+			return
+		}
 		binding.btnNotificationPermission.isEnabled = !granted
 		binding.btnNotificationPermission.visibility = View.VISIBLE
 		binding.tvNotificationStatus.visibility = if (granted) View.VISIBLE else View.GONE

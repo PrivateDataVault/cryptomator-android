@@ -16,7 +16,9 @@ import androidx.preference.SwitchPreference
 import org.cryptomator.presentation.BuildConfig
 import org.cryptomator.presentation.CryptomatorApp
 import org.cryptomator.presentation.R
+import org.cryptomator.presentation.intent.Intents
 import org.cryptomator.presentation.licensing.LicenseEnforcer
+import org.cryptomator.presentation.presenter.ContextHolder
 import org.cryptomator.presentation.service.PhotoContentJob
 import org.cryptomator.presentation.service.ProductInfo
 import org.cryptomator.presentation.service.resolveProductPrices
@@ -24,7 +26,6 @@ import org.cryptomator.presentation.ui.activity.AutoUploadChooseVaultActivity
 import org.cryptomator.presentation.ui.activity.BiometricAuthSettingsActivity
 import org.cryptomator.presentation.ui.activity.CloudSettingsActivity
 import org.cryptomator.presentation.ui.activity.CryptomatorVariantsActivity
-import org.cryptomator.presentation.ui.activity.LicenseCheckActivity
 import org.cryptomator.presentation.ui.activity.LicensesActivity
 import org.cryptomator.presentation.ui.activity.SettingsActivity
 import org.cryptomator.presentation.ui.dialog.DebugModeDisclaimerDialog
@@ -213,7 +214,7 @@ class SettingsFragment : PreferenceFragmentCompatLayout() {
 							getString(R.string.screen_settings_license_summary_tap_to_unlock)
 						}
 						pref.setOnPreferenceClickListener {
-							startActivity(Intent(activity(), LicenseCheckActivity::class.java))
+							Intents.licenseCheckIntent().startActivity(activity() as ContextHolder)
 							true
 						}
 					}
@@ -254,7 +255,9 @@ class SettingsFragment : PreferenceFragmentCompatLayout() {
 							app.queryProductDetails { products ->
 								val prices = products.resolveProductPrices()
 								activity?.runOnUiThread {
-									if (!isAdded) return@runOnUiThread
+									if (!isAdded) {
+										return@runOnUiThread
+									}
 									category.findPreference<Preference>(UPGRADE_LIFETIME_KEY)?.let { pref ->
 										if (!prices.lifetimePrice.isNullOrEmpty()) {
 											pref.summary = prices.lifetimePrice
@@ -278,7 +281,7 @@ class SettingsFragment : PreferenceFragmentCompatLayout() {
 						pref.title = getString(R.string.screen_settings_license_title_unlock)
 						pref.summary = getString(R.string.screen_settings_license_summary_tap_to_unlock)
 						pref.setOnPreferenceClickListener {
-							startActivity(Intent(activity(), LicenseCheckActivity::class.java))
+							Intents.licenseCheckIntent().startActivity(activity() as ContextHolder)
 							true
 						}
 					} else {
