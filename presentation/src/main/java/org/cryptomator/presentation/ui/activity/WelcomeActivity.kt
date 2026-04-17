@@ -197,11 +197,7 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 		if (!this::pagerAdapter.isInitialized) {
 			return
 		}
-		val granted = grantedOverride ?: if (needsNotificationPermission()) {
-			hasNotificationPermission()
-		} else {
-			true
-		}
+		val granted = grantedOverride ?: hasNotificationPermission()
 		pagerAdapter.notificationsFragment?.updatePermissionState(granted)
 	}
 

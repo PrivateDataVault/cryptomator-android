@@ -133,7 +133,6 @@ class CryptomatorApp : MultiDexApplication(), HasComponent<ApplicationComponent>
 				Timber.tag("App").i("IAP Billing service connected")
 				iapBillingServiceBinder = service as IapBillingService.Binder
 				iapBillingServiceBinder?.init(Companion.applicationContext)
-				iapBillingServiceBinder?.restorePurchases()
 				drainPendingProductDetailsCallbacks()
 			}
 
