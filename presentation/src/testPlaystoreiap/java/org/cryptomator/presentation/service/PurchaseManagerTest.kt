@@ -157,13 +157,14 @@ class PurchaseManagerTest {
 	}
 
 	@Test
-	fun `handleInAppPurchases returns on PENDING before reaching PURCHASED for same product`() {
+	fun `handleInAppPurchases continues past PENDING to reach PURCHASED for same product`() {
 		val pending = mockPurchase(ProductInfo.PRODUCT_FULL_VERSION, Purchase.PurchaseState.PENDING, "token-pending", isAcknowledged = false)
 		val purchased = mockPurchase(ProductInfo.PRODUCT_FULL_VERSION, Purchase.PurchaseState.PURCHASED, "token-purchased", isAcknowledged = true)
+		`when`(sharedPreferencesHandler.licenseToken()).thenReturn("")
 
 		purchaseManager.handleInAppPurchases(listOf(pending, purchased), acknowledgePurchase = acknowledgePurchase)
 
-		verify(sharedPreferencesHandler, never()).setLicenseToken(anyString())
+		verify(sharedPreferencesHandler).setLicenseToken("token-purchased")
 	}
 
 	// -- Unknown state --
