@@ -706,7 +706,6 @@
 	<string name="screen_settings_clear_lru_cache_size">Clear Cache</string>
 	<string name="screen_settings_lru_cache_changed__restart_toast">Changes will be applied on next app restart</string>
 
-	<string name="screen_settings_license">Premium</string>
 	<string name="screen_settings_license_title_unlock">Unlock Full Version</string>
 	<string name="screen_settings_license_title_unlocked">Full Version</string>
 	<string name="screen_settings_license_mail">%1$s</string>

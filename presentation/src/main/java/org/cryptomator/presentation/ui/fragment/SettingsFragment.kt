@@ -186,7 +186,6 @@ class SettingsFragment : PreferenceFragmentCompatLayout() {
 	private fun setupLicense() {
 		val licenseCategory = findPreference(LICENSE_ITEM_KEY) as PreferenceCategory?
 		val licensePref = findPreference(SharedPreferencesHandler.MAIL) as Preference?
-		licenseCategory?.title = getString(R.string.screen_settings_license)
 		licensePref?.isEnabled = true
 		when {
 			FlavorConfig.isPremiumFlavor -> {

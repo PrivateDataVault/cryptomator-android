@@ -2,7 +2,7 @@ package org.cryptomator.util
 
 object FlavorConfig {
 
-	/** Premium flavors: Play Store and Accrescent editions. License enforcement is bypassed. */
+	/** Premium flavors (Play Store and Accrescent editions) ship with full access, so license enforcement is bypassed. */
 	val isPremiumFlavor: Boolean
 		get() = BuildConfig.FLAVOR == "playstore" || BuildConfig.FLAVOR == "accrescent"
 
