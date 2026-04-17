@@ -430,6 +430,7 @@
 	<string name="screen_settings_lru_cache_size">총 캐시 크기</string>
 	<string name="screen_settings_clear_lru_cache_size">캐시 지우기</string>
 	<string name="screen_settings_lru_cache_changed__restart_toast">변경사항은 앱 재시작 후 적용됩니다</string>
+	<string name="screen_settings_license">등록된 사용자</string>
 	<string name="screen_settings_license_mail">%1$s</string>
 	<string name="dialog_settings_update_check_interval_title">업데이트 확인 주기</string>
 	<string name="screen_settings_check_updates">업데이트 확인</string>

@@ -396,6 +396,7 @@
 	<string name="screen_settings_lru_cache_size">Ukupna veličina predmemorije</string>
 	<string name="screen_settings_clear_lru_cache_size">Očisti predmemoriju</string>
 	<string name="screen_settings_lru_cache_changed__restart_toast">Promjene će se primijeniti kod slijedećeg pokretanja aplikacije</string>
+	<string name="screen_settings_license">Registrirano za</string>
 	<string name="screen_settings_license_mail">%1$s</string>
 	<string name="dialog_settings_update_check_interval_title">Razmak ažuriranja</string>
 	<string name="screen_settings_check_updates">Potraži ažuriranja</string>

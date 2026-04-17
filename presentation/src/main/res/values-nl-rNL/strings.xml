@@ -431,6 +431,7 @@
 	<string name="screen_settings_lru_cache_size">Totale cache grootte</string>
 	<string name="screen_settings_clear_lru_cache_size">Cache leegmaken</string>
 	<string name="screen_settings_lru_cache_changed__restart_toast">Wijzigingen worden toegepast bij het opnieuw opstarten van de app</string>
+	<string name="screen_settings_license">Geregistreerd voor</string>
 	<string name="screen_settings_license_mail">%1$s</string>
 	<string name="dialog_settings_update_check_interval_title">Update interval</string>
 	<string name="screen_settings_check_updates">Controleren op updates</string>

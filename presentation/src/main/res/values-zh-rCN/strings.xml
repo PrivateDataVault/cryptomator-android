@@ -430,6 +430,7 @@
 	<string name="screen_settings_lru_cache_size">缓存总大小</string>
 	<string name="screen_settings_clear_lru_cache_size">清除缓存</string>
 	<string name="screen_settings_lru_cache_changed__restart_toast">更改将在下次应用重启时生效</string>
+	<string name="screen_settings_license">已授权给</string>
 	<string name="screen_settings_license_mail">%1$s</string>
 	<string name="dialog_settings_update_check_interval_title">更新检查频率</string>
 	<string name="screen_settings_check_updates">检查更新</string>

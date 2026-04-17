@@ -324,6 +324,7 @@
 	<string name="screen_settings_lru_cache">ਕੈਸ਼</string>
 	<string name="screen_settings_lru_cache_size">ਕੁੱਲ ਕੈਸ਼ ਆਕਾਰ</string>
 	<string name="screen_settings_clear_lru_cache_size">ਕੈਸ਼ ਨੂੰ ਮਿਟਾਓ</string>
+	<string name="screen_settings_license">ਇਸ ਲਈ ਰਜਿਸਟਰ ਹੈ</string>
 	<string name="screen_settings_license_mail">%1$s</string>
 	<string name="dialog_settings_update_check_interval_title">ਅੱਪਡੇਟ ਚੈਕ ਕਰਨ ਦਾ ਅੰਤਰਾਲ</string>
 	<string name="screen_settings_check_updates">ਅੱਪਡੇਟ ਲਈ ਜਾਂਚ ਕਰੋ</string>

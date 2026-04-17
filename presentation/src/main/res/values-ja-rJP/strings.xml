@@ -430,6 +430,7 @@
 	<string name="screen_settings_lru_cache_size">キャッシュの合計サイズ</string>
 	<string name="screen_settings_clear_lru_cache_size">キャッシュを削除する</string>
 	<string name="screen_settings_lru_cache_changed__restart_toast">変更は次のアプリの再起動時に適用されます</string>
+	<string name="screen_settings_license">登録済み</string>
 	<string name="screen_settings_license_mail">%1$s</string>
 	<string name="dialog_settings_update_check_interval_title">更新確認の間隔</string>
 	<string name="screen_settings_check_updates">更新の確認</string>

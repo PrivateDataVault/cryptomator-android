@@ -149,8 +149,15 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 		binding.welcomePager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
 			override fun onPageSelected(position: Int) {
 				updateNavigationButtons(position)
-				if (FlavorConfig.isFreemiumFlavor && pages[position] is FragmentPage.License) {
-					orchestrator.updateState()
+				when (pages[position]) {
+					is FragmentPage.License -> {
+						if (FlavorConfig.isFreemiumFlavor) {
+							orchestrator.updateState()
+						}
+					}
+					is FragmentPage.Notifications -> updateNotificationPermissionState()
+					is FragmentPage.ScreenLock -> updateScreenLockState()
+					is FragmentPage.Intro -> Unit
 				}
 			}
 		})
@@ -190,10 +197,11 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 		if (!this::pagerAdapter.isInitialized) {
 			return
 		}
-		if (!needsNotificationPermission()) {
-			return
+		val granted = grantedOverride ?: if (needsNotificationPermission()) {
+			hasNotificationPermission()
+		} else {
+			true
 		}
-		val granted = grantedOverride ?: hasNotificationPermission()
 		pagerAdapter.notificationsFragment?.updatePermissionState(granted)
 	}
 

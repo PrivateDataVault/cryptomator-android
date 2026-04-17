@@ -431,6 +431,7 @@
 	<string name="screen_settings_lru_cache_size">Total cachestorlek</string>
 	<string name="screen_settings_clear_lru_cache_size">Rensa cachen</string>
 	<string name="screen_settings_lru_cache_changed__restart_toast">Ändringar kommer att tillämpas vid omstart av appen</string>
+	<string name="screen_settings_license">Registrerad till</string>
 	<string name="screen_settings_license_mail">%1$s</string>
 	<string name="dialog_settings_update_check_interval_title">Uppdateringsintervall</string>
 	<string name="screen_settings_check_updates">Sök efter uppdateringar</string>

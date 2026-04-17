@@ -431,6 +431,7 @@
 	<string name="screen_settings_lru_cache_size">Gyorsítótár mérete</string>
 	<string name="screen_settings_clear_lru_cache_size">Gyorsítótár törlése</string>
 	<string name="screen_settings_lru_cache_changed__restart_toast">A módosítások az alkalmazás újraindítása után lépnek életbe</string>
+	<string name="screen_settings_license">Regisztrált:</string>
 	<string name="screen_settings_license_mail">%1$s</string>
 	<string name="dialog_settings_update_check_interval_title">Frissítések keresésése</string>
 	<string name="screen_settings_check_updates">Frissítések keresése</string>

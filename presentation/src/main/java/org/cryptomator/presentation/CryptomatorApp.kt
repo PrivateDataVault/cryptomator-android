@@ -133,6 +133,7 @@ class CryptomatorApp : MultiDexApplication(), HasComponent<ApplicationComponent>
 				Timber.tag("App").i("IAP Billing service connected")
 				iapBillingServiceBinder = service as IapBillingService.Binder
 				iapBillingServiceBinder?.init(Companion.applicationContext)
+				iapBillingServiceBinder?.restorePurchases()
 				drainPendingProductDetailsCallbacks()
 			}
 
@@ -152,12 +153,7 @@ class CryptomatorApp : MultiDexApplication(), HasComponent<ApplicationComponent>
 	fun queryProductDetails(callback: (List<ProductInfo>) -> Unit) {
 		if (FlavorConfig.isFreemiumFlavor) {
 			synchronized(pendingProductDetailsCallbacks) {
-				val binder = iapBillingServiceBinder
-				if (binder != null) {
-					binder.queryProductDetails(callback)
-				} else {
-					pendingProductDetailsCallbacks.add(callback)
-				}
+				iapBillingServiceBinder?.queryProductDetails(callback) ?: pendingProductDetailsCallbacks.add(callback)
 			}
 		} else {
 			callback(emptyList())
@@ -264,7 +260,6 @@ class CryptomatorApp : MultiDexApplication(), HasComponent<ApplicationComponent>
 	private val serviceNotifier: ActivityLifecycleCallbacks = object : NoOpActivityLifecycleCallbacks() {
 		override fun onActivityResumed(activity: Activity) {
 			updateService(resumedActivities.incrementAndGet())
-			restorePurchases()
 		}
 
 		override fun onActivityPaused(activity: Activity) {

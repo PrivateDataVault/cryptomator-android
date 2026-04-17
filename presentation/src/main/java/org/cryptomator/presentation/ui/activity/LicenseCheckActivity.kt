@@ -55,13 +55,11 @@ class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityL
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
-		lockedAction = LicenseEnforcer.LockedAction.fromName(licenseCheckIntent.lockedAction())
 		binding.activityRootView.setOnFilteredTouchEventForSecurityListener(object : ObscuredAwareCoordinatorLayout.Listener {
 			override fun onFilteredTouchEventForSecurity() {
 				licenseCheckPresenter.onFilteredTouchEventForSecurity()
 			}
 		})
-		setupUpsellView()
 		validate(intent)
 	}
 
@@ -76,7 +74,8 @@ class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityL
 	}
 
 	override fun setupView() {
-		// handled in onCreate via setupUpsellView
+		lockedAction = LicenseEnforcer.LockedAction.fromName(licenseCheckIntent.lockedAction())
+		setupUpsellView()
 	}
 
 	private fun setupUpsellView() {
@@ -132,6 +131,7 @@ class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityL
 		Activities.setIntent(this)
 		lockedAction = LicenseEnforcer.LockedAction.fromName(licenseCheckIntent.lockedAction())
 		setupUpsellView()
+		orchestrator.updateState()
 		validate(intent)
 	}
 

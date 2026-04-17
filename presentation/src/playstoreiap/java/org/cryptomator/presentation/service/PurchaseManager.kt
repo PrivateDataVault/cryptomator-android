@@ -15,7 +15,7 @@ class PurchaseManager(
 			}
 			if (purchase.purchaseState == Purchase.PurchaseState.PENDING) {
 				Timber.tag("PurchaseManager").d("In-app purchase pending, skipping")
-				return
+				continue
 			}
 			if (purchase.purchaseState == Purchase.PurchaseState.PURCHASED) {
 				Timber.tag("PurchaseManager").d("In-app purchase found: %s", purchase.signature)
@@ -41,7 +41,7 @@ class PurchaseManager(
 			}
 			if (purchase.purchaseState == Purchase.PurchaseState.PENDING) {
 				Timber.tag("PurchaseManager").d("Subscription purchase pending, skipping")
-				return
+				continue
 			}
 			if (purchase.purchaseState == Purchase.PurchaseState.PURCHASED) {
 				Timber.tag("PurchaseManager").d("Subscription found: %s", purchase.signature)

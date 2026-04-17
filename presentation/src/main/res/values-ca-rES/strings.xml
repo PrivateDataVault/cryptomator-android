@@ -418,6 +418,7 @@
 	<string name="screen_settings_lru_cache_size">Mida total de la memòria cau</string>
 	<string name="screen_settings_clear_lru_cache_size">Esborra la memòria cau</string>
 	<string name="screen_settings_lru_cache_changed__restart_toast">Els canvis seran aplicats al reinicialitzar l\'aplicació</string>
+	<string name="screen_settings_license">Registrat per</string>
 	<string name="screen_settings_license_mail">%1$s</string>
 	<string name="dialog_settings_update_check_interval_title">Interval entre comprovacions d\'actualitzacions</string>
 	<string name="screen_settings_check_updates">Cerca actualitzacions</string>

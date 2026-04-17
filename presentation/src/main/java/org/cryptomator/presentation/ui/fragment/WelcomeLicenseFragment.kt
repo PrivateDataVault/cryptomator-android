@@ -23,9 +23,7 @@ class WelcomeLicenseFragment : BaseFragment<FragmentWelcomeLicenseBinding>(Fragm
 		fun onSkipLicense()
 	}
 
-	private val isFreemiumFlavor: Boolean
-		get() = FlavorConfig.isFreemiumFlavor
-	private val licenseContentViewBinder by lazy { LicenseContentViewBinder(binding.licenseContent, isFreemiumFlavor) }
+	private val licenseContentViewBinder by lazy { LicenseContentViewBinder(binding.licenseContent, FlavorConfig.isFreemiumFlavor) }
 	private var listener: Listener? = null
 	private val debounceHandler = Handler(Looper.getMainLooper())
 	private var debounceRunnable: Runnable? = null
@@ -45,7 +43,7 @@ class WelcomeLicenseFragment : BaseFragment<FragmentWelcomeLicenseBinding>(Fragm
 	}
 
 	private fun setupUi() {
-		if (isFreemiumFlavor) {
+		if (FlavorConfig.isFreemiumFlavor) {
 			setupIapUi()
 		} else {
 			setupLicenseEntryUi()
@@ -71,11 +69,14 @@ class WelcomeLicenseFragment : BaseFragment<FragmentWelcomeLicenseBinding>(Fragm
 			override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
 			override fun afterTextChanged(s: Editable?) {
 				debounceRunnable?.let { debounceHandler.removeCallbacks(it) }
+				debounceRunnable = null
 				val text = s?.toString()
 				if (!text.isNullOrBlank()) {
 					val runnable = Runnable { listener?.onLicenseTextChanged(text) }
 					debounceRunnable = runnable
 					debounceHandler.postDelayed(runnable, DEBOUNCE_DELAY_MS)
+				} else {
+					listener?.onLicenseTextChanged(null)
 				}
 			}
 		})
@@ -107,7 +108,7 @@ class WelcomeLicenseFragment : BaseFragment<FragmentWelcomeLicenseBinding>(Fragm
 			return
 		}
 		binding.licenseContent.etLicense.setText(license)
-		binding.licenseContent.licenseEntryGroup.visibility = if (isFreemiumFlavor) View.GONE else View.VISIBLE
+		binding.licenseContent.licenseEntryGroup.visibility = if (FlavorConfig.isFreemiumFlavor) View.GONE else View.VISIBLE
 	}
 
 	companion object {

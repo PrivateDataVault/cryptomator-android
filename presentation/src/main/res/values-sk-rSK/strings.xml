@@ -419,6 +419,7 @@
 	<string name="screen_settings_lru_cache_size">Celková veľkosť vyrovovnávacej pamäte</string>
 	<string name="screen_settings_clear_lru_cache_size">Vyprázdniť vyrovnávaciu pamäť</string>
 	<string name="screen_settings_lru_cache_changed__restart_toast">Zmeny sa uplatnia pro reštarte aplikácie</string>
+	<string name="screen_settings_license">Registrovaný pre</string>
 	<string name="screen_settings_license_mail">%1$s</string>
 	<string name="dialog_settings_update_check_interval_title">Interval kontroly aktualizácii</string>
 	<string name="screen_settings_check_updates">Skontrolovať dostupnosť aktualizácií</string>

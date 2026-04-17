@@ -412,6 +412,7 @@
 	<string name="screen_settings_lru_cache_size">Kabuuang laki ng cache</string>
 	<string name="screen_settings_clear_lru_cache_size">Linisin ang Cache</string>
 	<string name="screen_settings_lru_cache_changed__restart_toast">Ang mga pagbabago ay makikita pagkatapos ng pag-restart ng app</string>
+	<string name="screen_settings_license">Nakarehistro para sa</string>
 	<string name="screen_settings_license_mail">%1$s</string>
 	<string name="dialog_settings_update_check_interval_title">I-update ang agwat ng pagsusuri</string>
 	<string name="screen_settings_check_updates">Tingnan ang mga update</string>

@@ -436,6 +436,7 @@
 	<string name="screen_settings_lru_cache_size">إجمالي حجم ذاكرة التخزين المؤقت</string>
 	<string name="screen_settings_clear_lru_cache_size">مسح بيانات الذاكرة المؤقتة</string>
 	<string name="screen_settings_lru_cache_changed__restart_toast">سيتم تطبيق التغييرات عند إعادة تشغيل التطبيق</string>
+	<string name="screen_settings_license">مسجل لـ</string>
 	<string name="screen_settings_license_mail">%1$s</string>
 	<string name="dialog_settings_update_check_interval_title">الفاصل الزمني للتحديث</string>
 	<string name="screen_settings_check_updates">بحث عن تحديثات</string>

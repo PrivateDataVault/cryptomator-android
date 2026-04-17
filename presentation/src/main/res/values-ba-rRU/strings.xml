@@ -404,6 +404,7 @@
 	<string name="screen_settings_lru_cache_size">Дөйөм кэш күләме</string>
 	<string name="screen_settings_clear_lru_cache_size">Кэшты таҙартыу</string>
 	<string name="screen_settings_lru_cache_changed__restart_toast">Үҙгәрештәр ҡушымтаны ҡайтанан эшләтеп ебәргәндә ҡулланыласаҡ</string>
+	<string name="screen_settings_license">Теркәлеүсе</string>
 	<string name="screen_settings_license_mail">%1$s</string>
 	<string name="dialog_settings_update_check_interval_title">Яңыртыу тикшереү интервалы</string>
 	<string name="screen_settings_check_updates">Яңыртыуҙарҙы тикшереү</string>

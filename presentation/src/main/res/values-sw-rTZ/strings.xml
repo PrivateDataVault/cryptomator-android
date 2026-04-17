@@ -393,6 +393,7 @@
 	<string name="screen_settings_lru_cache_size">Ukubwa wa jumla wa kache</string>
 	<string name="screen_settings_clear_lru_cache_size">Ondoa Kache</string>
 	<string name="screen_settings_lru_cache_changed__restart_toast">Mabadiliko yatatekelezwa kwenye uanzishaji upya wa programu inayofuata</string>
+	<string name="screen_settings_license">Imesajiliwa kwa ajili ya</string>
 	<string name="screen_settings_license_mail">%1$s</string>
 	<string name="dialog_settings_update_check_interval_title">Sasisha muda wa ukaguzi</string>
 	<string name="screen_settings_check_updates">Kagua sasishi</string>
