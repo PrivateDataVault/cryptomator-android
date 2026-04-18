@@ -32,6 +32,7 @@ class IapBillingService : Service(), PurchasesUpdatedListener {
 	private lateinit var billingClient: BillingClient
 	private lateinit var sharedPreferencesHandler: SharedPreferencesHandler
 	private lateinit var purchaseManager: PurchaseManager
+	private lateinit var purchaseRefreshCoordinator: PurchaseRefreshCoordinator
 
 	private val productDetailsMap = ConcurrentHashMap<String, ProductDetails>()
 	private val pendingProductDetailsCallbacks = mutableListOf<(List<ProductInfo>) -> Unit>()
@@ -39,6 +40,7 @@ class IapBillingService : Service(), PurchasesUpdatedListener {
 	private fun initBillingClient(context: Context) {
 		this.sharedPreferencesHandler = SharedPreferencesHandler(context)
 		this.purchaseManager = PurchaseManager(sharedPreferencesHandler)
+		this.purchaseRefreshCoordinator = PurchaseRefreshCoordinator(sharedPreferencesHandler)
 		val pendingPurchasesParams = PendingPurchasesParams.newBuilder()
 			.enableOneTimeProducts()
 			.enablePrepaidPlans()
@@ -78,27 +80,13 @@ class IapBillingService : Service(), PurchasesUpdatedListener {
 		Timber.tag("IapBillingService").d("Service created")
 	}
 
-	fun queryExistingPurchases() {
-		if (!billingClient.isReady) {
-			Timber.tag("IapBillingService").w("queryExistingPurchases skipped, billing client not ready")
-			return
-		}
-		val inappParams = QueryPurchasesParams.newBuilder()
-			.setProductType(BillingClient.ProductType.INAPP)
-			.build()
-		billingClient.queryPurchasesAsync(inappParams) { billingResult: BillingResult, purchases: List<Purchase> ->
-			if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-				purchaseManager.handleInAppPurchases(purchases, clearIfNotFound = true) { token -> acknowledgePurchase(token) }
-			}
-		}
-		val subsParams = QueryPurchasesParams.newBuilder()
-			.setProductType(BillingClient.ProductType.SUBS)
-			.build()
-		billingClient.queryPurchasesAsync(subsParams) { billingResult: BillingResult, purchases: List<Purchase> ->
-			if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-				purchaseManager.handleSubscriptionPurchases(purchases, clearIfNotFound = true) { token -> acknowledgePurchase(token) }
-			}
-		}
+	fun queryExistingPurchases(onComplete: (RestoreOutcome) -> Unit = {}) {
+		purchaseRefreshCoordinator.refresh(
+			billingClient = billingClient,
+			purchaseManager = purchaseManager,
+			acknowledge = { token -> acknowledgePurchase(token) },
+			onComplete = onComplete,
+		)
 	}
 
 	private fun acknowledgePurchase(purchaseToken: String, isRetry: Boolean = false) {
@@ -265,8 +253,8 @@ class IapBillingService : Service(), PurchasesUpdatedListener {
 			service.queryProductDetails(callback)
 		}
 
-		fun restorePurchases() {
-			service.queryExistingPurchases()
+		fun restorePurchases(onComplete: (RestoreOutcome) -> Unit) {
+			service.queryExistingPurchases(onComplete)
 		}
 	}
 }

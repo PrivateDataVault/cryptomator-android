@@ -22,8 +22,13 @@ import org.cryptomator.presentation.databinding.ActivityWelcomeBinding
 import org.cryptomator.presentation.licensing.LicenseEnforcer
 import org.cryptomator.presentation.licensing.LicenseStateOrchestrator
 import org.cryptomator.presentation.presenter.WelcomePresenter
+import org.cryptomator.presentation.service.RestoreOutcome
+import org.cryptomator.presentation.service.RestoreOutcomeHandler
 import org.cryptomator.presentation.ui.activity.view.UpdateLicenseView
 import org.cryptomator.presentation.ui.activity.view.WelcomeView
+import org.cryptomator.presentation.ui.dialog.NoFullVersionDialog
+import org.cryptomator.presentation.ui.dialog.RestoreFailedDialog
+import org.cryptomator.presentation.ui.dialog.RestoreSuccessfulDialog
 import org.cryptomator.presentation.ui.fragment.WelcomeIntroFragment
 import org.cryptomator.presentation.ui.fragment.WelcomeLicenseFragment
 import org.cryptomator.presentation.ui.fragment.WelcomeNotificationsFragment
@@ -38,7 +43,11 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 	WelcomeView, //
 	WelcomeLicenseFragment.Listener, //
 	WelcomeNotificationsFragment.Listener, //
-	WelcomeScreenLockFragment.Listener {
+	WelcomeScreenLockFragment.Listener, //
+	RestoreOutcomeHandler, //
+	RestoreSuccessfulDialog.Callback, //
+	NoFullVersionDialog.Callback, //
+	RestoreFailedDialog.Callback {
 
 	@Inject
 	lateinit var welcomePresenter: WelcomePresenter
@@ -122,6 +131,7 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 			return
 		}
 		orchestrator.onResume()
+		(application as CryptomatorApp).consumeLastRestoreOutcome()?.let { onRestoreOutcome(it) }
 		updateNotificationPermissionState()
 		updateScreenLockState()
 	}
@@ -259,6 +269,20 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 	override fun onSkipLicense() {
 		advanceOrComplete()
 	}
+
+	// RestoreOutcomeHandler
+
+	override fun onRestoreOutcome(outcome: RestoreOutcome) {
+		when (outcome) {
+			RestoreOutcome.RESTORED -> showDialog(RestoreSuccessfulDialog.newInstance())
+			RestoreOutcome.NOTHING_TO_RESTORE -> showDialog(NoFullVersionDialog.newInstance())
+			is RestoreOutcome.FAILED -> showDialog(RestoreFailedDialog.newInstance())
+		}
+	}
+
+	override fun onRestoreSuccessfulDialogFinished() = Unit
+	override fun onNoFullVersionDialogFinished() = Unit
+	override fun onRestoreFailedDialogFinished() = Unit
 
 	// WelcomeNotificationsFragment.Listener
 

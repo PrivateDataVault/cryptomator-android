@@ -14,8 +14,13 @@ import org.cryptomator.presentation.intent.LicenseCheckIntent
 import org.cryptomator.presentation.licensing.LicenseEnforcer
 import org.cryptomator.presentation.licensing.LicenseStateOrchestrator
 import org.cryptomator.presentation.presenter.LicenseCheckPresenter
+import org.cryptomator.presentation.service.RestoreOutcome
+import org.cryptomator.presentation.service.RestoreOutcomeHandler
 import org.cryptomator.presentation.ui.activity.view.UpdateLicenseView
 import org.cryptomator.presentation.ui.dialog.LicenseConfirmationDialog
+import org.cryptomator.presentation.ui.dialog.NoFullVersionDialog
+import org.cryptomator.presentation.ui.dialog.RestoreFailedDialog
+import org.cryptomator.presentation.ui.dialog.RestoreSuccessfulDialog
 import org.cryptomator.presentation.ui.layout.LicenseContentViewBinder
 import org.cryptomator.presentation.ui.layout.ObscuredAwareCoordinatorLayout
 import org.cryptomator.util.FlavorConfig
@@ -24,7 +29,11 @@ import javax.inject.Inject
 @Activity
 class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityLicenseCheckBinding::inflate), //
 	LicenseConfirmationDialog.Callback, //
-	UpdateLicenseView {
+	UpdateLicenseView, //
+	RestoreOutcomeHandler, //
+	RestoreSuccessfulDialog.Callback, //
+	NoFullVersionDialog.Callback, //
+	RestoreFailedDialog.Callback {
 
 	@Inject
 	lateinit var licenseCheckPresenter: LicenseCheckPresenter
@@ -66,6 +75,7 @@ class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityL
 	override fun onResume() {
 		super.onResume()
 		orchestrator.onResume()
+		(application as CryptomatorApp).consumeLastRestoreOutcome()?.let { onRestoreOutcome(it) }
 	}
 
 	override fun onPause() {
@@ -154,6 +164,18 @@ class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityL
 			.preventGoingBackInHistory() //
 			.startActivity(this) //
 	}
+
+	override fun onRestoreOutcome(outcome: RestoreOutcome) {
+		when (outcome) {
+			RestoreOutcome.RESTORED -> showDialog(RestoreSuccessfulDialog.newInstance())
+			RestoreOutcome.NOTHING_TO_RESTORE -> showDialog(NoFullVersionDialog.newInstance())
+			is RestoreOutcome.FAILED -> showDialog(RestoreFailedDialog.newInstance())
+		}
+	}
+
+	override fun onRestoreSuccessfulDialogFinished() = Unit
+	override fun onNoFullVersionDialogFinished() = Unit
+	override fun onRestoreFailedDialogFinished() = Unit
 
 	private fun onLicenseSubmit() {
 		licenseCheckPresenter.validateDialogAware(binding.licenseContent.etLicense.text?.toString())

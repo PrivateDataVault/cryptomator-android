@@ -3,6 +3,8 @@ package org.cryptomator.presentation.service
 import com.android.billingclient.api.Purchase
 import org.cryptomator.util.SharedPreferencesHandler
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentMatchers.anyBoolean
@@ -23,6 +25,8 @@ class PurchaseManagerTest {
 	@BeforeEach
 	fun setUp() {
 		purchaseManager = PurchaseManager(sharedPreferencesHandler)
+		`when`(sharedPreferencesHandler.licenseToken()).thenReturn("")
+		`when`(sharedPreferencesHandler.hasRunningSubscription()).thenReturn(false)
 		acknowledgedTokens.clear()
 	}
 
@@ -31,35 +35,42 @@ class PurchaseManagerTest {
 	@Test
 	fun `handleInAppPurchases sets license token when purchase is PURCHASED`() {
 		val purchase = mockPurchase(ProductInfo.PRODUCT_FULL_VERSION, Purchase.PurchaseState.PURCHASED, "token-1", isAcknowledged = true)
-		`when`(sharedPreferencesHandler.licenseToken()).thenReturn("")
 
-		purchaseManager.handleInAppPurchases(listOf(purchase), acknowledgePurchase = acknowledgePurchase)
+		val change = purchaseManager.handleInAppPurchases(listOf(purchase), acknowledgePurchase = acknowledgePurchase)
 
 		verify(sharedPreferencesHandler).setLicenseToken("token-1")
+		assertFalse(change.before)
+		assertTrue(change.after)
+		assertFalse(change.cleared)
 	}
 
 	@Test
 	fun `handleInAppPurchases skips pending purchase`() {
 		val purchase = mockPurchase(ProductInfo.PRODUCT_FULL_VERSION, Purchase.PurchaseState.PENDING, "token-1", isAcknowledged = false)
 
-		purchaseManager.handleInAppPurchases(listOf(purchase), acknowledgePurchase = acknowledgePurchase)
+		val change = purchaseManager.handleInAppPurchases(listOf(purchase), acknowledgePurchase = acknowledgePurchase)
 
 		verify(sharedPreferencesHandler, never()).setLicenseToken(anyString())
+		assertFalse(change.before)
+		assertFalse(change.after)
+		assertFalse(change.cleared)
 	}
 
 	@Test
 	fun `handleInAppPurchases clears token when clearIfNotFound and no matching purchase`() {
 		`when`(sharedPreferencesHandler.licenseToken()).thenReturn("old-token")
 
-		purchaseManager.handleInAppPurchases(emptyList(), clearIfNotFound = true, acknowledgePurchase = acknowledgePurchase)
+		val change = purchaseManager.handleInAppPurchases(emptyList(), clearIfNotFound = true, acknowledgePurchase = acknowledgePurchase)
 
 		verify(sharedPreferencesHandler).setLicenseToken("")
+		assertTrue(change.before)
+		assertFalse(change.after)
+		assertTrue(change.cleared)
 	}
 
 	@Test
 	fun `handleInAppPurchases acknowledges unacknowledged purchase`() {
 		val purchase = mockPurchase(ProductInfo.PRODUCT_FULL_VERSION, Purchase.PurchaseState.PURCHASED, "token-1", isAcknowledged = false)
-		`when`(sharedPreferencesHandler.licenseToken()).thenReturn("")
 
 		purchaseManager.handleInAppPurchases(listOf(purchase), acknowledgePurchase = acknowledgePurchase)
 
@@ -71,9 +82,37 @@ class PurchaseManagerTest {
 		val purchase = mockPurchase(ProductInfo.PRODUCT_FULL_VERSION, Purchase.PurchaseState.PURCHASED, "token-2", isAcknowledged = true)
 		`when`(sharedPreferencesHandler.licenseToken()).thenReturn("existing-token")
 
-		purchaseManager.handleInAppPurchases(listOf(purchase), acknowledgePurchase = acknowledgePurchase)
+		val change = purchaseManager.handleInAppPurchases(listOf(purchase), acknowledgePurchase = acknowledgePurchase)
 
 		verify(sharedPreferencesHandler, never()).setLicenseToken(anyString())
+		assertTrue(change.before)
+		assertTrue(change.after)
+		assertFalse(change.cleared)
+	}
+
+	@Test
+	fun `handleInAppPurchases returns cleared true when clearIfNotFound and token existed before`() {
+		`when`(sharedPreferencesHandler.licenseToken()).thenReturn("old-token")
+
+		val change = purchaseManager.handleInAppPurchases(emptyList(), clearIfNotFound = true, acknowledgePurchase = acknowledgePurchase)
+
+		assertTrue(change.cleared)
+	}
+
+	@Test
+	fun `handleInAppPurchases returns cleared false when no prior token existed`() {
+		val change = purchaseManager.handleInAppPurchases(emptyList(), clearIfNotFound = true, acknowledgePurchase = acknowledgePurchase)
+
+		assertFalse(change.cleared)
+	}
+
+	@Test
+	fun `handleInAppPurchases does not arm purchaseRevokedPending`() {
+		`when`(sharedPreferencesHandler.licenseToken()).thenReturn("old-token")
+
+		purchaseManager.handleInAppPurchases(emptyList(), clearIfNotFound = true, acknowledgePurchase = acknowledgePurchase)
+
+		verify(sharedPreferencesHandler, never()).setPurchaseRevokedState(anyBoolean(), anyString())
 	}
 
 	// -- handleSubscriptionPurchases --
@@ -82,25 +121,36 @@ class PurchaseManagerTest {
 	fun `handleSubscriptionPurchases sets running subscription when purchase is PURCHASED`() {
 		val purchase = mockPurchase(ProductInfo.PRODUCT_YEARLY_SUBSCRIPTION, Purchase.PurchaseState.PURCHASED, "sub-token", isAcknowledged = true)
 
-		purchaseManager.handleSubscriptionPurchases(listOf(purchase), acknowledgePurchase = acknowledgePurchase)
+		val change = purchaseManager.handleSubscriptionPurchases(listOf(purchase), acknowledgePurchase = acknowledgePurchase)
 
 		verify(sharedPreferencesHandler).setHasRunningSubscription(true)
+		assertFalse(change.before)
+		assertTrue(change.after)
+		assertFalse(change.cleared)
 	}
 
 	@Test
 	fun `handleSubscriptionPurchases skips pending subscription`() {
 		val purchase = mockPurchase(ProductInfo.PRODUCT_YEARLY_SUBSCRIPTION, Purchase.PurchaseState.PENDING, "sub-token", isAcknowledged = false)
 
-		purchaseManager.handleSubscriptionPurchases(listOf(purchase), acknowledgePurchase = acknowledgePurchase)
+		val change = purchaseManager.handleSubscriptionPurchases(listOf(purchase), acknowledgePurchase = acknowledgePurchase)
 
 		verify(sharedPreferencesHandler, never()).setHasRunningSubscription(anyBoolean())
+		assertFalse(change.before)
+		assertFalse(change.after)
+		assertFalse(change.cleared)
 	}
 
 	@Test
 	fun `handleSubscriptionPurchases clears subscription when clearIfNotFound and no matching purchase`() {
-		purchaseManager.handleSubscriptionPurchases(emptyList(), clearIfNotFound = true, acknowledgePurchase = acknowledgePurchase)
+		`when`(sharedPreferencesHandler.hasRunningSubscription()).thenReturn(true)
+
+		val change = purchaseManager.handleSubscriptionPurchases(emptyList(), clearIfNotFound = true, acknowledgePurchase = acknowledgePurchase)
 
 		verify(sharedPreferencesHandler).setHasRunningSubscription(false)
+		assertTrue(change.before)
+		assertFalse(change.after)
+		assertTrue(change.cleared)
 	}
 
 	@Test
@@ -110,6 +160,22 @@ class PurchaseManagerTest {
 		purchaseManager.handleSubscriptionPurchases(listOf(purchase), acknowledgePurchase = acknowledgePurchase)
 
 		assertEquals(listOf("sub-token"), acknowledgedTokens)
+	}
+
+	@Test
+	fun `handleSubscriptionPurchases returns cleared true when clearIfNotFound and subscription existed before`() {
+		`when`(sharedPreferencesHandler.hasRunningSubscription()).thenReturn(true)
+
+		val change = purchaseManager.handleSubscriptionPurchases(emptyList(), clearIfNotFound = true, acknowledgePurchase = acknowledgePurchase)
+
+		assertTrue(change.cleared)
+	}
+
+	@Test
+	fun `handleSubscriptionPurchases returns cleared false when no prior subscription existed`() {
+		val change = purchaseManager.handleSubscriptionPurchases(emptyList(), clearIfNotFound = true, acknowledgePurchase = acknowledgePurchase)
+
+		assertFalse(change.cleared)
 	}
 
 	// -- UNSPECIFIED_STATE handling --
@@ -149,7 +215,6 @@ class PurchaseManagerTest {
 	fun `handleInAppPurchases skips non-matching product then processes matching PURCHASED`() {
 		val otherProduct = mockPurchase("other_product", Purchase.PurchaseState.PURCHASED, "token-other", isAcknowledged = true)
 		val fullVersion = mockPurchase(ProductInfo.PRODUCT_FULL_VERSION, Purchase.PurchaseState.PURCHASED, "token-full", isAcknowledged = true)
-		`when`(sharedPreferencesHandler.licenseToken()).thenReturn("")
 
 		purchaseManager.handleInAppPurchases(listOf(otherProduct, fullVersion), acknowledgePurchase = acknowledgePurchase)
 
@@ -160,7 +225,6 @@ class PurchaseManagerTest {
 	fun `handleInAppPurchases continues past PENDING to reach PURCHASED for same product`() {
 		val pending = mockPurchase(ProductInfo.PRODUCT_FULL_VERSION, Purchase.PurchaseState.PENDING, "token-pending", isAcknowledged = false)
 		val purchased = mockPurchase(ProductInfo.PRODUCT_FULL_VERSION, Purchase.PurchaseState.PURCHASED, "token-purchased", isAcknowledged = true)
-		`when`(sharedPreferencesHandler.licenseToken()).thenReturn("")
 
 		purchaseManager.handleInAppPurchases(listOf(pending, purchased), acknowledgePurchase = acknowledgePurchase)
 

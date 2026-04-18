@@ -227,6 +227,25 @@ override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key
 		defaultSharedPreferences.setValue(TRIAL_EXPIRED, value)
 	}
 
+	fun purchaseRevokedPending(): Boolean {
+		return defaultSharedPreferences.getValue(PURCHASE_REVOKED_PENDING, false)
+	}
+
+	fun purchaseRevokedReason(): String {
+		return defaultSharedPreferences.getValue(PURCHASE_REVOKED_REASON, "")
+	}
+
+	fun setPurchaseRevokedState(pending: Boolean, reason: String) {
+		defaultSharedPreferences.edit { editor ->
+			editor.putBoolean(PURCHASE_REVOKED_PENDING, pending)
+			editor.putString(PURCHASE_REVOKED_REASON, reason)
+		}
+	}
+
+	fun clearPurchaseRevokedState() {
+		setPurchaseRevokedState(pending = false, reason = "")
+	}
+
 	fun hasRunningSubscription(): Boolean {
 		return defaultSharedPreferences.getValue(HAS_RUNNING_SUBSCRIPTION, false)
 	}
@@ -382,6 +401,8 @@ override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key
 		private const val TRIAL_EXPIRATION_DATE = "trialExpirationDate"
 		private const val TRIAL_EXPIRED = "trialExpired"
 		private const val HAS_RUNNING_SUBSCRIPTION = "hasRunningSubscription"
+		private const val PURCHASE_REVOKED_PENDING = "purchaseRevokedPending"
+		private const val PURCHASE_REVOKED_REASON = "purchaseRevokedReason"
 		const val DEBUG_MODE = "debugMode"
 		const val DISABLE_APP_WHEN_OBSCURED = "disableAppWhenObscured"
 		const val SECURE_SCREEN = "secureScreen"

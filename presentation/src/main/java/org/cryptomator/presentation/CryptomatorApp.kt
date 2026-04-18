@@ -27,6 +27,8 @@ import org.cryptomator.presentation.service.AutoUploadService
 import org.cryptomator.presentation.service.CryptorsService
 import org.cryptomator.presentation.service.IapBillingService
 import org.cryptomator.presentation.service.ProductInfo
+import org.cryptomator.presentation.service.PurchaseRevokedToastObserver
+import org.cryptomator.presentation.service.RestoreOutcome
 import org.cryptomator.util.FlavorConfig
 import org.cryptomator.util.NoOpActivityLifecycleCallbacks
 import org.cryptomator.util.SharedPreferencesHandler
@@ -49,11 +51,21 @@ class CryptomatorApp : MultiDexApplication(), HasComponent<ApplicationComponent>
 	@Volatile
 	private var iapBillingServiceBinder: IapBillingService.Binder? = null
 
+	@Volatile
+	var lastRestoreOutcome: RestoreOutcome? = null
+
+	fun consumeLastRestoreOutcome(): RestoreOutcome? {
+		val outcome = lastRestoreOutcome
+		lastRestoreOutcome = null
+		return outcome
+	}
+
 	private val pendingProductDetailsCallbacks = mutableListOf<(List<ProductInfo>) -> Unit>()
 
 	override fun onCreate() {
 		super.onCreate()
 		setupLogging()
+		val sharedPreferencesHandler = SharedPreferencesHandler(applicationContext())
 		@Suppress("KotlinConstantConditions") //
 		val flavor = when (BuildConfig.FLAVOR) {
 			"apkstore" -> "APK Store Edition"
@@ -74,10 +86,13 @@ class CryptomatorApp : MultiDexApplication(), HasComponent<ApplicationComponent>
 		initializeInjector()
 		launchServices()
 		registerActivityLifecycleCallbacks(serviceNotifier)
-		AppCompatDelegate.setDefaultNightMode(SharedPreferencesHandler(applicationContext()).screenStyleMode)
+		if (FlavorConfig.isFreemiumFlavor) {
+			registerActivityLifecycleCallbacks(PurchaseRevokedToastObserver(sharedPreferencesHandler))
+		}
+		AppCompatDelegate.setDefaultNightMode(sharedPreferencesHandler.screenStyleMode)
 		cleanupCache()
 
-		if (SharedPreferencesHandler(applicationContext()).microsoftWorkaround()) {
+		if (sharedPreferencesHandler.microsoftWorkaround()) {
 			val builder: StrictMode.VmPolicy.Builder = StrictMode.VmPolicy.Builder()
 			StrictMode.setVmPolicy(builder.build())
 		}
@@ -172,10 +187,18 @@ class CryptomatorApp : MultiDexApplication(), HasComponent<ApplicationComponent>
 		}
 	}
 
-	fun restorePurchases() {
-		if (FlavorConfig.isFreemiumFlavor) {
-			iapBillingServiceBinder?.restorePurchases()
+	fun restorePurchases(onComplete: (RestoreOutcome) -> Unit = {}) {
+		if (!FlavorConfig.isFreemiumFlavor) {
+			onComplete(RestoreOutcome.NOTHING_TO_RESTORE)
+			return
 		}
+		val binder = iapBillingServiceBinder
+		if (binder == null) {
+			Timber.tag("App").w("restorePurchases called before IAP binder ready")
+			onComplete(RestoreOutcome.FAILED())
+			return
+		}
+		binder.restorePurchases(onComplete)
 	}
 
 	private fun startAutoUploadService() {
@@ -255,23 +278,32 @@ class CryptomatorApp : MultiDexApplication(), HasComponent<ApplicationComponent>
 		return applicationComponent
 	}
 
-	private val resumedActivities = AtomicInteger(0)
+	private val startedActivities = AtomicInteger(0)
 	private val serviceNotifier: ActivityLifecycleCallbacks = object : NoOpActivityLifecycleCallbacks() {
-		override fun onActivityResumed(activity: Activity) {
-			updateService(resumedActivities.incrementAndGet())
+		override fun onActivityStarted(activity: Activity) {
+			// Using onActivityStarted/Stopped (not Resumed/Paused) because B.onStart fires before A.onStop during
+			// intra-app navigation, so the counter never transiently hits 0 on screen transitions.
+			val newCount = startedActivities.incrementAndGet()
+			updateService(newCount)
+			if (newCount == 1 && FlavorConfig.isFreemiumFlavor) {
+				// Refresh purchases on background→foreground so a refund or lapsed subscription is detected.
+				// The coordinator persists revoke state via SharedPreferences; PurchaseRevokedToastObserver picks it up
+				// on the next activity resume. Outcome is ignored here because auto-refresh only drives the revoke toast.
+				restorePurchases()
+			}
 		}
 
-		override fun onActivityPaused(activity: Activity) {
-			updateService(resumedActivities.decrementAndGet())
+		override fun onActivityStopped(activity: Activity) {
+			updateService(startedActivities.decrementAndGet())
 		}
 	}
 
-	private fun updateService(resumedCount: Int = resumedActivities.get()) {
+	private fun updateService(startedCount: Int = startedActivities.get()) {
 		val localServiceBinder = cryptoServiceBinder
 		if (localServiceBinder == null) {
 			startCryptorsService()
 		} else {
-			localServiceBinder.appInForeground(resumedCount > 0)
+			localServiceBinder.appInForeground(startedCount > 0)
 		}
 	}
 

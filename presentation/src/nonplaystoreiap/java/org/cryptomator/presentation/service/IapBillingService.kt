@@ -34,8 +34,8 @@ class IapBillingService : Service() {
 			callback(emptyList())
 		}
 
-		fun restorePurchases() {
-			// no-op
+		fun restorePurchases(onComplete: (RestoreOutcome) -> Unit) {
+			onComplete(RestoreOutcome.NOTHING_TO_RESTORE)
 		}
 	}
 }

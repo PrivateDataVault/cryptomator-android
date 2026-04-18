@@ -65,6 +65,8 @@
 	<string name="read_only_reason_move_node">Moving files or folders requires write access.</string>
 	<string name="read_only_reason_delete_node">Deleting files or folders requires write access.</string>
 	<string name="read_only_reason_hub_inactive">Upgrade your Hub license to enable writing for this vault.</string>
+	<string name="toast_purchase_revoked_refunded">Your lifetime purchase was refunded. You now have read-only access.</string>
+	<string name="toast_purchase_revoked_subscription_inactive">Your subscription is no longer active. You now have read-only access.</string>
 	<string name="screen_license_check_locked_create_vault">Unlock full version to create vaults</string>
 	<string name="screen_license_check_locked_upload_files">Unlock full version to upload files</string>
 	<string name="screen_license_check_locked_create_folder">Unlock full version to create folders</string>
@@ -613,6 +615,18 @@
 	<string name="dialog_hub_vault_archived_title">Vault archived</string>
 	<string name="dialog_hub_vault_archived_hint">This vault is archived and cannot be unlocked. To unlock it, a vault owner must unarchive it.</string>
 	<string name="dialog_hub_vault_archived_positive_button" translatable="false">@string/dialog_unable_to_share_positive_button</string>
+
+	<string name="dialog_restore_successful_title">Restore Successful</string>
+	<string name="dialog_restore_successful_message">Your purchase has been restored and is now active on this device.</string>
+	<string name="dialog_restore_successful_positive_button" translatable="false">@string/dialog_unable_to_share_positive_button</string>
+
+	<string name="dialog_no_full_version_title">No Full Version</string>
+	<string name="dialog_no_full_version_message">We couldn\u0027t find an existing purchase on this Google account.</string>
+	<string name="dialog_no_full_version_positive_button" translatable="false">@string/dialog_unable_to_share_positive_button</string>
+
+	<string name="dialog_restore_failed_title">Restore Failed</string>
+	<string name="dialog_restore_failed_message">We couldn\u0027t reach the Play Store. Please check your connection and try again.</string>
+	<string name="dialog_restore_failed_positive_button" translatable="false">@string/dialog_unable_to_share_positive_button</string>
 
 	<string name="dialog_hub_user_setup_required_title">User setup required</string>
 	<string name="dialog_hub_user_setup_required_hint">To proceed, please complete the steps required in your Hub user profile.</string>
