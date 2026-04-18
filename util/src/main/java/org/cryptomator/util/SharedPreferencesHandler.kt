@@ -219,6 +219,14 @@ override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key
 		defaultSharedPreferences.setValue(TRIAL_EXPIRATION_DATE, date)
 	}
 
+	fun isTrialExpired(): Boolean {
+		return defaultSharedPreferences.getValue(TRIAL_EXPIRED, false)
+	}
+
+	fun setTrialExpired(value: Boolean) {
+		defaultSharedPreferences.setValue(TRIAL_EXPIRED, value)
+	}
+
 	fun hasRunningSubscription(): Boolean {
 		return defaultSharedPreferences.getValue(HAS_RUNNING_SUBSCRIPTION, false)
 	}
@@ -372,6 +380,7 @@ override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key
 		private const val LAST_UPDATE_CHECK = "lastUpdateCheck"
 		private const val WELCOME_FLOW_COMPLETED = "welcomeFlowCompleted"
 		private const val TRIAL_EXPIRATION_DATE = "trialExpirationDate"
+		private const val TRIAL_EXPIRED = "trialExpired"
 		private const val HAS_RUNNING_SUBSCRIPTION = "hasRunningSubscription"
 		const val DEBUG_MODE = "debugMode"
 		const val DISABLE_APP_WHEN_OBSCURED = "disableAppWhenObscured"

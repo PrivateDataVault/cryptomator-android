@@ -89,16 +89,27 @@ class LicenseEnforcer @Inject constructor(private val sharedPreferencesHandler: 
 		sharedPreferencesHandler.setTrialExpirationDate(trialExpiration)
 	}
 
-	fun hasActiveTrial(): Boolean {
+	private fun observeTrialExpiry() {
 		val trialExpiration = sharedPreferencesHandler.trialExpirationDate()
-		return trialExpiration > 0 && trialExpiration > System.currentTimeMillis()
+		val now = System.currentTimeMillis()
+		if (trialExpiration > 0 && trialExpiration <= now && !sharedPreferencesHandler.isTrialExpired()) {
+			sharedPreferencesHandler.setTrialExpired(true)
+		}
+	}
+
+	fun hasActiveTrial(): Boolean {
+		observeTrialExpiry()
+		val trialExpiration = sharedPreferencesHandler.trialExpirationDate()
+		return trialExpiration > 0 && trialExpiration > System.currentTimeMillis() && !sharedPreferencesHandler.isTrialExpired()
 	}
 
 	fun evaluateTrialState(): TrialState {
+		observeTrialExpiry()
 		val trialExpiration = sharedPreferencesHandler.trialExpirationDate()
 		val now = System.currentTimeMillis()
-		val active = trialExpiration > 0 && trialExpiration > now
-		val expired = trialExpiration > 0 && trialExpiration <= now
+		val sticky = sharedPreferencesHandler.isTrialExpired()
+		val active = trialExpiration > 0 && trialExpiration > now && !sticky
+		val expired = trialExpiration > 0 && (trialExpiration <= now || sticky)
 		val formattedDate = if (active || expired) {
 			DateFormat.getDateInstance().format(Date(trialExpiration))
 		} else null

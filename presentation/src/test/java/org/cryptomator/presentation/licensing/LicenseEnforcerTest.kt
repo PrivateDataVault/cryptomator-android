@@ -16,6 +16,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
+import org.mockito.ArgumentMatchers.anyBoolean
 import org.mockito.ArgumentMatchers.anyLong
 import org.mockito.ArgumentMatchers.eq
 import org.mockito.Mockito.mock
@@ -59,6 +60,7 @@ class LicenseEnforcerTest {
 		`when`(sharedPreferencesHandler.licenseToken()).thenReturn("")
 		`when`(sharedPreferencesHandler.hasRunningSubscription()).thenReturn(false)
 		`when`(sharedPreferencesHandler.trialExpirationDate()).thenReturn(System.currentTimeMillis() + 86400000L)
+		`when`(sharedPreferencesHandler.isTrialExpired()).thenReturn(false)
 
 		assertTrue(licenseEnforcer.hasWriteAccess())
 	}
@@ -69,6 +71,7 @@ class LicenseEnforcerTest {
 		`when`(sharedPreferencesHandler.licenseToken()).thenReturn("")
 		`when`(sharedPreferencesHandler.hasRunningSubscription()).thenReturn(false)
 		`when`(sharedPreferencesHandler.trialExpirationDate()).thenReturn(System.currentTimeMillis() - 1000L)
+		`when`(sharedPreferencesHandler.isTrialExpired()).thenReturn(false)
 
 		assertFalse(licenseEnforcer.hasWriteAccess())
 	}
@@ -150,6 +153,7 @@ class LicenseEnforcerTest {
 		`when`(sharedPreferencesHandler.licenseToken()).thenReturn("")
 		`when`(sharedPreferencesHandler.hasRunningSubscription()).thenReturn(false)
 		`when`(sharedPreferencesHandler.trialExpirationDate()).thenReturn(System.currentTimeMillis() + 86400000L)
+		`when`(sharedPreferencesHandler.isTrialExpired()).thenReturn(false)
 
 		assertTrue(licenseEnforcer.hasWriteAccessForVault(vault))
 	}
@@ -260,6 +264,7 @@ class LicenseEnforcerTest {
 	@Test
 	fun `hasActiveTrial returns true when trial expiration is in the future`() {
 		`when`(sharedPreferencesHandler.trialExpirationDate()).thenReturn(System.currentTimeMillis() + 86400000L)
+		`when`(sharedPreferencesHandler.isTrialExpired()).thenReturn(false)
 
 		assertTrue(licenseEnforcer.hasActiveTrial())
 	}
@@ -267,6 +272,7 @@ class LicenseEnforcerTest {
 	@Test
 	fun `hasActiveTrial returns false when trial expiration is in the past`() {
 		`when`(sharedPreferencesHandler.trialExpirationDate()).thenReturn(System.currentTimeMillis() - 1000L)
+		`when`(sharedPreferencesHandler.isTrialExpired()).thenReturn(false)
 
 		assertFalse(licenseEnforcer.hasActiveTrial())
 	}
@@ -319,6 +325,7 @@ class LicenseEnforcerTest {
 	fun `evaluateTrialState returns active with formatted date when trial is active`() {
 		val futureDate = System.currentTimeMillis() + 86400000L
 		`when`(sharedPreferencesHandler.trialExpirationDate()).thenReturn(futureDate)
+		`when`(sharedPreferencesHandler.isTrialExpired()).thenReturn(false)
 
 		val state = licenseEnforcer.evaluateTrialState()
 
@@ -330,6 +337,7 @@ class LicenseEnforcerTest {
 	@Test
 	fun `evaluateTrialState returns expired with formatted date when trial is expired`() {
 		`when`(sharedPreferencesHandler.trialExpirationDate()).thenReturn(System.currentTimeMillis() - 1000L)
+		`when`(sharedPreferencesHandler.isTrialExpired()).thenReturn(false)
 
 		val state = licenseEnforcer.evaluateTrialState()
 
@@ -349,6 +357,85 @@ class LicenseEnforcerTest {
 		assertNull(state.formattedExpirationDate)
 	}
 
+	// -- sticky trial expiry --
+
+	@Test
+	fun `hasActiveTrial latches isTrialExpired when expiration is in the past`() {
+		`when`(sharedPreferencesHandler.trialExpirationDate()).thenReturn(System.currentTimeMillis() - 1000L)
+		`when`(sharedPreferencesHandler.isTrialExpired()).thenReturn(false)
+
+		assertFalse(licenseEnforcer.hasActiveTrial())
+		verify(sharedPreferencesHandler).setTrialExpired(true)
+	}
+
+	@Test
+	fun `hasActiveTrial returns false when isTrialExpired is already true even if date is in the future`() {
+		`when`(sharedPreferencesHandler.trialExpirationDate()).thenReturn(System.currentTimeMillis() + 86400000L)
+		`when`(sharedPreferencesHandler.isTrialExpired()).thenReturn(true)
+
+		assertFalse(licenseEnforcer.hasActiveTrial())
+		verify(sharedPreferencesHandler, never()).setTrialExpired(anyBoolean())
+	}
+
+	@Test
+	fun `evaluateTrialState latches isTrialExpired and returns expired when date is in the past`() {
+		`when`(sharedPreferencesHandler.trialExpirationDate()).thenReturn(System.currentTimeMillis() - 1000L)
+		`when`(sharedPreferencesHandler.isTrialExpired()).thenReturn(false)
+
+		val state = licenseEnforcer.evaluateTrialState()
+
+		assertFalse(state.isActive)
+		assertTrue(state.isExpired)
+		verify(sharedPreferencesHandler).setTrialExpired(true)
+	}
+
+	@Test
+	fun `evaluateTrialState returns expired when isTrialExpired is already true even if date is in the future`() {
+		`when`(sharedPreferencesHandler.trialExpirationDate()).thenReturn(System.currentTimeMillis() + 86400000L)
+		`when`(sharedPreferencesHandler.isTrialExpired()).thenReturn(true)
+
+		val state = licenseEnforcer.evaluateTrialState()
+
+		assertFalse(state.isActive)
+		assertTrue(state.isExpired)
+		assertNotNull(state.formattedExpirationDate)
+		verify(sharedPreferencesHandler, never()).setTrialExpired(anyBoolean())
+	}
+
+	@Test
+	fun `observeTrialExpiry idempotent once flag is set`() {
+		`when`(sharedPreferencesHandler.trialExpirationDate()).thenReturn(System.currentTimeMillis() - 1000L)
+		`when`(sharedPreferencesHandler.isTrialExpired()).thenReturn(true)
+
+		licenseEnforcer.hasActiveTrial()
+		licenseEnforcer.evaluateTrialState()
+
+		verify(sharedPreferencesHandler, never()).setTrialExpired(anyBoolean())
+	}
+
+	@Test
+	fun `startTrial does not reset sticky trialExpired flag`() {
+		`when`(sharedPreferencesHandler.trialExpirationDate()).thenReturn(0L)
+		`when`(sharedPreferencesHandler.isTrialExpired()).thenReturn(true)
+
+		licenseEnforcer.startTrial()
+
+		verify(sharedPreferencesHandler, never()).setTrialExpired(anyBoolean())
+	}
+
+	@Test
+	fun `fresh install with no trial and no flag behaves unchanged`() {
+		`when`(sharedPreferencesHandler.trialExpirationDate()).thenReturn(0L)
+		`when`(sharedPreferencesHandler.isTrialExpired()).thenReturn(false)
+
+		assertFalse(licenseEnforcer.hasActiveTrial())
+		val state = licenseEnforcer.evaluateTrialState()
+		assertFalse(state.isActive)
+		assertFalse(state.isExpired)
+		assertNull(state.formattedExpirationDate)
+		verify(sharedPreferencesHandler, never()).setTrialExpired(anyBoolean())
+	}
+
 	// -- evaluateUiState --
 
 	@Test
@@ -358,6 +445,7 @@ class LicenseEnforcerTest {
 		`when`(sharedPreferencesHandler.licenseToken()).thenReturn("")
 		`when`(sharedPreferencesHandler.hasRunningSubscription()).thenReturn(false)
 		`when`(sharedPreferencesHandler.trialExpirationDate()).thenReturn(System.currentTimeMillis() + 86400000L)
+		`when`(sharedPreferencesHandler.isTrialExpired()).thenReturn(false)
 		`when`(context.getString(eq(R.string.screen_license_check_trial_expiration), any())).thenReturn("Expiration Date: Mar 28, 2026")
 
 		val uiState = licenseEnforcer.evaluateUiState(context)
@@ -375,6 +463,7 @@ class LicenseEnforcerTest {
 		`when`(sharedPreferencesHandler.licenseToken()).thenReturn("")
 		`when`(sharedPreferencesHandler.hasRunningSubscription()).thenReturn(false)
 		`when`(sharedPreferencesHandler.trialExpirationDate()).thenReturn(System.currentTimeMillis() - 1000L)
+		`when`(sharedPreferencesHandler.isTrialExpired()).thenReturn(false)
 		`when`(context.getString(eq(R.string.screen_license_check_trial_expiration), any())).thenReturn("Expiration Date: Mar 26, 2026")
 
 		val uiState = licenseEnforcer.evaluateUiState(context)
