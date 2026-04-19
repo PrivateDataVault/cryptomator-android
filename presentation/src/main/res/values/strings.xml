@@ -107,6 +107,7 @@
 	<string name="screen_welcome_screen_lock_button">Set screen lock</string>
 	<string name="screen_welcome_screen_lock_already_set">Screen lock is already set.</string>
 	<string name="screen_welcome_intro_body">Thanks for choosing Cryptomator to protect your files.\n\nWith Cryptomator, the key to your data is in your hands.\n\nCryptomator encrypts your data quickly and easily.</string>
+	<string name="screen_welcome_trial_button" translatable="false">@string/screen_license_check_trial_price</string>
 	<string name="next">Next</string>
 	<string name="back">Back</string>
 	<string name="screen_settings_license_unlock_prompt">Unlock write access</string>

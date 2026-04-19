@@ -66,6 +66,14 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 						return
 					}
 					pagerAdapter.licenseFragment?.updateUnlocked(hasWriteAccess, hasPaidLicense)
+					if (!FlavorConfig.isPremiumFlavor && !FlavorConfig.isFreemiumFlavor && !hasPaidLicense) {
+						val uiState = licenseEnforcer.evaluateUiState(this@WelcomeActivity)
+						pagerAdapter.licenseFragment?.updateTrialState(
+							uiState.trialState.isActive,
+							uiState.trialState.isExpired,
+							uiState.trialExpirationText
+						)
+					}
 				}
 				override fun onTrialStateChanged(active: Boolean, expired: Boolean, expirationText: String?) {
 					if (!this@WelcomeActivity::pagerAdapter.isInitialized) {
@@ -160,11 +168,7 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 			override fun onPageSelected(position: Int) {
 				updateNavigationButtons(position)
 				when (pages[position]) {
-					is FragmentPage.License -> {
-						if (FlavorConfig.isFreemiumFlavor) {
-							orchestrator.updateState()
-						}
-					}
+					is FragmentPage.License -> orchestrator.updateState()
 					is FragmentPage.Notifications -> updateNotificationPermissionState()
 					is FragmentPage.ScreenLock -> updateScreenLockState()
 					is FragmentPage.Intro -> Unit

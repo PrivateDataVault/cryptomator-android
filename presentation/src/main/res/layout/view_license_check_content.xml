@@ -225,6 +225,7 @@
 		</LinearLayout>
 
 		<View
+			android:id="@+id/dividerTrialSubscription"
 			android:layout_width="match_parent"
 			android:layout_height="1dp"
 			android:background="?android:attr/listDivider" />
@@ -273,6 +274,7 @@
 		</LinearLayout>
 
 		<View
+			android:id="@+id/dividerSubscriptionLifetime"
 			android:layout_width="match_parent"
 			android:layout_height="1dp"
 			android:background="?android:attr/listDivider" />

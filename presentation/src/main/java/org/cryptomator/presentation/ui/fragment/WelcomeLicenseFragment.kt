@@ -61,7 +61,9 @@ class WelcomeLicenseFragment : BaseFragment<FragmentWelcomeLicenseBinding>(Fragm
 	}
 
 	private fun setupLicenseEntryUi() {
-		licenseContentViewBinder.bindInitialLicenseEntryLayout()
+		licenseContentViewBinder.bindInitialLicenseEntryWithTrialLayout()
+		binding.licenseContent.btnTrial.text = getString(R.string.screen_welcome_trial_button)
+		binding.licenseContent.btnTrial.setOnClickListener { listener?.onStartTrial() }
 		binding.licenseContent.tvLicenseLink.setOnClickListener { listener?.onOpenLicenseLink() }
 		binding.licenseContent.btnPurchase.visibility = View.GONE
 		binding.licenseContent.etLicense.addTextChangedListener(object : TextWatcher {
