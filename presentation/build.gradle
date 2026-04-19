@@ -162,12 +162,6 @@ android {
 		quiet true
 	}
 
-	testOptions {
-		unitTests {
-			includeAndroidResources = true
-		}
-	}
-
 	namespace 'org.cryptomator.presentation'
 }
 
@@ -284,7 +278,6 @@ dependencies {
 
 	androidTestImplementation dependencies.runner
 	androidTestImplementation dependencies.androidAnnotations
-	androidTestImplementation dependencies.androidxTestJunitKtln
 
 
 	testImplementation dependencies.junit
@@ -297,9 +290,6 @@ dependencies {
 	testImplementation dependencies.mockitoKotlin
 	testImplementation dependencies.mockitoInline
 	testImplementation dependencies.hamcrest
-	testImplementation dependencies.robolectric
-	testImplementation dependencies.androidxTestCore
-	testImplementation dependencies.junit4
 }
 
 configurations {
