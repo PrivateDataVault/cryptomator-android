@@ -30,7 +30,9 @@ class LicenseContentViewBinder(
 		binding.purchaseOptionsGroup.visibility = View.VISIBLE
 		binding.tvRestorePurchase.visibility = View.VISIBLE
 		binding.legalLinksGroup.visibility = View.VISIBLE
+		binding.rowSubscription.isEnabled = false
 		binding.btnSubscription.isEnabled = false
+		binding.rowLifetime.isEnabled = false
 		binding.btnLifetime.isEnabled = false
 	}
 
@@ -72,10 +74,10 @@ class LicenseContentViewBinder(
 		onTrialClicked: () -> Unit
 	) {
 		binding.btnTrial.setOnClickListener { onTrialClicked() }
-		binding.btnSubscription.setOnClickListener {
+		binding.rowSubscription.setOnClickListener {
 			app.launchPurchaseFlow(WeakReference(activity), ProductInfo.PRODUCT_YEARLY_SUBSCRIPTION)
 		}
-		binding.btnLifetime.setOnClickListener {
+		binding.rowLifetime.setOnClickListener {
 			app.launchPurchaseFlow(WeakReference(activity), ProductInfo.PRODUCT_FULL_VERSION)
 		}
 		binding.tvRestorePurchase.setOnClickListener {
@@ -105,10 +107,12 @@ class LicenseContentViewBinder(
 	fun bindProductPrices(subscriptionPrice: String?, lifetimePrice: String?) {
 		if (!subscriptionPrice.isNullOrEmpty()) {
 			binding.btnSubscription.text = subscriptionPrice
+			binding.rowSubscription.isEnabled = true
 			binding.btnSubscription.isEnabled = true
 		}
 		if (!lifetimePrice.isNullOrEmpty()) {
 			binding.btnLifetime.text = lifetimePrice
+			binding.rowLifetime.isEnabled = true
 			binding.btnLifetime.isEnabled = true
 		}
 	}

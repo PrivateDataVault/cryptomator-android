@@ -235,6 +235,9 @@
 			android:id="@+id/rowSubscription"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
+			android:background="?android:attr/selectableItemBackground"
+			android:clickable="true"
+			android:focusable="true"
 			android:gravity="center_vertical"
 			android:orientation="horizontal"
 			android:paddingVertical="12dp">
@@ -250,6 +253,7 @@
 			<LinearLayout
 				android:layout_width="wrap_content"
 				android:layout_height="wrap_content"
+				android:duplicateParentState="true"
 				android:gravity="center"
 				android:orientation="vertical">
 
@@ -258,6 +262,9 @@
 					style="@style/Widget.Material3.Button.TonalButton"
 					android:layout_width="wrap_content"
 					android:layout_height="36dp"
+					android:clickable="false"
+					android:duplicateParentState="true"
+					android:focusable="false"
 					android:insetTop="0dp"
 					android:insetBottom="0dp"
 					android:minWidth="85dp"
@@ -284,6 +291,9 @@
 			android:id="@+id/rowLifetime"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
+			android:background="?android:attr/selectableItemBackground"
+			android:clickable="true"
+			android:focusable="true"
 			android:gravity="center_vertical"
 			android:orientation="horizontal"
 			android:paddingVertical="12dp">
@@ -299,6 +309,7 @@
 			<LinearLayout
 				android:layout_width="wrap_content"
 				android:layout_height="wrap_content"
+				android:duplicateParentState="true"
 				android:gravity="center"
 				android:orientation="vertical">
 
@@ -307,6 +318,9 @@
 					style="@style/Widget.Material3.Button.TonalButton"
 					android:layout_width="wrap_content"
 					android:layout_height="36dp"
+					android:clickable="false"
+					android:duplicateParentState="true"
+					android:focusable="false"
 					android:insetTop="0dp"
 					android:insetBottom="0dp"
 					android:minWidth="85dp"
