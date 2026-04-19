@@ -51,13 +51,15 @@ class WelcomeLicenseFragment : BaseFragment<FragmentWelcomeLicenseBinding>(Fragm
 	}
 
 	private fun setupIapUi() {
+		val app = requireActivity().application as CryptomatorApp
 		licenseContentViewBinder.bindInitialIapLayout()
 		licenseContentViewBinder.bindLegalLinks()
 		licenseContentViewBinder.bindPurchaseButtons(
 			activity = requireActivity(),
-			app = requireActivity().application as CryptomatorApp,
+			app = app,
 			onTrialClicked = { listener?.onStartTrial() }
 		)
+		licenseContentViewBinder.loadAndBindPrices(app)
 	}
 
 	private fun setupLicenseEntryUi() {
