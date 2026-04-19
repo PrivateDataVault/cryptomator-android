@@ -55,15 +55,6 @@
 	<string name="error_hub_not_trustworthy">Hub is not trustworthy.</string>
 
 	<!-- # read-only & purchases -->
-	<string name="read_only_banner">You are currently in read-only mode.</string>
-	<string name="read_only_reason_create_vault">Creating new vaults requires an active license.</string>
-	<string name="read_only_reason_add_file">Uploading files requires write access.</string>
-	<string name="read_only_reason_create_folder">Folder creation is only available with a license.</string>
-	<string name="read_only_reason_create_text_file">Creating files requires an active license.</string>
-	<string name="read_only_reason_share_node">Sharing files or folders is only available with write access.</string>
-	<string name="read_only_reason_rename_node">Renaming requires write access.</string>
-	<string name="read_only_reason_move_node">Moving files or folders requires write access.</string>
-	<string name="read_only_reason_delete_node">Deleting files or folders requires write access.</string>
 	<string name="read_only_reason_hub_inactive">Upgrade your Hub license to enable writing for this vault.</string>
 	<string name="toast_purchase_revoked_refunded">Your lifetime purchase was refunded. You now have read-only access.</string>
 	<string name="toast_purchase_revoked_subscription_inactive">Your subscription is no longer active. You now have read-only access.</string>

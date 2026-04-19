@@ -137,7 +137,7 @@ class LicenseContentViewBinder(
 	}
 
 	/** Updates trial-related view visibility based on trial state. */
-	fun bindTrialState(active: Boolean, expired: Boolean, expirationText: String?) {
+	fun bindTrialState(active: Boolean, expired: Boolean, expirationText: String?, hasLockedActionHeader: Boolean = false) {
 		if (active || expired) {
 			binding.trialButtonGroup.visibility = View.GONE
 			binding.tvTrialStatusBadge.visibility = View.VISIBLE
@@ -147,10 +147,10 @@ class LicenseContentViewBinder(
 			)
 			binding.tvTrialExpiration.visibility = View.VISIBLE
 			binding.tvTrialExpiration.text = expirationText
-			if (expired) {
+			if (expired && !hasLockedActionHeader) {
 				binding.tvInfoText.visibility = View.VISIBLE
 				binding.tvInfoText.text = context.getString(R.string.screen_license_check_trial_expired_info)
-			} else {
+			} else if (!hasLockedActionHeader) {
 				binding.tvInfoText.visibility = View.GONE
 			}
 		} else {

@@ -21,41 +21,16 @@ import javax.inject.Inject
 class LicenseEnforcer @Inject constructor(private val sharedPreferencesHandler: SharedPreferencesHandler) {
 
 	enum class LockedAction(
-		@StringRes val toastMessageRes: Int,
 		@StringRes val headerMessageRes: Int
 	) {
-		CREATE_VAULT(
-			R.string.read_only_reason_create_vault,
-			R.string.screen_license_check_locked_create_vault,
-		),
-		UPLOAD_FILES(
-			R.string.read_only_reason_add_file,
-			R.string.screen_license_check_locked_upload_files,
-		),
-		CREATE_FOLDER(
-			R.string.read_only_reason_create_folder,
-			R.string.screen_license_check_locked_create_folder,
-		),
-		CREATE_TEXT_FILE(
-			R.string.read_only_reason_create_text_file,
-			R.string.screen_license_check_locked_create_text_file,
-		),
-		SHARE_NODE(
-			R.string.read_only_reason_share_node,
-			R.string.screen_license_check_locked_share_node,
-		),
-		RENAME_NODE(
-			R.string.read_only_reason_rename_node,
-			R.string.screen_license_check_locked_rename_node,
-		),
-		MOVE_NODE(
-			R.string.read_only_reason_move_node,
-			R.string.screen_license_check_locked_move_node,
-		),
-		DELETE_NODE(
-			R.string.read_only_reason_delete_node,
-			R.string.screen_license_check_locked_delete_node,
-		);
+		CREATE_VAULT(R.string.screen_license_check_locked_create_vault),
+		UPLOAD_FILES(R.string.screen_license_check_locked_upload_files),
+		CREATE_FOLDER(R.string.screen_license_check_locked_create_folder),
+		CREATE_TEXT_FILE(R.string.screen_license_check_locked_create_text_file),
+		SHARE_NODE(R.string.screen_license_check_locked_share_node),
+		RENAME_NODE(R.string.screen_license_check_locked_rename_node),
+		MOVE_NODE(R.string.screen_license_check_locked_move_node),
+		DELETE_NODE(R.string.screen_license_check_locked_delete_node);
 
 		companion object {
 			fun fromName(name: String?): LockedAction? {
@@ -138,15 +113,10 @@ class LicenseEnforcer @Inject constructor(private val sharedPreferencesHandler: 
 		)
 	}
 
-	@StringRes
-	fun defaultReasonRes(): Int = R.string.read_only_banner
-
 	fun ensureWriteAccess(activity: Activity, action: LockedAction): Boolean {
 		if (hasWriteAccess()) {
 			return true
 		}
-
-		Toast.makeText(activity, activity.getString(action.toastMessageRes), Toast.LENGTH_LONG).show()
 
 		if (FlavorConfig.isPremiumFlavor) {
 			return false

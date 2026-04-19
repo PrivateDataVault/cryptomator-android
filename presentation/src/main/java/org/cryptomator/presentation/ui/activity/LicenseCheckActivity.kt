@@ -55,7 +55,7 @@ class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityL
 					licenseContentViewBinder.bindPurchaseState(hasWriteAccess, hasPaidLicense)
 				}
 				override fun onTrialStateChanged(active: Boolean, expired: Boolean, expirationText: String?) {
-					licenseContentViewBinder.bindTrialState(active, expired, expirationText)
+					licenseContentViewBinder.bindTrialState(active, expired, expirationText, hasLockedActionHeader = lockedAction != null)
 				}
 			},
 			priceLoader = { licenseContentViewBinder.loadAndBindPrices(application as CryptomatorApp) }
