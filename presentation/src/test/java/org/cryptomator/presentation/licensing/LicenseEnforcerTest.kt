@@ -403,7 +403,7 @@ class LicenseEnforcerTest {
 	}
 
 	@Test
-	fun `observeTrialExpiry idempotent once flag is set`() {
+	fun `evaluateTrialState is idempotent once sticky flag is set`() {
 		`when`(sharedPreferencesHandler.trialExpirationDate()).thenReturn(System.currentTimeMillis() - 1000L)
 		`when`(sharedPreferencesHandler.isTrialExpired()).thenReturn(true)
 

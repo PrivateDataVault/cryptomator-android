@@ -64,27 +64,19 @@ class LicenseEnforcer @Inject constructor(private val sharedPreferencesHandler: 
 		sharedPreferencesHandler.setTrialExpirationDate(trialExpiration)
 	}
 
-	private fun observeTrialExpiry() {
-		val trialExpiration = sharedPreferencesHandler.trialExpirationDate()
-		val now = System.currentTimeMillis()
-		if (trialExpiration > 0 && trialExpiration <= now && !sharedPreferencesHandler.isTrialExpired()) {
-			sharedPreferencesHandler.setTrialExpired(true)
-		}
-	}
-
 	fun hasActiveTrial(): Boolean {
-		observeTrialExpiry()
-		val trialExpiration = sharedPreferencesHandler.trialExpirationDate()
-		return trialExpiration > 0 && trialExpiration > System.currentTimeMillis() && !sharedPreferencesHandler.isTrialExpired()
+		return evaluateTrialState().isActive
 	}
 
 	fun evaluateTrialState(): TrialState {
-		observeTrialExpiry()
 		val trialExpiration = sharedPreferencesHandler.trialExpirationDate()
 		val now = System.currentTimeMillis()
 		val sticky = sharedPreferencesHandler.isTrialExpired()
 		val active = trialExpiration > 0 && trialExpiration > now && !sticky
 		val expired = trialExpiration > 0 && (trialExpiration <= now || sticky)
+		if (expired && !sticky) {
+			sharedPreferencesHandler.setTrialExpired(true)
+		}
 		val formattedDate = if (active || expired) {
 			DateFormat.getDateInstance().format(Date(trialExpiration))
 		} else null
@@ -102,12 +94,13 @@ class LicenseEnforcer @Inject constructor(private val sharedPreferencesHandler: 
 
 	fun evaluateUiState(context: Context): LicenseUiState {
 		val trialState = evaluateTrialState()
+		val paidLicense = hasPaidLicense()
 		val expirationText = if (trialState.isActive || trialState.isExpired) {
 			context.getString(R.string.screen_license_check_trial_expiration, trialState.formattedExpirationDate)
 		} else null
 		return LicenseUiState(
-			hasWriteAccess = hasWriteAccess(),
-			hasPaidLicense = hasPaidLicense(),
+			hasWriteAccess = paidLicense || trialState.isActive,
+			hasPaidLicense = paidLicense,
 			trialState = trialState,
 			trialExpirationText = expirationText
 		)
