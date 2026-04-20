@@ -55,17 +55,15 @@ class IapBillingService : Service(), PurchasesUpdatedListener {
 				if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
 					Timber.tag("IapBillingService").d("Billing setup successful")
 					queryExistingPurchases()
-					synchronized(pendingProductDetailsCallbacks) {
-						if (pendingProductDetailsCallbacks.isNotEmpty()) {
-							val callbacks = ArrayList(pendingProductDetailsCallbacks)
-							pendingProductDetailsCallbacks.clear()
-							queryProductDetails { products ->
-								callbacks.forEach { it(products) }
-							}
+					val callbacks = drainPendingProductDetailsCallbacks()
+					if (callbacks.isNotEmpty()) {
+						queryProductDetails { products ->
+							callbacks.forEach { it(products) }
 						}
 					}
 				} else {
 					Timber.tag("IapBillingService").e("Billing setup not successful, error: %d", billingResult.responseCode)
+					drainPendingProductDetailsCallbacks().forEach { it(emptyList()) }
 				}
 			}
 
@@ -73,6 +71,17 @@ class IapBillingService : Service(), PurchasesUpdatedListener {
 				Timber.tag("IapBillingService").i("Billing service disconnected")
 			}
 		})
+	}
+
+	private fun drainPendingProductDetailsCallbacks(): List<(List<ProductInfo>) -> Unit> {
+		synchronized(pendingProductDetailsCallbacks) {
+			if (pendingProductDetailsCallbacks.isEmpty()) {
+				return emptyList()
+			}
+			val snapshot = ArrayList(pendingProductDetailsCallbacks)
+			pendingProductDetailsCallbacks.clear()
+			return snapshot
+		}
 	}
 
 	override fun onCreate() {

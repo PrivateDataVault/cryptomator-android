@@ -219,7 +219,6 @@ dependencies {
 	addToFlavors(googleFlavors, dependencies.googleApiServicesDrive) {
 		exclude module: 'guava-jdk5'
 		exclude module: 'httpclient'
-		exclude module: 'googlehttpclient'
 		exclude group: "com.google.http-client", module: "google-http-client"
 	}
 	addToFlavors(googleFlavors, dependencies.googleApiClientAndroid) {

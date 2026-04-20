@@ -101,9 +101,6 @@
 	<string name="screen_welcome_trial_button" translatable="false">@string/screen_license_check_trial_price</string>
 	<string name="next">Next</string>
 	<string name="back">Back</string>
-	<string name="screen_settings_license_unlock_prompt">Unlock write access</string>
-	<string name="screen_settings_license_unlock_summary">Tap to enter your license key.</string>
-	<string name="screen_settings_license_unlocked_iap">Write access is unlocked</string>
 
 	<!-- # clouds -->
 
@@ -545,7 +542,7 @@
 	<string name="dialog_biometric_auth_key_invalidated_neutral_button" translatable="false">@string/dialog_unable_to_share_positive_button</string>
 
 	<string name="dialog_enter_license_title">Provide a valid license</string>
-	<string name="dialog_enter_license_content">A license can be purchased on <a href="https://cryptomator.org/android/">https://cryptomator.org/android/</a> or enter your existing Android License Key</string>
+	<string name="dialog_enter_license_content">Purchase a license at <a href="https://cryptomator.org/android/">https://cryptomator.org/android/</a> or enter your existing Android license key.</string>
 	<string name="dialog_enter_license_not_valid_content">The provided license isn\'t valid. Make sure you entered it correctly.</string>
 	<string name="dialog_enter_license_not_valid_content_desktop_supporter_certificate">The provided key is a desktop supporter certificate. Please enter a valid license.</string>
 	<string name="dialog_enter_license_no_content">No license provided. Please enter a valid license.</string>
