@@ -21,6 +21,7 @@ class WelcomeLicenseFragment : BaseFragment<FragmentWelcomeLicenseBinding>(Fragm
 		fun onOpenLicenseLink()
 		fun onStartTrial()
 		fun onSkipLicense()
+		fun onLicenseViewReady()
 	}
 
 	private val licenseContentViewBinder by lazy { LicenseContentViewBinder(binding.licenseContent, FlavorConfig.isFreemiumFlavor) }
@@ -60,6 +61,7 @@ class WelcomeLicenseFragment : BaseFragment<FragmentWelcomeLicenseBinding>(Fragm
 			onTrialClicked = { listener?.onStartTrial() }
 		)
 		licenseContentViewBinder.loadAndBindPrices(app)
+		listener?.onLicenseViewReady()
 	}
 
 	private fun setupLicenseEntryUi() {

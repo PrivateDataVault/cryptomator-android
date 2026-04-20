@@ -276,6 +276,10 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 		advanceOrComplete()
 	}
 
+	override fun onLicenseViewReady() {
+		orchestrator.updateState()
+	}
+
 	// RestoreOutcomeHandler
 
 	override fun onRestoreOutcome(outcome: RestoreOutcome) {
