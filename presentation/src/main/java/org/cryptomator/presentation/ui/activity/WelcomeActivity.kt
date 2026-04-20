@@ -156,7 +156,9 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 			pages.add(FragmentPage.License)
 		}
 		pages.add(FragmentPage.Notifications)
-		pages.add(FragmentPage.ScreenLock)
+		if (!keyguardManager.isDeviceSecure) {
+			pages.add(FragmentPage.ScreenLock)
+		}
 	}
 
 	private fun setupPager() {
@@ -219,7 +221,7 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 		if (!this::pagerAdapter.isInitialized) {
 			return
 		}
-		pagerAdapter.screenLockFragment?.updateScreenLockState(keyguardManager.isKeyguardSecure)
+		pagerAdapter.screenLockFragment?.updateScreenLockState(keyguardManager.isDeviceSecure)
 	}
 
 	private fun completeWelcomeFlow() {

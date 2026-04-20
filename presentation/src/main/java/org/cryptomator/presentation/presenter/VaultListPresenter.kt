@@ -141,7 +141,7 @@ class VaultListPresenter @Inject constructor( //
 
 		if (!sharedPreferencesHandler.isScreenLockDialogAlreadyShown) {
 			val keyguardManager = context().getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
-			if (!keyguardManager.isKeyguardSecure) {
+			if (!keyguardManager.isDeviceSecure) {
 				view?.showDialog(AskForLockScreenDialog.newInstance())
 			}
 			sharedPreferencesHandler.setScreenLockDialogAlreadyShown()
