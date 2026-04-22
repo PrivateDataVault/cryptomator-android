@@ -14,7 +14,7 @@ class LicenseStateOrchestrator(
 ) {
 
 	interface Target {
-		fun onPurchaseStateChanged(hasWriteAccess: Boolean, hasPaidLicense: Boolean)
+		fun onPurchaseStateChanged(hasWriteAccess: Boolean, hasPaidLicense: Boolean, hasLifetimeLicense: Boolean, hasRunningSubscription: Boolean)
 		fun onTrialStateChanged(active: Boolean, expired: Boolean, expirationText: String?)
 	}
 
@@ -34,7 +34,7 @@ class LicenseStateOrchestrator(
 
 	fun updateState() {
 		val uiState = licenseEnforcer.evaluateUiState(contextProvider())
-		target.onPurchaseStateChanged(uiState.hasWriteAccess, uiState.hasPaidLicense)
+		target.onPurchaseStateChanged(uiState.hasWriteAccess, uiState.hasPaidLicense, uiState.hasLifetimeLicense, uiState.hasRunningSubscription)
 		target.onTrialStateChanged(uiState.trialState.isActive, uiState.trialState.isExpired, uiState.trialExpirationText)
 	}
 }

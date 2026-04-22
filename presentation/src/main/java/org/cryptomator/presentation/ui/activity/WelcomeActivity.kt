@@ -62,7 +62,7 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 		LicenseStateOrchestrator(
 			sharedPreferencesHandler, licenseEnforcer, { this },
 			target = object : LicenseStateOrchestrator.Target {
-				override fun onPurchaseStateChanged(hasWriteAccess: Boolean, hasPaidLicense: Boolean) {
+				override fun onPurchaseStateChanged(hasWriteAccess: Boolean, hasPaidLicense: Boolean, hasLifetimeLicense: Boolean, hasRunningSubscription: Boolean) {
 					if (!this@WelcomeActivity::pagerAdapter.isInitialized) {
 						return
 					}

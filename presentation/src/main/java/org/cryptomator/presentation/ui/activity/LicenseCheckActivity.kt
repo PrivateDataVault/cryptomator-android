@@ -16,6 +16,7 @@ import org.cryptomator.presentation.presenter.LicenseCheckPresenter
 import org.cryptomator.presentation.service.RestoreOutcome
 import org.cryptomator.presentation.service.RestoreOutcomeHandler
 import org.cryptomator.presentation.ui.activity.view.UpdateLicenseView
+import org.cryptomator.presentation.ui.dialog.CancelSubscriptionReminderDialog
 import org.cryptomator.presentation.ui.dialog.EnterLicenseDialog
 import org.cryptomator.presentation.ui.dialog.LicenseConfirmationDialog
 import org.cryptomator.presentation.ui.dialog.NoFullVersionDialog
@@ -34,7 +35,8 @@ class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityL
 	RestoreSuccessfulDialog.Callback, //
 	NoFullVersionDialog.Callback, //
 	RestoreFailedDialog.Callback, //
-	EnterLicenseDialog.Callback {
+	EnterLicenseDialog.Callback, //
+	CancelSubscriptionReminderDialog.Callback {
 
 	@Inject
 	lateinit var licenseCheckPresenter: LicenseCheckPresenter
@@ -46,17 +48,22 @@ class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityL
 	lateinit var licenseCheckIntent: LicenseCheckIntent
 
 	private var lockedAction: LicenseEnforcer.LockedAction? = null
+	private var wasSubscriptionOnly = false
 	private val licenseContentViewBinder by lazy { LicenseContentViewBinder(binding.licenseContent, FlavorConfig.isFreemiumFlavor) }
 
 	private val orchestrator by lazy {
 		LicenseStateOrchestrator(
 			sharedPreferencesHandler, licenseEnforcer, { this },
 			target = object : LicenseStateOrchestrator.Target {
-				override fun onPurchaseStateChanged(hasWriteAccess: Boolean, hasPaidLicense: Boolean) {
-					licenseContentViewBinder.bindPurchaseState(hasWriteAccess, hasPaidLicense)
+				override fun onPurchaseStateChanged(hasWriteAccess: Boolean, hasPaidLicense: Boolean, hasLifetimeLicense: Boolean, hasRunningSubscription: Boolean) {
+					if (hasLifetimeLicense && hasRunningSubscription && wasSubscriptionOnly) {
+						showDialog(CancelSubscriptionReminderDialog.newInstance())
+					}
+					wasSubscriptionOnly = hasRunningSubscription && !hasLifetimeLicense
+					licenseContentViewBinder.bindPurchaseState(hasWriteAccess, hasPaidLicense, hasLifetimeLicense, hasRunningSubscription, hasLockedActionHeader = lockedAction != null)
 				}
 				override fun onTrialStateChanged(active: Boolean, expired: Boolean, expirationText: String?) {
-					licenseContentViewBinder.bindTrialState(active, expired, expirationText, hasLockedActionHeader = lockedAction != null)
+					licenseContentViewBinder.bindTrialState(active, expired, expirationText, hasLockedActionHeader = lockedAction != null, hasSubscriptionUpgradeHint = wasSubscriptionOnly)
 				}
 			},
 			priceLoader = { licenseContentViewBinder.loadAndBindPrices(application as CryptomatorApp) }
@@ -180,4 +187,5 @@ class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityL
 	override fun onRestoreSuccessfulDialogFinished() = Unit
 	override fun onNoFullVersionDialogFinished() = Unit
 	override fun onRestoreFailedDialogFinished() = Unit
+	override fun onCancelSubscriptionReminderDismissed() = Unit
 }

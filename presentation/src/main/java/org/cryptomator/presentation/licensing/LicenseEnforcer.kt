@@ -88,6 +88,8 @@ class LicenseEnforcer @Inject constructor(private val sharedPreferencesHandler: 
 	data class LicenseUiState(
 		val hasWriteAccess: Boolean,
 		val hasPaidLicense: Boolean,
+		val hasLifetimeLicense: Boolean,
+		val hasRunningSubscription: Boolean,
 		val trialState: TrialState,
 		val trialExpirationText: String?
 	)
@@ -95,12 +97,16 @@ class LicenseEnforcer @Inject constructor(private val sharedPreferencesHandler: 
 	fun evaluateUiState(context: Context): LicenseUiState {
 		val trialState = evaluateTrialState()
 		val paidLicense = hasPaidLicense()
+		val lifetimeLicense = sharedPreferencesHandler.licenseToken().isNotEmpty()
+		val runningSubscription = sharedPreferencesHandler.hasRunningSubscription()
 		val expirationText = if (trialState.isActive || trialState.isExpired) {
 			context.getString(R.string.screen_license_check_trial_expiration, trialState.formattedExpirationDate)
 		} else null
 		return LicenseUiState(
 			hasWriteAccess = paidLicense || trialState.isActive,
 			hasPaidLicense = paidLicense,
+			hasLifetimeLicense = lifetimeLicense,
+			hasRunningSubscription = runningSubscription,
 			trialState = trialState,
 			trialExpirationText = expirationText
 		)

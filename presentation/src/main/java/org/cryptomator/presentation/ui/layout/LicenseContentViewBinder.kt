@@ -129,14 +129,32 @@ class LicenseContentViewBinder(
 	}
 
 	/** Updates purchase-related view visibility based on license state. */
-	fun bindPurchaseState(unlocked: Boolean, hasPaidLicense: Boolean) {
+	fun bindPurchaseState(unlocked: Boolean, hasPaidLicense: Boolean, hasLifetimeLicense: Boolean = false, hasRunningSubscription: Boolean = false, hasLockedActionHeader: Boolean = false) {
 		if (isFreemiumFlavor) {
-			binding.purchaseOptionsGroup.visibility = if (hasPaidLicense) View.GONE else View.VISIBLE
-			binding.tvRestorePurchase.visibility = if (hasPaidLicense) View.GONE else View.VISIBLE
-			if (hasPaidLicense) {
-				binding.tvInfoText.visibility = View.GONE
-				binding.tvTrialStatusBadge.visibility = View.GONE
-				binding.tvTrialExpiration.visibility = View.GONE
+			when {
+				hasLifetimeLicense -> {
+					binding.purchaseOptionsGroup.visibility = View.GONE
+					binding.tvRestorePurchase.visibility = View.GONE
+					binding.tvInfoText.visibility = View.GONE
+					binding.tvTrialStatusBadge.visibility = View.GONE
+					binding.tvTrialExpiration.visibility = View.GONE
+				}
+				hasRunningSubscription -> {
+					binding.purchaseOptionsGroup.visibility = View.VISIBLE
+					binding.tvRestorePurchase.visibility = View.GONE
+					binding.rowTrial.visibility = View.GONE
+					binding.dividerTrialSubscription.visibility = View.GONE
+					binding.rowSubscription.visibility = View.GONE
+					binding.dividerSubscriptionLifetime.visibility = View.GONE
+					if (!hasLockedActionHeader) {
+						binding.tvInfoText.visibility = View.VISIBLE
+						binding.tvInfoText.text = context.getString(R.string.screen_license_check_subscription_upgrade_hint)
+					}
+				}
+				else -> {
+					binding.purchaseOptionsGroup.visibility = View.VISIBLE
+					binding.tvRestorePurchase.visibility = View.VISIBLE
+				}
 			}
 		} else {
 			binding.btnPurchase.isEnabled = !unlocked
@@ -150,7 +168,7 @@ class LicenseContentViewBinder(
 	}
 
 	/** Updates trial-related view visibility based on trial state. */
-	fun bindTrialState(active: Boolean, expired: Boolean, expirationText: String?, hasLockedActionHeader: Boolean = false) {
+	fun bindTrialState(active: Boolean, expired: Boolean, expirationText: String?, hasLockedActionHeader: Boolean = false, hasSubscriptionUpgradeHint: Boolean = false) {
 		if (active || expired) {
 			binding.trialButtonGroup.visibility = View.GONE
 			binding.tvTrialStatusBadge.visibility = View.VISIBLE
@@ -160,10 +178,10 @@ class LicenseContentViewBinder(
 			)
 			binding.tvTrialExpiration.visibility = View.VISIBLE
 			binding.tvTrialExpiration.text = expirationText
-			if (expired && !hasLockedActionHeader) {
+			if (expired && !hasLockedActionHeader && !hasSubscriptionUpgradeHint) {
 				binding.tvInfoText.visibility = View.VISIBLE
 				binding.tvInfoText.text = context.getString(R.string.screen_license_check_trial_expired_info)
-			} else if (!hasLockedActionHeader) {
+			} else if (!hasLockedActionHeader && !hasSubscriptionUpgradeHint) {
 				binding.tvInfoText.visibility = View.GONE
 			}
 		} else {
