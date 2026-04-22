@@ -48,13 +48,24 @@ class LicenseContentViewBinder(
 
 	/** Sets the initial visibility state for license-entry mode with the trial row visible (welcome flow only). */
 	fun bindInitialLicenseEntryWithTrialLayout() {
-		bindInitialLicenseEntryLayout()
+		binding.licenseEntryGroup.visibility = View.GONE
+		binding.btnPurchase.visibility = View.GONE
 		binding.purchaseOptionsGroup.visibility = View.VISIBLE
 		binding.rowSubscription.visibility = View.GONE
 		binding.rowLifetime.visibility = View.GONE
 		binding.dividerTrialSubscription.visibility = View.GONE
 		binding.dividerSubscriptionLifetime.visibility = View.GONE
 		binding.rowTrial.visibility = View.VISIBLE
+		binding.dividerTrialEnterLicense.visibility = View.VISIBLE
+		binding.rowEnterLicense.visibility = View.VISIBLE
+		binding.tvRestorePurchase.visibility = View.GONE
+		binding.legalLinksGroup.visibility = View.GONE
+		binding.tvLicenseLink.visibility = View.GONE
+	}
+
+	/** Wires the Enter License row click listener (welcome non-IAP flow only). */
+	fun bindEnterLicenseButton(onEnterLicenseClicked: () -> Unit) {
+		binding.rowEnterLicense.setOnClickListener { onEnterLicenseClicked() }
 	}
 
 	/** Sets click listeners on Terms and Privacy links. */
@@ -131,6 +142,8 @@ class LicenseContentViewBinder(
 			binding.btnPurchase.isEnabled = !unlocked
 			if (hasPaidLicense) {
 				binding.rowTrial.visibility = View.GONE
+				binding.dividerTrialEnterLicense.visibility = View.GONE
+				binding.rowEnterLicense.visibility = View.GONE
 				binding.tvInfoText.visibility = View.GONE
 			}
 		}

@@ -1,7 +1,6 @@
 package org.cryptomator.presentation.ui.activity
 
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import org.cryptomator.generator.Activity
@@ -17,6 +16,7 @@ import org.cryptomator.presentation.presenter.LicenseCheckPresenter
 import org.cryptomator.presentation.service.RestoreOutcome
 import org.cryptomator.presentation.service.RestoreOutcomeHandler
 import org.cryptomator.presentation.ui.activity.view.UpdateLicenseView
+import org.cryptomator.presentation.ui.dialog.EnterLicenseDialog
 import org.cryptomator.presentation.ui.dialog.LicenseConfirmationDialog
 import org.cryptomator.presentation.ui.dialog.NoFullVersionDialog
 import org.cryptomator.presentation.ui.dialog.RestoreFailedDialog
@@ -33,7 +33,8 @@ class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityL
 	RestoreOutcomeHandler, //
 	RestoreSuccessfulDialog.Callback, //
 	NoFullVersionDialog.Callback, //
-	RestoreFailedDialog.Callback {
+	RestoreFailedDialog.Callback, //
+	EnterLicenseDialog.Callback {
 
 	@Inject
 	lateinit var licenseCheckPresenter: LicenseCheckPresenter
@@ -126,12 +127,13 @@ class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityL
 
 	private fun setupLicenseEntryView() {
 		supportActionBar?.title = getString(R.string.screen_license_check_title)
-		licenseContentViewBinder.bindInitialLicenseEntryLayout()
-		binding.licenseContent.btnPurchase.visibility = View.VISIBLE
-		binding.licenseContent.btnPurchase.text = getString(R.string.dialog_enter_license_ok_button)
-		binding.licenseContent.btnPurchase.setOnClickListener { onLicenseSubmit() }
-		binding.licenseContent.tvLicenseLink.setOnClickListener {
-			startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://cryptomator.org/android/")))
+		licenseContentViewBinder.bindInitialLicenseEntryWithTrialLayout()
+		binding.licenseContent.btnTrial.setOnClickListener {
+			licenseEnforcer.startTrial()
+			orchestrator.updateState()
+		}
+		licenseContentViewBinder.bindEnterLicenseButton {
+			showDialog(EnterLicenseDialog.newInstance())
 		}
 	}
 
@@ -146,13 +148,15 @@ class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityL
 	}
 
 	private fun validate(intent: Intent) {
-		val data: Uri? = intent.data
-		licenseCheckPresenter.validate(data)
+		licenseCheckPresenter.validate(intent.data)
 	}
 
 	override fun showOrUpdateLicenseEntry(license: String) {
-		binding.licenseContent.etLicense.setText(license)
-		binding.licenseContent.licenseEntryGroup.visibility = View.VISIBLE
+		// license already validated by the use case; no inline input to update
+	}
+
+	override fun onLicenseEntered(license: String) {
+		licenseCheckPresenter.validateDialogAware(license)
 	}
 
 	override fun showConfirmationDialog(mail: String) {
@@ -176,9 +180,4 @@ class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityL
 	override fun onRestoreSuccessfulDialogFinished() = Unit
 	override fun onNoFullVersionDialogFinished() = Unit
 	override fun onRestoreFailedDialogFinished() = Unit
-
-	private fun onLicenseSubmit() {
-		licenseCheckPresenter.validateDialogAware(binding.licenseContent.etLicense.text?.toString())
-	}
-
 }

@@ -5,7 +5,6 @@ import android.app.KeyguardManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Build
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
@@ -26,6 +25,7 @@ import org.cryptomator.presentation.service.RestoreOutcome
 import org.cryptomator.presentation.service.RestoreOutcomeHandler
 import org.cryptomator.presentation.ui.activity.view.UpdateLicenseView
 import org.cryptomator.presentation.ui.activity.view.WelcomeView
+import org.cryptomator.presentation.ui.dialog.EnterLicenseDialog
 import org.cryptomator.presentation.ui.dialog.NoFullVersionDialog
 import org.cryptomator.presentation.ui.dialog.RestoreFailedDialog
 import org.cryptomator.presentation.ui.dialog.RestoreSuccessfulDialog
@@ -47,7 +47,8 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 	RestoreOutcomeHandler, //
 	RestoreSuccessfulDialog.Callback, //
 	NoFullVersionDialog.Callback, //
-	RestoreFailedDialog.Callback {
+	RestoreFailedDialog.Callback, //
+	EnterLicenseDialog.Callback {
 
 	@Inject
 	lateinit var welcomePresenter: WelcomePresenter
@@ -67,7 +68,7 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 					}
 					pagerAdapter.licenseFragment?.updateUnlocked(hasWriteAccess, hasPaidLicense)
 					if (!FlavorConfig.isPremiumFlavor && !FlavorConfig.isFreemiumFlavor && !hasPaidLicense) {
-						val uiState = licenseEnforcer.evaluateUiState(this@WelcomeActivity)
+						val uiState = licenseEnforcer.evaluateUiState(applicationContext)
 						pagerAdapter.licenseFragment?.updateTrialState(
 							uiState.trialState.isActive,
 							uiState.trialState.isExpired,
@@ -262,10 +263,6 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 		welcomePresenter.validateDialogAware(license)
 	}
 
-	override fun onOpenLicenseLink() {
-		startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://cryptomator.org/android/")))
-	}
-
 	override fun onStartTrial() {
 		licenseEnforcer.startTrial()
 		orchestrator.updateState()
@@ -278,6 +275,14 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 
 	override fun onLicenseViewReady() {
 		orchestrator.updateState()
+	}
+
+	override fun onEnterLicenseDialogRequested() {
+		showDialog(EnterLicenseDialog.newInstance())
+	}
+
+	override fun onLicenseEntered(license: String) {
+		welcomePresenter.validateDialogAware(license)
 	}
 
 	// RestoreOutcomeHandler

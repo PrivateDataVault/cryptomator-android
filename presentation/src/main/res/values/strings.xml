@@ -73,6 +73,7 @@
 	<string name="screen_license_check_benefit_support">Open-source development</string>
 	<string name="screen_license_check_button_purchase">Unlock via Google Play</string>
 	<string name="screen_license_check_button_enter_license">Enter license key</string>
+	<string name="screen_license_check_enter_license_action">Enter</string>
 	<string name="screen_license_check_title_full_version">Unlock Full Version</string>
 	<string name="screen_license_check_trial_title">30-Day Trial</string>
 	<string name="screen_license_check_trial_price">Free</string>

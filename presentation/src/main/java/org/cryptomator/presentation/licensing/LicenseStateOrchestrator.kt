@@ -35,10 +35,6 @@ class LicenseStateOrchestrator(
 	fun updateState() {
 		val uiState = licenseEnforcer.evaluateUiState(contextProvider())
 		target.onPurchaseStateChanged(uiState.hasWriteAccess, uiState.hasPaidLicense)
-		if (FlavorConfig.isFreemiumFlavor && !uiState.hasPaidLicense) {
-			target.onTrialStateChanged(
-				uiState.trialState.isActive, uiState.trialState.isExpired, uiState.trialExpirationText
-			)
-		}
+		target.onTrialStateChanged(uiState.trialState.isActive, uiState.trialState.isExpired, uiState.trialExpirationText)
 	}
 }
