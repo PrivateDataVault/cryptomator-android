@@ -97,7 +97,6 @@ class VaultListPresenter @Inject constructor( //
 ) : Presenter<VaultListView>(exceptionMappings) {
 
 	private var vaultAction: VaultAction? = null
-	private var hasShownTrialExpiredDialog = false
 
 	override fun workflows(): Iterable<Workflow<*>> {
 		return listOf(addExistingVaultWorkflow, createNewVaultWorkflow)
@@ -108,10 +107,10 @@ class VaultListPresenter @Inject constructor( //
 			return
 		}
 
-		if (!hasShownTrialExpiredDialog && FlavorConfig.isFreemiumFlavor) {
+		if (FlavorConfig.isFreemiumFlavor) {
+			val alreadyKnownExpired = sharedPreferencesHandler.isTrialExpired()
 			val trialState = licenseEnforcer.evaluateTrialState()
-			if (trialState.isExpired && !licenseEnforcer.hasPaidLicense()) {
-				hasShownTrialExpiredDialog = true
+			if (!alreadyKnownExpired && trialState.isExpired && !licenseEnforcer.hasPaidLicense()) {
 				view?.showDialog(TrialExpiredDialog.newInstance())
 			}
 		}

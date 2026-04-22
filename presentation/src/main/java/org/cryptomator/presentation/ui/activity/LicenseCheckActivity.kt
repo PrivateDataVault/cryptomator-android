@@ -52,18 +52,22 @@ class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityL
 	private val licenseContentViewBinder by lazy { LicenseContentViewBinder(binding.licenseContent, FlavorConfig.isFreemiumFlavor) }
 
 	private val orchestrator by lazy {
+		wasSubscriptionOnly = sharedPreferencesHandler.hasRunningSubscription() && sharedPreferencesHandler.licenseToken().isEmpty()
 		LicenseStateOrchestrator(
 			sharedPreferencesHandler, licenseEnforcer, { this },
 			target = object : LicenseStateOrchestrator.Target {
-				override fun onPurchaseStateChanged(hasWriteAccess: Boolean, hasPaidLicense: Boolean, hasLifetimeLicense: Boolean, hasRunningSubscription: Boolean) {
-					if (hasLifetimeLicense && hasRunningSubscription && wasSubscriptionOnly) {
+				override fun onStateChanged(uiState: LicenseEnforcer.LicenseUiState) {
+					if (uiState.hasLifetimeLicense && uiState.hasRunningSubscription && wasSubscriptionOnly) {
 						showDialog(CancelSubscriptionReminderDialog.newInstance())
 					}
-					wasSubscriptionOnly = hasRunningSubscription && !hasLifetimeLicense
-					licenseContentViewBinder.bindPurchaseState(hasWriteAccess, hasPaidLicense, hasLifetimeLicense, hasRunningSubscription, hasLockedActionHeader = lockedAction != null)
-				}
-				override fun onTrialStateChanged(active: Boolean, expired: Boolean, expirationText: String?) {
-					licenseContentViewBinder.bindTrialState(active, expired, expirationText, hasLockedActionHeader = lockedAction != null, hasSubscriptionUpgradeHint = wasSubscriptionOnly)
+					val prevSubscriptionOnly = wasSubscriptionOnly
+					wasSubscriptionOnly = uiState.hasRunningSubscription && !uiState.hasLifetimeLicense
+					if (uiState.hasRunningSubscription && !uiState.hasLifetimeLicense && !prevSubscriptionOnly) {
+						finish()
+						return
+					}
+					licenseContentViewBinder.bindPurchaseState(uiState.hasWriteAccess, uiState.hasPaidLicense, uiState.hasLifetimeLicense, uiState.hasRunningSubscription, hasLockedActionHeader = lockedAction != null)
+					licenseContentViewBinder.bindTrialState(uiState.trialState.isActive, uiState.trialState.isExpired, uiState.trialExpirationText, hasLockedActionHeader = lockedAction != null, hasSubscriptionUpgradeHint = wasSubscriptionOnly)
 				}
 			},
 			priceLoader = { licenseContentViewBinder.loadAndBindPrices(application as CryptomatorApp) }
@@ -118,6 +122,11 @@ class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityL
 		}
 	}
 
+	private fun onTrialClicked() {
+		licenseEnforcer.startTrial()
+		orchestrator.updateState()
+	}
+
 	private fun setupIapView() {
 		supportActionBar?.title = getString(R.string.screen_license_check_title_full_version)
 		licenseContentViewBinder.bindInitialIapLayout()
@@ -125,20 +134,14 @@ class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityL
 		licenseContentViewBinder.bindPurchaseButtons(
 			activity = this,
 			app = application as CryptomatorApp,
-			onTrialClicked = {
-				licenseEnforcer.startTrial()
-				orchestrator.updateState()
-			}
+			onTrialClicked = ::onTrialClicked
 		)
 	}
 
 	private fun setupLicenseEntryView() {
 		supportActionBar?.title = getString(R.string.screen_license_check_title)
 		licenseContentViewBinder.bindInitialLicenseEntryWithTrialLayout()
-		binding.licenseContent.btnTrial.setOnClickListener {
-			licenseEnforcer.startTrial()
-			orchestrator.updateState()
-		}
+		binding.licenseContent.btnTrial.setOnClickListener { onTrialClicked() }
 		licenseContentViewBinder.bindEnterLicenseButton {
 			showDialog(EnterLicenseDialog.newInstance())
 		}

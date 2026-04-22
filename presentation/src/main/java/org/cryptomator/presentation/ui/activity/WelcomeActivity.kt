@@ -62,25 +62,12 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 		LicenseStateOrchestrator(
 			sharedPreferencesHandler, licenseEnforcer, { this },
 			target = object : LicenseStateOrchestrator.Target {
-				override fun onPurchaseStateChanged(hasWriteAccess: Boolean, hasPaidLicense: Boolean, hasLifetimeLicense: Boolean, hasRunningSubscription: Boolean) {
+				override fun onStateChanged(uiState: LicenseEnforcer.LicenseUiState) {
 					if (!this@WelcomeActivity::pagerAdapter.isInitialized) {
 						return
 					}
-					pagerAdapter.licenseFragment?.updateUnlocked(hasWriteAccess, hasPaidLicense)
-					if (!FlavorConfig.isPremiumFlavor && !FlavorConfig.isFreemiumFlavor && !hasPaidLicense) {
-						val uiState = licenseEnforcer.evaluateUiState(applicationContext)
-						pagerAdapter.licenseFragment?.updateTrialState(
-							uiState.trialState.isActive,
-							uiState.trialState.isExpired,
-							uiState.trialExpirationText
-						)
-					}
-				}
-				override fun onTrialStateChanged(active: Boolean, expired: Boolean, expirationText: String?) {
-					if (!this@WelcomeActivity::pagerAdapter.isInitialized) {
-						return
-					}
-					pagerAdapter.licenseFragment?.updateTrialState(active, expired, expirationText)
+					pagerAdapter.licenseFragment?.updateUnlocked(uiState.hasWriteAccess, uiState.hasPaidLicense)
+					pagerAdapter.licenseFragment?.updateTrialState(uiState.trialState.isActive, uiState.trialState.isExpired, uiState.trialExpirationText)
 				}
 			},
 			priceLoader = {
@@ -330,10 +317,10 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 	}
 
 	private sealed class FragmentPage {
-		object Intro : FragmentPage()
-		object License : FragmentPage()
-		object Notifications : FragmentPage()
-		object ScreenLock : FragmentPage()
+		data object Intro : FragmentPage()
+		data object License : FragmentPage()
+		data object Notifications : FragmentPage()
+		data object ScreenLock : FragmentPage()
 	}
 
 	private inner class WelcomePagerAdapter(activity: AppCompatActivity, private val pages: List<FragmentPage>) : androidx.viewpager2.adapter.FragmentStateAdapter(activity) {

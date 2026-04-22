@@ -26,9 +26,6 @@ import timber.log.Timber
 
 class IapBillingService : Service(), PurchasesUpdatedListener {
 
-	private val fullVersionProductId = ProductInfo.PRODUCT_FULL_VERSION
-	private val yearlySubscriptionProductId = ProductInfo.PRODUCT_YEARLY_SUBSCRIPTION
-
 	private lateinit var billingClient: BillingClient
 	private lateinit var sharedPreferencesHandler: SharedPreferencesHandler
 	private lateinit var purchaseManager: PurchaseManager
@@ -145,62 +142,38 @@ class IapBillingService : Service(), PurchasesUpdatedListener {
 			readyResults?.let { callback(it) }
 		}
 
-		// Query INAPP products
-		val inappParams = QueryProductDetailsParams.newBuilder().setProductList(
-			listOf(
-				QueryProductDetailsParams.Product.newBuilder()
-					.setProductId(fullVersionProductId)
-					.setProductType(BillingClient.ProductType.INAPP)
-					.build()
-			)
-		).build()
-		billingClient.queryProductDetailsAsync(inappParams) { billingResult, productDetailsResult ->
-			if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-				synchronized(lock) {
-					for (productDetails in productDetailsResult.productDetailsList) {
-						productDetailsMap[productDetails.productId] = productDetails
-						results.add(
-							ProductInfo(
-								productDetails.productId,
-								productDetails.oneTimePurchaseOfferDetails?.formattedPrice ?: ""
-							)
-						)
+		fun doQuery(params: QueryProductDetailsParams, getPrice: (ProductDetails) -> String) {
+			billingClient.queryProductDetailsAsync(params) { billingResult, productDetailsResult ->
+				if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
+					synchronized(lock) {
+						for (productDetails in productDetailsResult.productDetailsList) {
+							productDetailsMap[productDetails.productId] = productDetails
+							results.add(ProductInfo(productDetails.productId, getPrice(productDetails)))
+						}
 					}
 				}
+				onQueryComplete()
 			}
-			onQueryComplete()
 		}
 
-		// Query SUBS products (must be separate — Billing Library requires same product type per query)
-		val subsParams = QueryProductDetailsParams.newBuilder().setProductList(
-			listOf(
+		doQuery(
+			QueryProductDetailsParams.newBuilder().setProductList(listOf(
 				QueryProductDetailsParams.Product.newBuilder()
-					.setProductId(yearlySubscriptionProductId)
+					.setProductId(ProductInfo.PRODUCT_FULL_VERSION)
+					.setProductType(BillingClient.ProductType.INAPP)
+					.build()
+			)).build()
+		) { it.oneTimePurchaseOfferDetails?.formattedPrice ?: "" }
+
+		// Query SUBS products (must be separate — Billing Library requires same product type per query)
+		doQuery(
+			QueryProductDetailsParams.newBuilder().setProductList(listOf(
+				QueryProductDetailsParams.Product.newBuilder()
+					.setProductId(ProductInfo.PRODUCT_YEARLY_SUBSCRIPTION)
 					.setProductType(BillingClient.ProductType.SUBS)
 					.build()
-			)
-		).build()
-		billingClient.queryProductDetailsAsync(subsParams) { billingResult, productDetailsResult ->
-			if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-				synchronized(lock) {
-					for (productDetails in productDetailsResult.productDetailsList) {
-						productDetailsMap[productDetails.productId] = productDetails
-						val pricingPhase = productDetails.subscriptionOfferDetails
-							?.firstOrNull()
-							?.pricingPhases
-							?.pricingPhaseList
-							?.firstOrNull()
-						results.add(
-							ProductInfo(
-								productDetails.productId,
-								pricingPhase?.formattedPrice ?: ""
-							)
-						)
-					}
-				}
-			}
-			onQueryComplete()
-		}
+			)).build()
+		) { it.subscriptionOfferDetails?.firstOrNull()?.pricingPhases?.pricingPhaseList?.firstOrNull()?.formattedPrice ?: "" }
 	}
 
 	fun launchPurchaseFlow(activity: WeakReference<Activity>, productId: String) {

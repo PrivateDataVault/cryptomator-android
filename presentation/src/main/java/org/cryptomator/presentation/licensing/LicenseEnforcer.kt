@@ -34,7 +34,7 @@ class LicenseEnforcer @Inject constructor(private val sharedPreferencesHandler: 
 
 		companion object {
 			fun fromName(name: String?): LockedAction? {
-				return values().firstOrNull { it.name == name }
+				return entries.firstOrNull { it.name == name }
 			}
 		}
 	}
@@ -43,18 +43,10 @@ class LicenseEnforcer @Inject constructor(private val sharedPreferencesHandler: 
 		return hasPaidLicense() || hasActiveTrial()
 	}
 
-	fun hasPaidLicense(): Boolean {
-		if (FlavorConfig.isPremiumFlavor) {
-			return true
-		}
-		if (sharedPreferencesHandler.licenseToken().isNotEmpty()) {
-			return true
-		}
-		if (sharedPreferencesHandler.hasRunningSubscription()) {
-			return true
-		}
-		return false
-	}
+	fun hasPaidLicense() =
+		FlavorConfig.isPremiumFlavor ||
+			sharedPreferencesHandler.licenseToken().isNotEmpty() ||
+			sharedPreferencesHandler.hasRunningSubscription()
 
 	fun startTrial() {
 		if (sharedPreferencesHandler.trialExpirationDate() > 0) {

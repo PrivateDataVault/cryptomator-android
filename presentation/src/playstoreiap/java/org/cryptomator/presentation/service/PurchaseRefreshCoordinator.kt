@@ -79,31 +79,24 @@ class PurchaseRefreshCoordinator(
 				}
 			}
 
-			val inappParams = QueryPurchasesParams.newBuilder()
-				.setProductType(BillingClient.ProductType.INAPP)
-				.build()
-			billingClient.queryPurchasesAsync(inappParams) { billingResult: BillingResult, purchases: List<Purchase> ->
-				synchronized(lock) {
-					if (billingResult.responseCode != BillingClient.BillingResponseCode.OK) {
-						failure = Throwable("Query failed with code: ${billingResult.responseCode}")
-					} else {
-						inappChange = purchaseManager.handleInAppPurchases(purchases, clearIfNotFound = true, acknowledgePurchase = acknowledge)
+			fun query(params: QueryPurchasesParams, handleAndSet: (List<Purchase>) -> Unit) {
+				billingClient.queryPurchasesAsync(params) { billingResult: BillingResult, purchases: List<Purchase> ->
+					synchronized(lock) {
+						if (billingResult.responseCode != BillingClient.BillingResponseCode.OK) {
+							failure = Throwable("Query failed with code: ${billingResult.responseCode}")
+						} else {
+							handleAndSet(purchases)
+						}
 					}
+					onQueryComplete()
 				}
-				onQueryComplete()
 			}
-			val subsParams = QueryPurchasesParams.newBuilder()
-				.setProductType(BillingClient.ProductType.SUBS)
-				.build()
-			billingClient.queryPurchasesAsync(subsParams) { billingResult: BillingResult, purchases: List<Purchase> ->
-				synchronized(lock) {
-					if (billingResult.responseCode != BillingClient.BillingResponseCode.OK) {
-						failure = Throwable("Query failed with code: ${billingResult.responseCode}")
-					} else {
-						subsChange = purchaseManager.handleSubscriptionPurchases(purchases, clearIfNotFound = true, acknowledgePurchase = acknowledge)
-					}
-				}
-				onQueryComplete()
+
+			query(QueryPurchasesParams.newBuilder().setProductType(BillingClient.ProductType.INAPP).build()) {
+				inappChange = purchaseManager.handleInAppPurchases(it, clearIfNotFound = true, acknowledgePurchase = acknowledge)
+			}
+			query(QueryPurchasesParams.newBuilder().setProductType(BillingClient.ProductType.SUBS).build()) {
+				subsChange = purchaseManager.handleSubscriptionPurchases(it, clearIfNotFound = true, acknowledgePurchase = acknowledge)
 			}
 		} catch (e: Throwable) {
 			Timber.tag("PurchaseRefreshCoordinator").e(e, "Unexpected error during purchase refresh")
