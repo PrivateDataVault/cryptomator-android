@@ -125,6 +125,9 @@ class VaultListPresenterFreemiumTest {
 	fun `resumed shows trial expired dialog only once per lifecycle`() {
 		stubTrialState(active = false, expired = true, date = "Mar 28, 2026")
 		stubHasPaidLicense(false)
+		// In production evaluateTrialState() flips isTrialExpired to true on first observation;
+		// simulate that side effect so the guard in resumed() skips the second dialog.
+		Mockito.`when`(sharedPreferencesHandler.isTrialExpired()).thenReturn(false, true)
 
 		inTest.resumed()
 		inTest.resumed()

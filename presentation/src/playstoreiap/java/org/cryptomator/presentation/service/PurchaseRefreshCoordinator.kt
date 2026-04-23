@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 class PurchaseRefreshCoordinator(
 	private val sharedPreferencesHandler: SharedPreferencesHandler,
-	private val licenseEnforcer: LicenseEnforcer = LicenseEnforcer(sharedPreferencesHandler)
+	private val licenseEnforcer: LicenseEnforcer
 ) {
 
 	// Play Billing async callbacks run on the main thread per BillingClient docs, but we still guard the aggregation
@@ -35,8 +35,8 @@ class PurchaseRefreshCoordinator(
 				return
 			}
 			val lock = Any()
-			var inappChange: PurchaseFieldChange? = null
-			var subsChange: PurchaseFieldChange? = null
+			var inappCleared: Boolean? = null
+			var subsCleared: Boolean? = null
 			var failure: Throwable? = null
 			var queriesCompleted = 0
 			val totalQueries = 2
@@ -44,16 +44,16 @@ class PurchaseRefreshCoordinator(
 			val hadWriteAccessBefore = licenseEnforcer.hasWriteAccess()
 
 			fun onSettled() {
-				val localInapp = inappChange
-				val localSubs = subsChange
+				val localInapp = inappCleared
+				val localSubs = subsCleared
 				val localFailure = failure
 				if (localFailure != null || localInapp == null || localSubs == null) {
 					complete(RestoreOutcome.FAILED(localFailure))
 					return
 				}
 				val hadWriteAccessAfter = licenseEnforcer.hasWriteAccess()
-				if (hadWriteAccessBefore && !hadWriteAccessAfter && (localInapp.cleared || localSubs.cleared)) {
-					val reason = if (localInapp.cleared) {
+				if (hadWriteAccessBefore && !hadWriteAccessAfter && (localInapp || localSubs)) {
+					val reason = if (localInapp) {
 						PurchaseRevokedReason.LIFETIME_REFUNDED
 					} else {
 						PurchaseRevokedReason.SUBSCRIPTION_INACTIVE
@@ -89,10 +89,10 @@ class PurchaseRefreshCoordinator(
 			}
 
 			query(QueryPurchasesParams.newBuilder().setProductType(BillingClient.ProductType.INAPP).build()) {
-				inappChange = purchaseManager.handleInAppPurchases(it, clearIfNotFound = true, acknowledgePurchase = acknowledge)
+				inappCleared = purchaseManager.handlePurchases(PurchaseManager.Kind.LIFETIME, it, clearIfNotFound = true, acknowledgePurchase = acknowledge)
 			}
 			query(QueryPurchasesParams.newBuilder().setProductType(BillingClient.ProductType.SUBS).build()) {
-				subsChange = purchaseManager.handleSubscriptionPurchases(it, clearIfNotFound = true, acknowledgePurchase = acknowledge)
+				subsCleared = purchaseManager.handlePurchases(PurchaseManager.Kind.SUBSCRIPTION, it, clearIfNotFound = true, acknowledgePurchase = acknowledge)
 			}
 		} catch (e: Throwable) {
 			Timber.tag("PurchaseRefreshCoordinator").e(e, "Unexpected error during purchase refresh")

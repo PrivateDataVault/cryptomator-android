@@ -12,13 +12,14 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentMatchers.anyBoolean
 import org.mockito.ArgumentMatchers.anyString
-import org.mockito.ArgumentMatchers.eq
 import org.mockito.Mockito.atLeast
 import org.mockito.Mockito.doAnswer
-import org.mockito.Mockito.mock
 import org.mockito.Mockito.never
 import org.mockito.Mockito.verify
-import org.mockito.Mockito.`when`
+import org.mockito.kotlin.any
+import org.mockito.kotlin.eq
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.whenever
 
 class PurchaseRefreshCoordinatorTest {
 
@@ -33,6 +34,8 @@ class PurchaseRefreshCoordinatorTest {
 	@BeforeEach
 	fun setUp() {
 		coordinator = PurchaseRefreshCoordinator(sharedPreferencesHandler, licenseEnforcer)
+		whenever(sharedPreferencesHandler.licenseToken()).thenReturn("")
+		whenever(sharedPreferencesHandler.hasRunningSubscription()).thenReturn(false)
 	}
 
 	@Test
@@ -40,10 +43,7 @@ class PurchaseRefreshCoordinatorTest {
 		stubBillingReady(true)
 		stubHasWriteAccess(before = false, after = false)
 		stubQueryPurchasesOk()
-		stubHandlers(
-			inappChange = PurchaseFieldChange(before = false, after = false, cleared = false),
-			subsChange = PurchaseFieldChange(before = false, after = false, cleared = false),
-		)
+		stubHandlers(inappCleared = false, subsCleared = false)
 
 		val outcomes = mutableListOf<RestoreOutcome>()
 		coordinator.refresh(billingClient, purchaseManager, acknowledge) { outcomes.add(it) }
@@ -72,7 +72,7 @@ class PurchaseRefreshCoordinatorTest {
 			val billingResult = buildBillingResult(BillingClient.BillingResponseCode.ERROR)
 			listener.onQueryPurchasesResponse(billingResult, emptyList())
 			null
-		}.`when`(billingClient).queryPurchasesAsync(any<QueryPurchasesParams>(), any<PurchasesResponseListener>())
+		}.whenever(billingClient).queryPurchasesAsync(any<QueryPurchasesParams>(), any<PurchasesResponseListener>())
 
 		val outcomes = mutableListOf<RestoreOutcome>()
 		coordinator.refresh(billingClient, purchaseManager, acknowledge) { outcomes.add(it) }
@@ -82,14 +82,11 @@ class PurchaseRefreshCoordinatorTest {
 	}
 
 	@Test
-	fun `arms purchaseRevokedPending with LIFETIME_REFUNDED when inappChange cleared and writeAccess transitions true to false`() {
+	fun `arms purchaseRevokedPending with LIFETIME_REFUNDED when inapp cleared and writeAccess transitions true to false`() {
 		stubBillingReady(true)
 		stubHasWriteAccess(before = true, after = false)
 		stubQueryPurchasesOk()
-		stubHandlers(
-			inappChange = PurchaseFieldChange(before = true, after = false, cleared = true),
-			subsChange = PurchaseFieldChange(before = false, after = false, cleared = false),
-		)
+		stubHandlers(inappCleared = true, subsCleared = false)
 
 		coordinator.refresh(billingClient, purchaseManager, acknowledge) { }
 
@@ -97,14 +94,11 @@ class PurchaseRefreshCoordinatorTest {
 	}
 
 	@Test
-	fun `arms purchaseRevokedPending with SUBSCRIPTION_INACTIVE when only subsChange cleared`() {
+	fun `arms purchaseRevokedPending with SUBSCRIPTION_INACTIVE when only sub cleared`() {
 		stubBillingReady(true)
 		stubHasWriteAccess(before = true, after = false)
 		stubQueryPurchasesOk()
-		stubHandlers(
-			inappChange = PurchaseFieldChange(before = false, after = false, cleared = false),
-			subsChange = PurchaseFieldChange(before = true, after = false, cleared = true),
-		)
+		stubHandlers(inappCleared = false, subsCleared = true)
 
 		coordinator.refresh(billingClient, purchaseManager, acknowledge) { }
 
@@ -116,10 +110,7 @@ class PurchaseRefreshCoordinatorTest {
 		stubBillingReady(true)
 		stubHasWriteAccess(before = true, after = false)
 		stubQueryPurchasesOk()
-		stubHandlers(
-			inappChange = PurchaseFieldChange(before = true, after = false, cleared = true),
-			subsChange = PurchaseFieldChange(before = true, after = false, cleared = true),
-		)
+		stubHandlers(inappCleared = true, subsCleared = true)
 
 		coordinator.refresh(billingClient, purchaseManager, acknowledge) { }
 
@@ -131,10 +122,7 @@ class PurchaseRefreshCoordinatorTest {
 		stubBillingReady(true)
 		stubHasWriteAccess(before = false, after = false)
 		stubQueryPurchasesOk()
-		stubHandlers(
-			inappChange = PurchaseFieldChange(before = false, after = false, cleared = false),
-			subsChange = PurchaseFieldChange(before = false, after = false, cleared = false),
-		)
+		stubHandlers(inappCleared = false, subsCleared = false)
 
 		coordinator.refresh(billingClient, purchaseManager, acknowledge) { }
 
@@ -146,10 +134,7 @@ class PurchaseRefreshCoordinatorTest {
 		stubBillingReady(true)
 		stubHasWriteAccess(before = false, after = true)
 		stubQueryPurchasesOk()
-		stubHandlers(
-			inappChange = PurchaseFieldChange(before = false, after = true, cleared = false),
-			subsChange = PurchaseFieldChange(before = false, after = false, cleared = false),
-		)
+		stubHandlers(inappCleared = false, subsCleared = false)
 
 		coordinator.refresh(billingClient, purchaseManager, acknowledge) { }
 
@@ -157,14 +142,12 @@ class PurchaseRefreshCoordinatorTest {
 	}
 
 	@Test
-	fun `onComplete is RESTORED when either change after is true`() {
+	fun `onComplete is RESTORED when an active purchase is present after refresh`() {
 		stubBillingReady(true)
 		stubHasWriteAccess(before = false, after = true)
 		stubQueryPurchasesOk()
-		stubHandlers(
-			inappChange = PurchaseFieldChange(before = false, after = true, cleared = false),
-			subsChange = PurchaseFieldChange(before = false, after = false, cleared = false),
-		)
+		stubHandlers(inappCleared = false, subsCleared = false)
+		whenever(sharedPreferencesHandler.licenseToken()).thenReturn("token")
 
 		val outcomes = mutableListOf<RestoreOutcome>()
 		coordinator.refresh(billingClient, purchaseManager, acknowledge) { outcomes.add(it) }
@@ -178,10 +161,7 @@ class PurchaseRefreshCoordinatorTest {
 		stubBillingReady(true)
 		stubHasWriteAccess(before = false, after = false)
 		stubQueryPurchasesOk()
-		stubHandlers(
-			inappChange = PurchaseFieldChange(before = false, after = false, cleared = false),
-			subsChange = PurchaseFieldChange(before = false, after = false, cleared = false),
-		)
+		stubHandlers(inappCleared = false, subsCleared = false)
 
 		val outcomes = mutableListOf<RestoreOutcome>()
 		coordinator.refresh(billingClient, purchaseManager, acknowledge) { outcomes.add(it) }
@@ -195,10 +175,7 @@ class PurchaseRefreshCoordinatorTest {
 		stubBillingReady(true)
 		stubHasWriteAccess(before = true, after = false)
 		stubQueryPurchasesOk()
-		stubHandlers(
-			inappChange = PurchaseFieldChange(before = true, after = false, cleared = true),
-			subsChange = PurchaseFieldChange(before = false, after = false, cleared = false),
-		)
+		stubHandlers(inappCleared = true, subsCleared = false)
 
 		val outcomes = mutableListOf<RestoreOutcome>()
 		coordinator.refresh(billingClient, purchaseManager, acknowledge) { outcomes.add(it) }
@@ -212,10 +189,7 @@ class PurchaseRefreshCoordinatorTest {
 		stubBillingReady(true)
 		stubHasWriteAccess(before = false, after = false)
 		stubQueryPurchasesOk()
-		stubHandlers(
-			inappChange = PurchaseFieldChange(before = false, after = false, cleared = false),
-			subsChange = PurchaseFieldChange(before = false, after = false, cleared = false),
-		)
+		stubHandlers(inappCleared = false, subsCleared = false)
 
 		coordinator.refresh(billingClient, purchaseManager, acknowledge) { }
 
@@ -225,11 +199,11 @@ class PurchaseRefreshCoordinatorTest {
 	// -- helpers --
 
 	private fun stubBillingReady(ready: Boolean) {
-		`when`(billingClient.isReady).thenReturn(ready)
+		whenever(billingClient.isReady).thenReturn(ready)
 	}
 
 	private fun stubHasWriteAccess(before: Boolean, after: Boolean) {
-		`when`(licenseEnforcer.hasWriteAccess()).thenReturn(before, after)
+		whenever(licenseEnforcer.hasWriteAccess()).thenReturn(before, after)
 	}
 
 	private fun stubQueryPurchasesOk() {
@@ -238,17 +212,15 @@ class PurchaseRefreshCoordinatorTest {
 			val billingResult = buildBillingResult(BillingClient.BillingResponseCode.OK)
 			listener.onQueryPurchasesResponse(billingResult, emptyList())
 			null
-		}.`when`(billingClient).queryPurchasesAsync(any<QueryPurchasesParams>(), any<PurchasesResponseListener>())
+		}.whenever(billingClient).queryPurchasesAsync(any<QueryPurchasesParams>(), any<PurchasesResponseListener>())
 	}
 
-	private fun stubHandlers(inappChange: PurchaseFieldChange, subsChange: PurchaseFieldChange) {
-		`when`(purchaseManager.handleInAppPurchases(any(), eq(true), any())).thenReturn(inappChange)
-		`when`(purchaseManager.handleSubscriptionPurchases(any(), eq(true), any())).thenReturn(subsChange)
+	private fun stubHandlers(inappCleared: Boolean, subsCleared: Boolean) {
+		whenever(purchaseManager.handlePurchases(eq(PurchaseManager.Kind.LIFETIME), any(), eq(true), any())).thenReturn(inappCleared)
+		whenever(purchaseManager.handlePurchases(eq(PurchaseManager.Kind.SUBSCRIPTION), any(), eq(true), any())).thenReturn(subsCleared)
 	}
 
 	private fun buildBillingResult(responseCode: Int): BillingResult {
 		return BillingResult.newBuilder().setResponseCode(responseCode).setDebugMessage("").build()
 	}
-
-	private inline fun <reified T> any(): T = org.mockito.ArgumentMatchers.any(T::class.java)
 }

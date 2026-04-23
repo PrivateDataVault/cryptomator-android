@@ -21,13 +21,8 @@ import org.cryptomator.presentation.databinding.ActivityWelcomeBinding
 import org.cryptomator.presentation.licensing.LicenseEnforcer
 import org.cryptomator.presentation.licensing.LicenseStateOrchestrator
 import org.cryptomator.presentation.presenter.WelcomePresenter
-import org.cryptomator.presentation.service.RestoreOutcome
-import org.cryptomator.presentation.ui.activity.view.UpdateLicenseView
 import org.cryptomator.presentation.ui.activity.view.WelcomeView
 import org.cryptomator.presentation.ui.dialog.EnterLicenseDialog
-import org.cryptomator.presentation.ui.dialog.NoFullVersionDialog
-import org.cryptomator.presentation.ui.dialog.RestoreFailedDialog
-import org.cryptomator.presentation.ui.dialog.RestoreSuccessfulDialog
 import org.cryptomator.presentation.ui.fragment.WelcomeIntroFragment
 import org.cryptomator.presentation.ui.fragment.WelcomeLicenseFragment
 import org.cryptomator.presentation.ui.fragment.WelcomeNotificationsFragment
@@ -38,7 +33,6 @@ import javax.inject.Inject
 
 @Activity
 class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBinding::inflate), //
-	UpdateLicenseView, //
 	WelcomeView, //
 	WelcomeLicenseFragment.Listener, //
 	WelcomeNotificationsFragment.Listener, //
@@ -55,11 +49,12 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 
 	private val orchestrator by lazy {
 		LicenseStateOrchestrator(
-			sharedPreferencesHandler, licenseEnforcer, { this },
-			onStateChanged = { uiState ->
-				if (this::pagerAdapter.isInitialized) {
-					pagerAdapter.licenseFragment?.updateUnlocked(uiState.hasWriteAccess, uiState.hasPaidLicense)
-					pagerAdapter.licenseFragment?.updateTrialState(uiState.trialState.isActive, uiState.trialState.isExpired, uiState.trialExpirationText)
+			sharedPreferencesHandler, licenseEnforcer,
+			callback = object : LicenseStateOrchestrator.Callback {
+				override fun onLicenseStateChanged(uiState: LicenseEnforcer.LicenseUiState) {
+					if (this@WelcomeActivity::pagerAdapter.isInitialized) {
+						pagerAdapter.licenseFragment?.updateState(uiState)
+					}
 				}
 			},
 			priceLoader = {
@@ -119,13 +114,6 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 			return
 		}
 		orchestrator.onResume()
-		(application as CryptomatorApp).consumeLastRestoreOutcome()?.let { outcome ->
-			when (outcome) {
-				RestoreOutcome.RESTORED -> showDialog(RestoreSuccessfulDialog.newInstance())
-				RestoreOutcome.NOTHING_TO_RESTORE -> showDialog(NoFullVersionDialog.newInstance())
-				is RestoreOutcome.FAILED -> showDialog(RestoreFailedDialog.newInstance())
-			}
-		}
 		updateNotificationPermissionState()
 		updateScreenLockState()
 	}
@@ -156,10 +144,10 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 			override fun onPageSelected(position: Int) {
 				updateNavigationButtons(position)
 				when (pages[position]) {
-					is FragmentPage.License -> orchestrator.updateState()
-					is FragmentPage.Notifications -> updateNotificationPermissionState()
-					is FragmentPage.ScreenLock -> updateScreenLockState()
-					is FragmentPage.Intro -> Unit
+					FragmentPage.License -> orchestrator.updateState()
+					FragmentPage.Notifications -> updateNotificationPermissionState()
+					FragmentPage.ScreenLock -> updateScreenLockState()
+					FragmentPage.Intro -> Unit
 				}
 			}
 		})
@@ -184,12 +172,8 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 		}
 	}
 
-	private fun needsNotificationPermission(): Boolean {
-		return Build.VERSION.SDK_INT > Build.VERSION_CODES.S_V2
-	}
-
 	private fun hasNotificationPermission(): Boolean {
-		return !needsNotificationPermission() || ContextCompat.checkSelfPermission(
+		return Build.VERSION.SDK_INT <= Build.VERSION_CODES.S_V2 || ContextCompat.checkSelfPermission(
 			this,
 			Manifest.permission.POST_NOTIFICATIONS
 		) == PackageManager.PERMISSION_GRANTED
@@ -300,38 +284,31 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 		}, AUTO_ADVANCE_DELAY_MS)
 	}
 
-	private sealed class FragmentPage {
-		data object Intro : FragmentPage()
-		data object License : FragmentPage()
-		data object Notifications : FragmentPage()
-		data object ScreenLock : FragmentPage()
-	}
+	private enum class FragmentPage { Intro, License, Notifications, ScreenLock }
 
 	private inner class WelcomePagerAdapter(activity: AppCompatActivity, private val pages: List<FragmentPage>) : androidx.viewpager2.adapter.FragmentStateAdapter(activity) {
 
 		val licenseFragment: WelcomeLicenseFragment?
-			get() = findPageFragment<FragmentPage.License, WelcomeLicenseFragment>()
+			get() = findPageFragment(FragmentPage.License)
 
 		val notificationsFragment: WelcomeNotificationsFragment?
-			get() = findPageFragment<FragmentPage.Notifications, WelcomeNotificationsFragment>()
+			get() = findPageFragment(FragmentPage.Notifications)
 
 		val screenLockFragment: WelcomeScreenLockFragment?
-			get() = findPageFragment<FragmentPage.ScreenLock, WelcomeScreenLockFragment>()
+			get() = findPageFragment(FragmentPage.ScreenLock)
 
-		private inline fun <reified P : FragmentPage, reified F : Fragment> findPageFragment(): F? {
-			val pos = pages.indexOfFirst { it is P }
+		private inline fun <reified F : Fragment> findPageFragment(page: FragmentPage): F? {
+			val pos = pages.indexOf(page)
 			return if (pos >= 0) supportFragmentManager.findFragmentByTag("f$pos") as? F else null
 		}
 
 		override fun getItemCount(): Int = pages.size
 
-		override fun createFragment(position: Int): Fragment {
-			return when (pages[position]) {
-				is FragmentPage.Intro -> WelcomeIntroFragment()
-				is FragmentPage.License -> WelcomeLicenseFragment()
-				is FragmentPage.Notifications -> WelcomeNotificationsFragment()
-				is FragmentPage.ScreenLock -> WelcomeScreenLockFragment()
-			}
+		override fun createFragment(position: Int): Fragment = when (pages[position]) {
+			FragmentPage.Intro -> WelcomeIntroFragment()
+			FragmentPage.License -> WelcomeLicenseFragment()
+			FragmentPage.Notifications -> WelcomeNotificationsFragment()
+			FragmentPage.ScreenLock -> WelcomeScreenLockFragment()
 		}
 	}
 

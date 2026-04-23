@@ -2,7 +2,6 @@ package org.cryptomator.presentation.ui.dialog
 
 import android.content.DialogInterface
 import androidx.appcompat.app.AlertDialog
-import androidx.fragment.app.DialogFragment
 import org.cryptomator.generator.Dialog
 import org.cryptomator.presentation.R
 import org.cryptomator.presentation.databinding.DialogTrialExpiredBinding
@@ -29,7 +28,7 @@ class TrialExpiredDialog : BaseDialog<TrialExpiredDialog.Callback, DialogTrialEx
 
 	companion object {
 
-		fun newInstance(): DialogFragment {
+		fun newInstance(): TrialExpiredDialog {
 			return TrialExpiredDialog()
 		}
 	}

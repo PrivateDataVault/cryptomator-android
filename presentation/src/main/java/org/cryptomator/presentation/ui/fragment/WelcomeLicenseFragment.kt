@@ -5,6 +5,7 @@ import org.cryptomator.generator.Fragment
 import org.cryptomator.presentation.CryptomatorApp
 import org.cryptomator.presentation.R
 import org.cryptomator.presentation.databinding.FragmentWelcomeLicenseBinding
+import org.cryptomator.presentation.licensing.LicenseEnforcer
 import org.cryptomator.presentation.ui.layout.LicenseContentViewBinder
 import org.cryptomator.util.FlavorConfig
 
@@ -60,18 +61,11 @@ class WelcomeLicenseFragment : BaseFragment<FragmentWelcomeLicenseBinding>(Fragm
 		listener?.onLicenseViewReady()
 	}
 
-	fun updateUnlocked(unlocked: Boolean, hasPaidLicense: Boolean) {
+	fun updateState(uiState: LicenseEnforcer.LicenseUiState) {
 		if (!isAdded) {
 			return
 		}
-		licenseContentViewBinder.bindPurchaseState(unlocked, hasPaidLicense)
-	}
-
-	fun updateTrialState(active: Boolean, expired: Boolean, expirationText: String?) {
-		if (!isAdded) {
-			return
-		}
-		licenseContentViewBinder.bindTrialState(active, expired, expirationText)
+		licenseContentViewBinder.bindState(uiState)
 	}
 
 	fun loadAndBindPrices(app: CryptomatorApp) {

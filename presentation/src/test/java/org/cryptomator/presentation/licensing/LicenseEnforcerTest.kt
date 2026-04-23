@@ -1,7 +1,6 @@
 package org.cryptomator.presentation.licensing
 
 import android.app.Activity
-import android.content.Context
 import android.widget.Toast
 import org.cryptomator.presentation.R
 import org.cryptomator.presentation.model.VaultModel
@@ -441,53 +440,48 @@ class LicenseEnforcerTest {
 	@Test
 	fun `evaluateUiState returns active trial with expiration text`() {
 		assumeTrue(!FlavorConfig.isPremiumFlavor, "Licensing logic is bypassed on this flavor")
-		val context: Context = mock()
 		`when`(sharedPreferencesHandler.licenseToken()).thenReturn("")
 		`when`(sharedPreferencesHandler.hasRunningSubscription()).thenReturn(false)
 		`when`(sharedPreferencesHandler.trialExpirationDate()).thenReturn(System.currentTimeMillis() + 86400000L)
 		`when`(sharedPreferencesHandler.isTrialExpired()).thenReturn(false)
-		`when`(context.getString(eq(R.string.screen_license_check_trial_expiration), any())).thenReturn("Expiration Date: Mar 28, 2026")
 
-		val uiState = licenseEnforcer.evaluateUiState(context)
+		val uiState = licenseEnforcer.evaluateUiState()
 
 		assertTrue(uiState.hasWriteAccess)
 		assertFalse(uiState.hasPaidLicense)
 		assertTrue(uiState.trialState.isActive)
-		assertNotNull(uiState.trialExpirationText)
+		assertNotNull(uiState.trialState.formattedExpirationDate)
 	}
 
 	@Test
 	fun `evaluateUiState returns expired trial with expiration date text`() {
 		assumeTrue(!FlavorConfig.isPremiumFlavor, "Licensing logic is bypassed on this flavor")
-		val context: Context = mock()
 		`when`(sharedPreferencesHandler.licenseToken()).thenReturn("")
 		`when`(sharedPreferencesHandler.hasRunningSubscription()).thenReturn(false)
 		`when`(sharedPreferencesHandler.trialExpirationDate()).thenReturn(System.currentTimeMillis() - 1000L)
 		`when`(sharedPreferencesHandler.isTrialExpired()).thenReturn(false)
-		`when`(context.getString(eq(R.string.screen_license_check_trial_expiration), any())).thenReturn("Expiration Date: Mar 26, 2026")
 
-		val uiState = licenseEnforcer.evaluateUiState(context)
+		val uiState = licenseEnforcer.evaluateUiState()
 
 		assertFalse(uiState.hasWriteAccess)
 		assertFalse(uiState.hasPaidLicense)
 		assertTrue(uiState.trialState.isExpired)
-		assertNotNull(uiState.trialExpirationText)
+		assertNotNull(uiState.trialState.formattedExpirationDate)
 	}
 
 	@Test
 	fun `evaluateUiState returns null expiration text when no trial started`() {
 		assumeTrue(!FlavorConfig.isPremiumFlavor, "Licensing logic is bypassed on this flavor")
-		val context: Context = mock()
 		`when`(sharedPreferencesHandler.licenseToken()).thenReturn("")
 		`when`(sharedPreferencesHandler.hasRunningSubscription()).thenReturn(false)
 		`when`(sharedPreferencesHandler.trialExpirationDate()).thenReturn(0L)
 
-		val uiState = licenseEnforcer.evaluateUiState(context)
+		val uiState = licenseEnforcer.evaluateUiState()
 
 		assertFalse(uiState.hasWriteAccess)
 		assertFalse(uiState.hasPaidLicense)
 		assertFalse(uiState.trialState.isActive)
 		assertFalse(uiState.trialState.isExpired)
-		assertNull(uiState.trialExpirationText)
+		assertNull(uiState.trialState.formattedExpirationDate)
 	}
 }

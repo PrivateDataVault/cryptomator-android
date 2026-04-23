@@ -1,11 +1,9 @@
 package org.cryptomator.presentation.licensing
 
 import android.app.Activity
-import android.content.Context
 import android.content.Intent
 import android.widget.Toast
 import androidx.annotation.StringRes
-import org.cryptomator.domain.di.PerView
 import org.cryptomator.presentation.R
 import org.cryptomator.presentation.intent.Intents
 import org.cryptomator.presentation.model.VaultModel
@@ -17,7 +15,6 @@ import java.util.Date
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
-@PerView
 class LicenseEnforcer @Inject constructor(private val sharedPreferencesHandler: SharedPreferencesHandler) {
 
 	enum class LockedAction(
@@ -56,19 +53,22 @@ class LicenseEnforcer @Inject constructor(private val sharedPreferencesHandler: 
 		sharedPreferencesHandler.setTrialExpirationDate(trialExpiration)
 	}
 
-	fun hasActiveTrial(): Boolean {
-		return evaluateTrialState().isActive
-	}
+	fun hasActiveTrial(): Boolean = evaluateTrialState().isActive
 
 	fun evaluateTrialState(): TrialState {
+		val state = readTrialState()
+		if (state.isExpired && !sharedPreferencesHandler.isTrialExpired()) {
+			sharedPreferencesHandler.setTrialExpired(true)
+		}
+		return state
+	}
+
+	private fun readTrialState(): TrialState {
 		val trialExpiration = sharedPreferencesHandler.trialExpirationDate()
 		val now = System.currentTimeMillis()
 		val sticky = sharedPreferencesHandler.isTrialExpired()
 		val active = trialExpiration > 0 && trialExpiration > now && !sticky
 		val expired = trialExpiration > 0 && (trialExpiration <= now || sticky)
-		if (expired && !sticky) {
-			sharedPreferencesHandler.setTrialExpired(true)
-		}
 		val formattedDate = if (active || expired) {
 			DateFormat.getDateInstance().format(Date(trialExpiration))
 		} else null
@@ -82,35 +82,24 @@ class LicenseEnforcer @Inject constructor(private val sharedPreferencesHandler: 
 		val hasPaidLicense: Boolean,
 		val hasLifetimeLicense: Boolean,
 		val hasRunningSubscription: Boolean,
-		val trialState: TrialState,
-		val trialExpirationText: String?
+		val trialState: TrialState
 	)
 
-	fun evaluateUiState(context: Context): LicenseUiState {
+	fun evaluateUiState(): LicenseUiState {
 		val trialState = evaluateTrialState()
 		val paidLicense = hasPaidLicense()
-		val lifetimeLicense = sharedPreferencesHandler.licenseToken().isNotEmpty()
-		val runningSubscription = sharedPreferencesHandler.hasRunningSubscription()
-		val expirationText = if (trialState.isActive || trialState.isExpired) {
-			context.getString(R.string.screen_license_check_trial_expiration, trialState.formattedExpirationDate)
-		} else null
 		return LicenseUiState(
 			hasWriteAccess = paidLicense || trialState.isActive,
 			hasPaidLicense = paidLicense,
-			hasLifetimeLicense = lifetimeLicense,
-			hasRunningSubscription = runningSubscription,
-			trialState = trialState,
-			trialExpirationText = expirationText
+			hasLifetimeLicense = sharedPreferencesHandler.licenseToken().isNotEmpty(),
+			hasRunningSubscription = sharedPreferencesHandler.hasRunningSubscription(),
+			trialState = trialState
 		)
 	}
 
 	fun ensureWriteAccess(activity: Activity, action: LockedAction): Boolean {
 		if (hasWriteAccess()) {
 			return true
-		}
-
-		if (FlavorConfig.isPremiumFlavor) {
-			return false
 		}
 
 		val intent = Intents.licenseCheckIntent()

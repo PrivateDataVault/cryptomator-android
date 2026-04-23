@@ -175,21 +175,21 @@ constructor(context: Context) : SharedPreferences.OnSharedPreferenceChangeListen
 		licenseChangedListeners.remove(listener)
 	}
 
-override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String?) {
-	when (key) {
-		LOCK_TIMEOUT -> {
-			val lockTimeout = lockTimeout
-			lockTimeoutChangedListeners.keys.forEach { listener ->
+	override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String?) {
+		when (key) {
+			LOCK_TIMEOUT -> {
+				val lockTimeout = lockTimeout
+				lockTimeoutChangedListeners.keys.forEach { listener ->
 					listener.accept(lockTimeout)
 				}
 			}
 			LICENSE_TOKEN, TRIAL_EXPIRATION_DATE, HAS_RUNNING_SUBSCRIPTION -> {
 				licenseChangedListeners.keys.forEach { listener ->
 					listener.accept(licenseToken())
+				}
 			}
 		}
 	}
-}
 
 	fun lruCacheSize(): Int {
 		return defaultSharedPreferences.getValue(LRU_CACHE_SIZE, "100").toInt() * 1024 * 1024
@@ -244,6 +244,18 @@ override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key
 
 	fun clearPurchaseRevokedState() {
 		setPurchaseRevokedState(pending = false, reason = "")
+	}
+
+	fun pendingRestoreOutcome(): String {
+		return defaultSharedPreferences.getValue(PENDING_RESTORE_OUTCOME, "")
+	}
+
+	fun setPendingRestoreOutcome(kind: String) {
+		defaultSharedPreferences.setValue(PENDING_RESTORE_OUTCOME, kind)
+	}
+
+	fun clearPendingRestoreOutcome() {
+		defaultSharedPreferences.setValue(PENDING_RESTORE_OUTCOME, "")
 	}
 
 	fun hasRunningSubscription(): Boolean {
@@ -403,6 +415,7 @@ override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key
 		private const val HAS_RUNNING_SUBSCRIPTION = "hasRunningSubscription"
 		private const val PURCHASE_REVOKED_PENDING = "purchaseRevokedPending"
 		private const val PURCHASE_REVOKED_REASON = "purchaseRevokedReason"
+		private const val PENDING_RESTORE_OUTCOME = "pendingRestoreOutcome"
 		const val DEBUG_MODE = "debugMode"
 		const val DISABLE_APP_WHEN_OBSCURED = "disableAppWhenObscured"
 		const val SECURE_SCREEN = "secureScreen"

@@ -1,6 +1,5 @@
 package org.cryptomator.presentation.licensing
 
-import android.content.Context
 import org.cryptomator.util.FlavorConfig
 import org.cryptomator.util.SharedPreferencesHandler
 import java.util.function.Consumer
@@ -8,16 +7,25 @@ import java.util.function.Consumer
 class LicenseStateOrchestrator(
 	private val sharedPreferencesHandler: SharedPreferencesHandler,
 	private val licenseEnforcer: LicenseEnforcer,
-	private val contextProvider: () -> Context,
-	private val onStateChanged: (LicenseEnforcer.LicenseUiState) -> Unit,
+	private val callback: Callback,
 	private val priceLoader: (() -> Unit)? = null
 ) {
 
+	interface Callback {
+		fun onLicenseStateChanged(uiState: LicenseEnforcer.LicenseUiState)
+		fun onSubscriptionActivatedFirstTime() {}
+		fun onSubscriptionUpgradedToLifetime() {}
+	}
+
 	private val licenseChangeListener = Consumer<String> { _ -> updateState() }
+	private var wasSubscriptionOnly = false
 
 	fun onResume() {
+		wasSubscriptionOnly = isSubscriptionOnly(
+			hasRunningSubscription = sharedPreferencesHandler.hasRunningSubscription(),
+			hasLifetimeLicense = sharedPreferencesHandler.licenseToken().isNotEmpty()
+		)
 		sharedPreferencesHandler.addLicenseChangedListeners(licenseChangeListener)
-		updateState()
 		if (FlavorConfig.isFreemiumFlavor) {
 			priceLoader?.invoke()
 		}
@@ -28,6 +36,20 @@ class LicenseStateOrchestrator(
 	}
 
 	fun updateState() {
-		onStateChanged(licenseEnforcer.evaluateUiState(contextProvider()))
+		val uiState = licenseEnforcer.evaluateUiState()
+		val nowSubOnly = isSubscriptionOnly(uiState.hasRunningSubscription, uiState.hasLifetimeLicense)
+		val wasSubOnly = wasSubscriptionOnly
+		wasSubscriptionOnly = nowSubOnly
+
+		if (wasSubOnly && uiState.hasLifetimeLicense && uiState.hasRunningSubscription) {
+			callback.onSubscriptionUpgradedToLifetime()
+		}
+		if (!wasSubOnly && nowSubOnly) {
+			callback.onSubscriptionActivatedFirstTime()
+		}
+		callback.onLicenseStateChanged(uiState)
 	}
+
+	private fun isSubscriptionOnly(hasRunningSubscription: Boolean, hasLifetimeLicense: Boolean): Boolean =
+		hasRunningSubscription && !hasLifetimeLicense
 }

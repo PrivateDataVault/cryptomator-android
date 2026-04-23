@@ -19,6 +19,7 @@ import com.android.billingclient.api.PurchasesUpdatedListener
 import com.android.billingclient.api.QueryProductDetailsParams
 import com.android.billingclient.api.QueryPurchasesParams
 import org.cryptomator.presentation.R
+import org.cryptomator.presentation.licensing.LicenseEnforcer
 import org.cryptomator.util.SharedPreferencesHandler
 import java.lang.ref.WeakReference
 import java.util.concurrent.ConcurrentHashMap
@@ -32,12 +33,12 @@ class IapBillingService : Service(), PurchasesUpdatedListener {
 	private lateinit var purchaseRefreshCoordinator: PurchaseRefreshCoordinator
 
 	private val productDetailsMap = ConcurrentHashMap<String, ProductDetails>()
-	private val pendingProductDetailsCallbacks = mutableListOf<(List<ProductInfo>) -> Unit>()
+	private val pendingProductDetailsCallbacks = PendingCallbackQueue<List<ProductInfo>>()
 
 	private fun initBillingClient(context: Context) {
 		this.sharedPreferencesHandler = SharedPreferencesHandler(context)
 		this.purchaseManager = PurchaseManager(sharedPreferencesHandler)
-		this.purchaseRefreshCoordinator = PurchaseRefreshCoordinator(sharedPreferencesHandler)
+		this.purchaseRefreshCoordinator = PurchaseRefreshCoordinator(sharedPreferencesHandler, LicenseEnforcer(sharedPreferencesHandler))
 		val pendingPurchasesParams = PendingPurchasesParams.newBuilder()
 			.enableOneTimeProducts()
 			.enablePrepaidPlans()
@@ -52,15 +53,12 @@ class IapBillingService : Service(), PurchasesUpdatedListener {
 				if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
 					Timber.tag("IapBillingService").d("Billing setup successful")
 					queryExistingPurchases()
-					val callbacks = drainPendingProductDetailsCallbacks()
-					if (callbacks.isNotEmpty()) {
-						queryProductDetails { products ->
-							callbacks.forEach { it(products) }
-						}
+					pendingProductDetailsCallbacks.drainSnapshot()?.let { callbacks ->
+						queryProductDetails { products -> callbacks.forEach { it(products) } }
 					}
 				} else {
 					Timber.tag("IapBillingService").e("Billing setup not successful, error: %d", billingResult.responseCode)
-					drainPendingProductDetailsCallbacks().forEach { it(emptyList()) }
+					pendingProductDetailsCallbacks.drainSnapshot()?.forEach { it(emptyList()) }
 				}
 			}
 
@@ -68,17 +66,6 @@ class IapBillingService : Service(), PurchasesUpdatedListener {
 				Timber.tag("IapBillingService").i("Billing service disconnected")
 			}
 		})
-	}
-
-	private fun drainPendingProductDetailsCallbacks(): List<(List<ProductInfo>) -> Unit> {
-		synchronized(pendingProductDetailsCallbacks) {
-			if (pendingProductDetailsCallbacks.isEmpty()) {
-				return emptyList()
-			}
-			val snapshot = ArrayList(pendingProductDetailsCallbacks)
-			pendingProductDetailsCallbacks.clear()
-			return snapshot
-		}
 	}
 
 	override fun onCreate() {
@@ -123,9 +110,7 @@ class IapBillingService : Service(), PurchasesUpdatedListener {
 
 	fun queryProductDetails(callback: (List<ProductInfo>) -> Unit) {
 		if (!billingClient.isReady) {
-			synchronized(pendingProductDetailsCallbacks) {
-				pendingProductDetailsCallbacks.add(callback)
-			}
+			pendingProductDetailsCallbacks.enqueue(callback)
 			return
 		}
 		val lock = Any()
@@ -201,8 +186,8 @@ class IapBillingService : Service(), PurchasesUpdatedListener {
 
 	override fun onPurchasesUpdated(billingResult: BillingResult, purchases: List<Purchase>?) {
 		if (billingResult.responseCode == BillingClient.BillingResponseCode.OK && purchases != null) {
-			purchaseManager.handleInAppPurchases(purchases) { token -> acknowledgePurchase(token) }
-			purchaseManager.handleSubscriptionPurchases(purchases) { token -> acknowledgePurchase(token) }
+			purchaseManager.handlePurchases(PurchaseManager.Kind.LIFETIME, purchases) { token -> acknowledgePurchase(token) }
+			purchaseManager.handlePurchases(PurchaseManager.Kind.SUBSCRIPTION, purchases) { token -> acknowledgePurchase(token) }
 		} else if (billingResult.responseCode == BillingClient.BillingResponseCode.USER_CANCELED) {
 			Timber.tag("IapBillingService").i("User canceled purchase flow")
 		} else {

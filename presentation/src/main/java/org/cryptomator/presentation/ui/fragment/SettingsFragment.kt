@@ -194,9 +194,8 @@ class SettingsFragment : PreferenceFragmentCompatLayout() {
 				removeUpdateCheck()
 			}
 			FlavorConfig.isFreemiumFlavor -> {
-				val licenseEnforcer = LicenseEnforcer(sharedPreferencesHandler)
-				val uiState = licenseEnforcer.evaluateUiState(requireContext())
-				val hasSubscription = sharedPreferencesHandler.hasRunningSubscription()
+				val uiState = LicenseEnforcer(sharedPreferencesHandler).evaluateUiState()
+				val hasSubscription = uiState.hasRunningSubscription
 				licensePref?.let { pref ->
 					if (uiState.hasPaidLicense) {
 						pref.title = getString(R.string.screen_settings_license_title_unlocked)
@@ -217,39 +216,27 @@ class SettingsFragment : PreferenceFragmentCompatLayout() {
 				}
 				licenseCategory?.let { category ->
 					val hasLifetimeLicense = sharedPreferencesHandler.licenseToken().isNotEmpty()
-					if (hasSubscription) {
-						if (category.findPreference<Preference>(MANAGE_SUBSCRIPTION_KEY) == null) {
-							category.addPreference(Preference(requireContext()).apply {
-								key = MANAGE_SUBSCRIPTION_KEY
-								title = getString(R.string.screen_settings_manage_subscription)
-								setOnPreferenceClickListener {
-									val url = "https://play.google.com/store/account/subscriptions" +
-										"?sku=${ProductInfo.PRODUCT_YEARLY_SUBSCRIPTION}" +
-										"&package=${requireContext().packageName}"
-									startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
-									true
-								}
-							})
-						}
-					} else {
-						category.findPreference<Preference>(MANAGE_SUBSCRIPTION_KEY)?.let {
-							category.removePreference(it)
+					category.togglePreference(MANAGE_SUBSCRIPTION_KEY, hasSubscription) {
+						Preference(requireContext()).apply {
+							key = MANAGE_SUBSCRIPTION_KEY
+							title = getString(R.string.screen_settings_manage_subscription)
+							setOnPreferenceClickListener {
+								val url = "https://play.google.com/store/account/subscriptions" +
+									"?sku=${ProductInfo.PRODUCT_YEARLY_SUBSCRIPTION}" +
+									"&package=${requireContext().packageName}"
+								startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+								true
+							}
 						}
 					}
-					if (hasSubscription && !hasLifetimeLicense) {
-						if (category.findPreference<Preference>(UPGRADE_LIFETIME_KEY) == null) {
-							category.addPreference(Preference(requireContext()).apply {
-								key = UPGRADE_LIFETIME_KEY
-								title = getString(R.string.screen_settings_upgrade_to_lifetime)
-								setOnPreferenceClickListener {
-									Intents.licenseCheckIntent().startActivity(activity() as ContextHolder)
-									true
-								}
-							})
-						}
-					} else {
-						category.findPreference<Preference>(UPGRADE_LIFETIME_KEY)?.let {
-							category.removePreference(it)
+					category.togglePreference(UPGRADE_LIFETIME_KEY, hasSubscription && !hasLifetimeLicense) {
+						Preference(requireContext()).apply {
+							key = UPGRADE_LIFETIME_KEY
+							title = getString(R.string.screen_settings_upgrade_to_lifetime)
+							setOnPreferenceClickListener {
+								Intents.licenseCheckIntent().startActivity(activity() as ContextHolder)
+								true
+							}
 						}
 					}
 				}
@@ -277,6 +264,16 @@ class SettingsFragment : PreferenceFragmentCompatLayout() {
 					removeUpdateCheck()
 				}
 			}
+		}
+	}
+
+	private fun PreferenceCategory.togglePreference(key: String, show: Boolean, build: () -> Preference) {
+		if (show) {
+			if (findPreference<Preference>(key) == null) {
+				addPreference(build())
+			}
+		} else {
+			findPreference<Preference>(key)?.let { removePreference(it) }
 		}
 	}
 

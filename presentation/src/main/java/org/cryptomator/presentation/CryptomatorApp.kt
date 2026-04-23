@@ -26,9 +26,11 @@ import org.cryptomator.presentation.service.AutoUploadNotification
 import org.cryptomator.presentation.service.AutoUploadService
 import org.cryptomator.presentation.service.CryptorsService
 import org.cryptomator.presentation.service.IapBillingService
+import org.cryptomator.presentation.service.PendingCallbackQueue
 import org.cryptomator.presentation.service.ProductInfo
 import org.cryptomator.presentation.service.PurchaseRevokedToastObserver
 import org.cryptomator.presentation.service.RestoreOutcome
+import org.cryptomator.presentation.service.RestoreOutcomeDialogObserver
 import org.cryptomator.util.FlavorConfig
 import org.cryptomator.util.NoOpActivityLifecycleCallbacks
 import org.cryptomator.util.SharedPreferencesHandler
@@ -51,21 +53,18 @@ class CryptomatorApp : MultiDexApplication(), HasComponent<ApplicationComponent>
 	@Volatile
 	private var iapBillingServiceBinder: IapBillingService.Binder? = null
 
-	@Volatile
-	var lastRestoreOutcome: RestoreOutcome? = null
-
-	fun consumeLastRestoreOutcome(): RestoreOutcome? {
-		val outcome = lastRestoreOutcome
-		lastRestoreOutcome = null
-		return outcome
+	fun restorePurchasesAndStore() {
+		val handler = SharedPreferencesHandler(applicationContext())
+		restorePurchases { outcome -> handler.setPendingRestoreOutcome(outcome.kind.name) }
 	}
 
-	private val pendingProductDetailsCallbacks = mutableListOf<(List<ProductInfo>) -> Unit>()
+	private val pendingProductDetailsCallbacks = PendingCallbackQueue<List<ProductInfo>>()
 
 	override fun onCreate() {
 		super.onCreate()
 		setupLogging()
 		val sharedPreferencesHandler = SharedPreferencesHandler(applicationContext())
+
 		@Suppress("KotlinConstantConditions") //
 		val flavor = when (BuildConfig.FLAVOR) {
 			"apkstore" -> "APK Store Edition"
@@ -88,6 +87,7 @@ class CryptomatorApp : MultiDexApplication(), HasComponent<ApplicationComponent>
 		registerActivityLifecycleCallbacks(serviceNotifier)
 		if (FlavorConfig.isFreemiumFlavor) {
 			registerActivityLifecycleCallbacks(PurchaseRevokedToastObserver(sharedPreferencesHandler))
+			registerActivityLifecycleCallbacks(RestoreOutcomeDialogObserver(sharedPreferencesHandler))
 		}
 		AppCompatDelegate.setDefaultNightMode(sharedPreferencesHandler.screenStyleMode)
 		cleanupCache()
@@ -165,25 +165,17 @@ class CryptomatorApp : MultiDexApplication(), HasComponent<ApplicationComponent>
 	}
 
 	fun queryProductDetails(callback: (List<ProductInfo>) -> Unit) {
-		if (FlavorConfig.isFreemiumFlavor) {
-			synchronized(pendingProductDetailsCallbacks) {
-				iapBillingServiceBinder?.queryProductDetails(callback) ?: pendingProductDetailsCallbacks.add(callback)
-			}
-		} else {
+		if (!FlavorConfig.isFreemiumFlavor) {
 			callback(emptyList())
+			return
 		}
+		iapBillingServiceBinder?.queryProductDetails(callback) ?: pendingProductDetailsCallbacks.enqueue(callback)
 	}
 
 	private fun drainPendingProductDetailsCallbacks() {
-		synchronized(pendingProductDetailsCallbacks) {
-			if (pendingProductDetailsCallbacks.isEmpty()) {
-				return
-			}
-			val callbacks = ArrayList(pendingProductDetailsCallbacks)
-			pendingProductDetailsCallbacks.clear()
-			iapBillingServiceBinder?.queryProductDetails { products ->
-				callbacks.forEach { it(products) }
-			}
+		val snapshot = pendingProductDetailsCallbacks.drainSnapshot() ?: return
+		iapBillingServiceBinder?.queryProductDetails { products ->
+			snapshot.forEach { it(products) }
 		}
 	}
 

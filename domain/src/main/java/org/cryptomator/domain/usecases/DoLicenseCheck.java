@@ -64,13 +64,12 @@ public class DoLicenseCheck {
 	private String useLicenseOrRetrieveFromPreferences(String license) throws NoLicenseAvailableException {
 		if (!license.isEmpty()) {
 			return license;
-		} else {
-			license = sharedPreferencesHandler.licenseToken();
-			if (license.isEmpty()) {
-				throw new NoLicenseAvailableException();
-			}
 		}
-		return license;
+		String stored = sharedPreferencesHandler.licenseToken();
+		if (stored.isEmpty()) {
+			throw new NoLicenseAvailableException();
+		}
+		return stored;
 	}
 
 	private ECPublicKey getPublicKey(String publicKey) throws NoSuchAlgorithmException, InvalidKeySpecException {

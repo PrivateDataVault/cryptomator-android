@@ -8,8 +8,6 @@ import android.net.Uri
 import android.os.Build
 import org.cryptomator.domain.di.PerView
 import org.cryptomator.domain.usecases.DoLicenseCheckUseCase
-import org.cryptomator.domain.usecases.LicenseCheck
-import org.cryptomator.domain.usecases.NoOpResultHandler
 import org.cryptomator.generator.Callback
 import org.cryptomator.presentation.R
 import org.cryptomator.presentation.exception.ExceptionHandlers
@@ -23,22 +21,14 @@ import javax.inject.Inject
 @PerView
 class WelcomePresenter @Inject internal constructor(
 	exceptionHandlers: ExceptionHandlers,
-	private val doLicenseCheckUseCase: DoLicenseCheckUseCase,
-	private val sharedPreferencesHandler: SharedPreferencesHandler
+	doLicenseCheckUseCase: DoLicenseCheckUseCase,
+	sharedPreferencesHandler: SharedPreferencesHandler
 ) : Presenter<WelcomeView>(exceptionHandlers) {
 
-	fun validate(data: Uri?) {
-		data?.let {
-			val license = it.fragment ?: it.lastPathSegment
-			if (license.isNullOrEmpty()) return
-			view?.showOrUpdateLicenseEntry(license)
-			doLicenseCheckUseCase.withLicense(license).run(CheckLicenseStatusSubscriber())
-		}
-	}
+	private val validator = LicenseKeyValidator(doLicenseCheckUseCase, sharedPreferencesHandler, { view }, ::showError)
 
-	fun validateDialogAware(license: String?) {
-		doLicenseCheckUseCase.withLicense(license).run(CheckLicenseStatusSubscriber())
-	}
+	fun validate(data: Uri?) = validator.validate(data) { view?.showOrUpdateLicenseEntry(it) }
+	fun validateDialogAware(license: String?) = validator.validateDialogAware(license)
 
 	fun onFilteredTouchEventForSecurity() {
 		view?.showDialog(AppIsObscuredInfoDialog.newInstance())
@@ -71,20 +61,6 @@ class WelcomePresenter @Inject internal constructor(
 			} catch (e: ActivityNotFoundException) {
 				Timber.tag("WelcomePresenter").d(e, "Device Policy Manager not found")
 			}
-		}
-	}
-
-	private inner class CheckLicenseStatusSubscriber : NoOpResultHandler<LicenseCheck>() {
-		override fun onSuccess(licenseCheck: LicenseCheck) {
-			super.onSuccess(licenseCheck)
-			view?.closeDialog()
-			sharedPreferencesHandler.setMail(licenseCheck.mail())
-			view?.showConfirmationDialog(licenseCheck.mail())
-		}
-
-		override fun onError(t: Throwable) {
-			super.onError(t)
-			showError(t)
 		}
 	}
 

@@ -2,8 +2,6 @@ package org.cryptomator.presentation.presenter
 
 import android.net.Uri
 import org.cryptomator.domain.usecases.DoLicenseCheckUseCase
-import org.cryptomator.domain.usecases.LicenseCheck
-import org.cryptomator.domain.usecases.NoOpResultHandler
 import org.cryptomator.presentation.exception.ExceptionHandlers
 import org.cryptomator.presentation.ui.activity.view.LicenseView
 import org.cryptomator.presentation.ui.dialog.AppIsObscuredInfoDialog
@@ -12,43 +10,15 @@ import javax.inject.Inject
 
 class LicenseCheckPresenter @Inject internal constructor(
 	exceptionHandlers: ExceptionHandlers,
-	private val doLicenseCheckUseCase: DoLicenseCheckUseCase,
-	private val sharedPreferencesHandler: SharedPreferencesHandler
+	doLicenseCheckUseCase: DoLicenseCheckUseCase,
+	sharedPreferencesHandler: SharedPreferencesHandler
 ) : Presenter<LicenseView>(exceptionHandlers) {
 
-	fun validate(data: Uri?) {
-		data?.let {
-			val license = it.fragment ?: it.lastPathSegment
-			if (license.isNullOrEmpty()) {
-				return
-			}
-			doLicenseCheckUseCase.withLicense(license).run(CheckLicenseStatusSubscriber())
-		}
-	}
+	private val validator = LicenseKeyValidator(doLicenseCheckUseCase, sharedPreferencesHandler, { view }, ::showError)
 
-	fun validateDialogAware(license: String?) {
-		doLicenseCheckUseCase.withLicense(license).run(CheckLicenseStatusSubscriber())
-	}
+	fun validate(data: Uri?) = validator.validate(data)
+	fun validateDialogAware(license: String?) = validator.validateDialogAware(license)
+	fun onFilteredTouchEventForSecurity() = view?.showDialog(AppIsObscuredInfoDialog.newInstance())
 
-	fun onFilteredTouchEventForSecurity() {
-		view?.showDialog(AppIsObscuredInfoDialog.newInstance())
-	}
-
-	private inner class CheckLicenseStatusSubscriber : NoOpResultHandler<LicenseCheck>() {
-		override fun onSuccess(licenseCheck: LicenseCheck) {
-			super.onSuccess(licenseCheck)
-			view?.closeDialog()
-			sharedPreferencesHandler.setMail(licenseCheck.mail())
-			view?.showConfirmationDialog(licenseCheck.mail())
-		}
-
-		override fun onError(t: Throwable) {
-			super.onError(t)
-			showError(t)
-		}
-	}
-
-	init {
-		unsubscribeOnDestroy(doLicenseCheckUseCase)
-	}
+	init { unsubscribeOnDestroy(doLicenseCheckUseCase) }
 }

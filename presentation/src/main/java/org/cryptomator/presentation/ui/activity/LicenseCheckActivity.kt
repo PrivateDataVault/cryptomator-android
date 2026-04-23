@@ -2,7 +2,6 @@ package org.cryptomator.presentation.ui.activity
 
 import android.content.Intent
 import android.os.Bundle
-import android.view.View
 import org.cryptomator.generator.Activity
 import org.cryptomator.generator.InjectIntent
 import org.cryptomator.presentation.CryptomatorApp
@@ -13,14 +12,10 @@ import org.cryptomator.presentation.intent.LicenseCheckIntent
 import org.cryptomator.presentation.licensing.LicenseEnforcer
 import org.cryptomator.presentation.licensing.LicenseStateOrchestrator
 import org.cryptomator.presentation.presenter.LicenseCheckPresenter
-import org.cryptomator.presentation.service.RestoreOutcome
 import org.cryptomator.presentation.ui.activity.view.LicenseView
 import org.cryptomator.presentation.ui.dialog.CancelSubscriptionReminderDialog
 import org.cryptomator.presentation.ui.dialog.EnterLicenseDialog
 import org.cryptomator.presentation.ui.dialog.LicenseConfirmationDialog
-import org.cryptomator.presentation.ui.dialog.NoFullVersionDialog
-import org.cryptomator.presentation.ui.dialog.RestoreFailedDialog
-import org.cryptomator.presentation.ui.dialog.RestoreSuccessfulDialog
 import org.cryptomator.presentation.ui.layout.LicenseContentViewBinder
 import org.cryptomator.presentation.ui.layout.ObscuredAwareCoordinatorLayout
 import org.cryptomator.util.FlavorConfig
@@ -42,24 +37,24 @@ class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityL
 	lateinit var licenseCheckIntent: LicenseCheckIntent
 
 	private var lockedAction: LicenseEnforcer.LockedAction? = null
-	private var wasSubscriptionOnly = false
 	private val licenseContentViewBinder by lazy { LicenseContentViewBinder(binding.licenseContent, FlavorConfig.isFreemiumFlavor) }
 
 	private val orchestrator by lazy {
-		wasSubscriptionOnly = sharedPreferencesHandler.hasRunningSubscription() && sharedPreferencesHandler.licenseToken().isEmpty()
 		LicenseStateOrchestrator(
-			sharedPreferencesHandler, licenseEnforcer, { this },
-			onStateChanged = { uiState ->
-				if (uiState.hasLifetimeLicense && uiState.hasRunningSubscription && wasSubscriptionOnly) {
-					showDialog(CancelSubscriptionReminderDialog.newInstance())
+			sharedPreferencesHandler, licenseEnforcer,
+			callback = object : LicenseStateOrchestrator.Callback {
+				override fun onLicenseStateChanged(uiState: LicenseEnforcer.LicenseUiState) {
+					if (!isFinishing) {
+						licenseContentViewBinder.bindState(uiState, lockedAction)
+					}
 				}
-				val prevSubscriptionOnly = wasSubscriptionOnly
-				wasSubscriptionOnly = uiState.hasRunningSubscription && !uiState.hasLifetimeLicense
-				if (uiState.hasRunningSubscription && !uiState.hasLifetimeLicense && !prevSubscriptionOnly) {
+
+				override fun onSubscriptionActivatedFirstTime() {
 					finish()
-				} else {
-					licenseContentViewBinder.bindPurchaseState(uiState.hasWriteAccess, uiState.hasPaidLicense, uiState.hasLifetimeLicense, uiState.hasRunningSubscription, hasLockedActionHeader = lockedAction != null)
-					licenseContentViewBinder.bindTrialState(uiState.trialState.isActive, uiState.trialState.isExpired, uiState.trialExpirationText, hasLockedActionHeader = lockedAction != null, hasSubscriptionUpgradeHint = wasSubscriptionOnly)
+				}
+
+				override fun onSubscriptionUpgradedToLifetime() {
+					showDialog(CancelSubscriptionReminderDialog.newInstance())
 				}
 			},
 			priceLoader = { licenseContentViewBinder.loadAndBindPrices(application as CryptomatorApp) }
@@ -79,13 +74,6 @@ class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityL
 	override fun onResume() {
 		super.onResume()
 		orchestrator.onResume()
-		(application as CryptomatorApp).consumeLastRestoreOutcome()?.let { outcome ->
-			when (outcome) {
-				RestoreOutcome.RESTORED -> showDialog(RestoreSuccessfulDialog.newInstance())
-				RestoreOutcome.NOTHING_TO_RESTORE -> showDialog(NoFullVersionDialog.newInstance())
-				is RestoreOutcome.FAILED -> showDialog(RestoreFailedDialog.newInstance())
-			}
-		}
 	}
 
 	override fun onPause() {
@@ -94,25 +82,24 @@ class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityL
 	}
 
 	override fun setupView() {
-		lockedAction = LicenseEnforcer.LockedAction.fromName(licenseCheckIntent.lockedAction())
-		setupUpsellView()
+		rebindForIntent()
 	}
 
-	private fun setupUpsellView() {
+	override fun onNewIntent(intent: Intent) {
+		super.onNewIntent(intent)
+		setIntent(intent)
+		Activities.setIntent(this)
+		rebindForIntent()
+		orchestrator.updateState()
+		validate(intent)
+	}
+
+	private fun rebindForIntent() {
+		lockedAction = LicenseEnforcer.LockedAction.fromName(licenseCheckIntent.lockedAction())
 		setSupportActionBar(binding.mtToolbar.toolbar)
 		supportActionBar?.setDisplayHomeAsUpEnabled(true)
 		supportActionBar?.setHomeAsUpIndicator(R.drawable.ic_clear)
 		binding.mtToolbar.toolbar.setNavigationOnClickListener { finish() }
-
-		val action = lockedAction
-		if (action != null) {
-			binding.licenseContent.tvInfoText.visibility = View.VISIBLE
-			binding.licenseContent.tvInfoText.text = getString(action.headerMessageRes)
-		} else {
-			binding.licenseContent.tvInfoText.visibility = View.GONE
-			binding.licenseContent.tvInfoText.text = null
-		}
-
 		if (FlavorConfig.isFreemiumFlavor) {
 			setupIapView()
 		} else {
@@ -139,20 +126,14 @@ class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityL
 	private fun setupLicenseEntryView() {
 		supportActionBar?.title = getString(R.string.screen_license_check_title)
 		licenseContentViewBinder.bindInitialLicenseEntryWithTrialLayout()
-		binding.licenseContent.btnTrial.setOnClickListener { onTrialClicked() }
+		licenseContentViewBinder.bindPurchaseButtons(
+			activity = this,
+			app = application as CryptomatorApp,
+			onTrialClicked = ::onTrialClicked
+		)
 		licenseContentViewBinder.bindEnterLicenseButton {
 			showDialog(EnterLicenseDialog.newInstance())
 		}
-	}
-
-	override fun onNewIntent(intent: Intent) {
-		super.onNewIntent(intent)
-		setIntent(intent)
-		Activities.setIntent(this)
-		lockedAction = LicenseEnforcer.LockedAction.fromName(licenseCheckIntent.lockedAction())
-		setupUpsellView()
-		orchestrator.updateState()
-		validate(intent)
 	}
 
 	private fun validate(intent: Intent) {
