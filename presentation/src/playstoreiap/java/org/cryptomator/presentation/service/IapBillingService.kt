@@ -142,22 +142,26 @@ class IapBillingService : Service(), PurchasesUpdatedListener {
 		}
 
 		doQuery(
-			QueryProductDetailsParams.newBuilder().setProductList(listOf(
-				QueryProductDetailsParams.Product.newBuilder()
-					.setProductId(ProductInfo.PRODUCT_FULL_VERSION)
-					.setProductType(BillingClient.ProductType.INAPP)
-					.build()
-			)).build()
+			QueryProductDetailsParams.newBuilder().setProductList(
+				listOf(
+					QueryProductDetailsParams.Product.newBuilder()
+						.setProductId(ProductInfo.PRODUCT_FULL_VERSION)
+						.setProductType(BillingClient.ProductType.INAPP)
+						.build()
+				)
+			).build()
 		) { it.oneTimePurchaseOfferDetails?.formattedPrice ?: "" }
 
 		// Query SUBS products (must be separate — Billing Library requires same product type per query)
 		doQuery(
-			QueryProductDetailsParams.newBuilder().setProductList(listOf(
-				QueryProductDetailsParams.Product.newBuilder()
-					.setProductId(ProductInfo.PRODUCT_YEARLY_SUBSCRIPTION)
-					.setProductType(BillingClient.ProductType.SUBS)
-					.build()
-			)).build()
+			QueryProductDetailsParams.newBuilder().setProductList(
+				listOf(
+					QueryProductDetailsParams.Product.newBuilder()
+						.setProductId(ProductInfo.PRODUCT_YEARLY_SUBSCRIPTION)
+						.setProductType(BillingClient.ProductType.SUBS)
+						.build()
+				)
+			).build()
 		) { it.subscriptionOfferDetails?.firstOrNull()?.pricingPhases?.pricingPhaseList?.firstOrNull()?.formattedPrice ?: "" }
 	}
 
@@ -165,11 +169,7 @@ class IapBillingService : Service(), PurchasesUpdatedListener {
 		val details = productDetailsMap[productId]
 		if (details == null) {
 			Timber.tag("IapBillingService").w("Product details not loaded for %s", productId)
-			activity.get()?.let { act ->
-				act.runOnUiThread {
-					Toast.makeText(act, R.string.error_purchase_not_available, Toast.LENGTH_SHORT).show()
-				}
-			}
+			Toast.makeText(act, R.string.error_purchase_not_available, Toast.LENGTH_SHORT).show()
 			return
 		}
 		val paramsBuilder = ProductDetailsParams.newBuilder().setProductDetails(details)

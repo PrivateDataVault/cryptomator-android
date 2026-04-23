@@ -11,7 +11,9 @@ class PendingCallbackQueue<T> {
 
 	@Synchronized
 	fun drainSnapshot(): List<(T) -> Unit>? {
-		if (pending.isEmpty()) return null
+		if (pending.isEmpty()) {
+			return null
+		}
 		val snapshot = ArrayList(pending)
 		pending.clear()
 		return snapshot

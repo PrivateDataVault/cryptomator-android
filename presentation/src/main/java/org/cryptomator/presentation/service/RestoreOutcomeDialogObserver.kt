@@ -12,7 +12,9 @@ class RestoreOutcomeDialogObserver(
 
 	override fun onActivityResumed(activity: Activity) {
 		val kindName = sharedPreferencesHandler.pendingRestoreOutcome()
-		if (kindName.isEmpty()) return
+		if (kindName.isEmpty()) {
+			return
+		}
 		sharedPreferencesHandler.clearPendingRestoreOutcome()
 		val kind = runCatching { RestoreOutcome.Kind.valueOf(kindName) }.getOrNull()
 		if (kind == null) {
