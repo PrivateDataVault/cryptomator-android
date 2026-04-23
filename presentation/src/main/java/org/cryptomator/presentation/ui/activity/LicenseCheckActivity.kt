@@ -14,8 +14,7 @@ import org.cryptomator.presentation.licensing.LicenseEnforcer
 import org.cryptomator.presentation.licensing.LicenseStateOrchestrator
 import org.cryptomator.presentation.presenter.LicenseCheckPresenter
 import org.cryptomator.presentation.service.RestoreOutcome
-import org.cryptomator.presentation.service.RestoreOutcomeHandler
-import org.cryptomator.presentation.ui.activity.view.UpdateLicenseView
+import org.cryptomator.presentation.ui.activity.view.LicenseView
 import org.cryptomator.presentation.ui.dialog.CancelSubscriptionReminderDialog
 import org.cryptomator.presentation.ui.dialog.EnterLicenseDialog
 import org.cryptomator.presentation.ui.dialog.LicenseConfirmationDialog
@@ -30,13 +29,8 @@ import javax.inject.Inject
 @Activity
 class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityLicenseCheckBinding::inflate), //
 	LicenseConfirmationDialog.Callback, //
-	UpdateLicenseView, //
-	RestoreOutcomeHandler, //
-	RestoreSuccessfulDialog.Callback, //
-	NoFullVersionDialog.Callback, //
-	RestoreFailedDialog.Callback, //
-	EnterLicenseDialog.Callback, //
-	CancelSubscriptionReminderDialog.Callback {
+	LicenseView, //
+	EnterLicenseDialog.Callback {
 
 	@Inject
 	lateinit var licenseCheckPresenter: LicenseCheckPresenter
@@ -55,17 +49,15 @@ class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityL
 		wasSubscriptionOnly = sharedPreferencesHandler.hasRunningSubscription() && sharedPreferencesHandler.licenseToken().isEmpty()
 		LicenseStateOrchestrator(
 			sharedPreferencesHandler, licenseEnforcer, { this },
-			target = object : LicenseStateOrchestrator.Target {
-				override fun onStateChanged(uiState: LicenseEnforcer.LicenseUiState) {
-					if (uiState.hasLifetimeLicense && uiState.hasRunningSubscription && wasSubscriptionOnly) {
-						showDialog(CancelSubscriptionReminderDialog.newInstance())
-					}
-					val prevSubscriptionOnly = wasSubscriptionOnly
-					wasSubscriptionOnly = uiState.hasRunningSubscription && !uiState.hasLifetimeLicense
-					if (uiState.hasRunningSubscription && !uiState.hasLifetimeLicense && !prevSubscriptionOnly) {
-						finish()
-						return
-					}
+			onStateChanged = { uiState ->
+				if (uiState.hasLifetimeLicense && uiState.hasRunningSubscription && wasSubscriptionOnly) {
+					showDialog(CancelSubscriptionReminderDialog.newInstance())
+				}
+				val prevSubscriptionOnly = wasSubscriptionOnly
+				wasSubscriptionOnly = uiState.hasRunningSubscription && !uiState.hasLifetimeLicense
+				if (uiState.hasRunningSubscription && !uiState.hasLifetimeLicense && !prevSubscriptionOnly) {
+					finish()
+				} else {
 					licenseContentViewBinder.bindPurchaseState(uiState.hasWriteAccess, uiState.hasPaidLicense, uiState.hasLifetimeLicense, uiState.hasRunningSubscription, hasLockedActionHeader = lockedAction != null)
 					licenseContentViewBinder.bindTrialState(uiState.trialState.isActive, uiState.trialState.isExpired, uiState.trialExpirationText, hasLockedActionHeader = lockedAction != null, hasSubscriptionUpgradeHint = wasSubscriptionOnly)
 				}
@@ -87,7 +79,13 @@ class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityL
 	override fun onResume() {
 		super.onResume()
 		orchestrator.onResume()
-		(application as CryptomatorApp).consumeLastRestoreOutcome()?.let { onRestoreOutcome(it) }
+		(application as CryptomatorApp).consumeLastRestoreOutcome()?.let { outcome ->
+			when (outcome) {
+				RestoreOutcome.RESTORED -> showDialog(RestoreSuccessfulDialog.newInstance())
+				RestoreOutcome.NOTHING_TO_RESTORE -> showDialog(NoFullVersionDialog.newInstance())
+				is RestoreOutcome.FAILED -> showDialog(RestoreFailedDialog.newInstance())
+			}
+		}
 	}
 
 	override fun onPause() {
@@ -161,10 +159,6 @@ class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityL
 		licenseCheckPresenter.validate(intent.data)
 	}
 
-	override fun showOrUpdateLicenseEntry(license: String) {
-		// license already validated by the use case; no inline input to update
-	}
-
 	override fun onLicenseEntered(license: String) {
 		licenseCheckPresenter.validateDialogAware(license)
 	}
@@ -178,17 +172,4 @@ class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityL
 			.preventGoingBackInHistory() //
 			.startActivity(this) //
 	}
-
-	override fun onRestoreOutcome(outcome: RestoreOutcome) {
-		when (outcome) {
-			RestoreOutcome.RESTORED -> showDialog(RestoreSuccessfulDialog.newInstance())
-			RestoreOutcome.NOTHING_TO_RESTORE -> showDialog(NoFullVersionDialog.newInstance())
-			is RestoreOutcome.FAILED -> showDialog(RestoreFailedDialog.newInstance())
-		}
-	}
-
-	override fun onRestoreSuccessfulDialogFinished() = Unit
-	override fun onNoFullVersionDialogFinished() = Unit
-	override fun onRestoreFailedDialogFinished() = Unit
-	override fun onCancelSubscriptionReminderDismissed() = Unit
 }

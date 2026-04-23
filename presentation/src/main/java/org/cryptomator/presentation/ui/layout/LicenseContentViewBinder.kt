@@ -4,13 +4,10 @@ import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.view.View
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleOwner
 import org.cryptomator.presentation.CryptomatorApp
 import org.cryptomator.presentation.R
 import org.cryptomator.presentation.databinding.ViewLicenseCheckContentBinding
 import org.cryptomator.presentation.service.ProductInfo
-import org.cryptomator.presentation.service.RestoreOutcomeHandler
 import org.cryptomator.presentation.service.resolveProductPrices
 import java.lang.ref.WeakReference
 
@@ -93,13 +90,7 @@ class LicenseContentViewBinder(
 		}
 		binding.tvRestorePurchase.setOnClickListener {
 			app.restorePurchases { outcome ->
-				val handler = activity as? RestoreOutcomeHandler
-				val lifecycleOwner = activity as? LifecycleOwner
-				if (handler != null && lifecycleOwner?.lifecycle?.currentState?.isAtLeast(Lifecycle.State.RESUMED) == true) {
-					handler.onRestoreOutcome(outcome)
-				} else {
-					app.lastRestoreOutcome = outcome
-				}
+				app.lastRestoreOutcome = outcome
 			}
 		}
 	}

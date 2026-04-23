@@ -1,13 +1,54 @@
 package org.cryptomator.presentation.presenter
 
+import android.net.Uri
 import org.cryptomator.domain.usecases.DoLicenseCheckUseCase
+import org.cryptomator.domain.usecases.LicenseCheck
+import org.cryptomator.domain.usecases.NoOpResultHandler
 import org.cryptomator.presentation.exception.ExceptionHandlers
-import org.cryptomator.presentation.ui.activity.view.UpdateLicenseView
+import org.cryptomator.presentation.ui.activity.view.LicenseView
+import org.cryptomator.presentation.ui.dialog.AppIsObscuredInfoDialog
 import org.cryptomator.util.SharedPreferencesHandler
 import javax.inject.Inject
 
 class LicenseCheckPresenter @Inject internal constructor(
 	exceptionHandlers: ExceptionHandlers,
-	doLicenseCheckUseCase: DoLicenseCheckUseCase,
-	sharedPreferencesHandler: SharedPreferencesHandler
-) : BaseLicensePresenter<UpdateLicenseView>(exceptionHandlers, doLicenseCheckUseCase, sharedPreferencesHandler)
+	private val doLicenseCheckUseCase: DoLicenseCheckUseCase,
+	private val sharedPreferencesHandler: SharedPreferencesHandler
+) : Presenter<LicenseView>(exceptionHandlers) {
+
+	fun validate(data: Uri?) {
+		data?.let {
+			val license = it.fragment ?: it.lastPathSegment
+			if (license.isNullOrEmpty()) {
+				return
+			}
+			doLicenseCheckUseCase.withLicense(license).run(CheckLicenseStatusSubscriber())
+		}
+	}
+
+	fun validateDialogAware(license: String?) {
+		doLicenseCheckUseCase.withLicense(license).run(CheckLicenseStatusSubscriber())
+	}
+
+	fun onFilteredTouchEventForSecurity() {
+		view?.showDialog(AppIsObscuredInfoDialog.newInstance())
+	}
+
+	private inner class CheckLicenseStatusSubscriber : NoOpResultHandler<LicenseCheck>() {
+		override fun onSuccess(licenseCheck: LicenseCheck) {
+			super.onSuccess(licenseCheck)
+			view?.closeDialog()
+			sharedPreferencesHandler.setMail(licenseCheck.mail())
+			view?.showConfirmationDialog(licenseCheck.mail())
+		}
+
+		override fun onError(t: Throwable) {
+			super.onError(t)
+			showError(t)
+		}
+	}
+
+	init {
+		unsubscribeOnDestroy(doLicenseCheckUseCase)
+	}
+}

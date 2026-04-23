@@ -22,7 +22,6 @@ import org.cryptomator.presentation.licensing.LicenseEnforcer
 import org.cryptomator.presentation.licensing.LicenseStateOrchestrator
 import org.cryptomator.presentation.presenter.WelcomePresenter
 import org.cryptomator.presentation.service.RestoreOutcome
-import org.cryptomator.presentation.service.RestoreOutcomeHandler
 import org.cryptomator.presentation.ui.activity.view.UpdateLicenseView
 import org.cryptomator.presentation.ui.activity.view.WelcomeView
 import org.cryptomator.presentation.ui.dialog.EnterLicenseDialog
@@ -44,10 +43,6 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 	WelcomeLicenseFragment.Listener, //
 	WelcomeNotificationsFragment.Listener, //
 	WelcomeScreenLockFragment.Listener, //
-	RestoreOutcomeHandler, //
-	RestoreSuccessfulDialog.Callback, //
-	NoFullVersionDialog.Callback, //
-	RestoreFailedDialog.Callback, //
 	EnterLicenseDialog.Callback {
 
 	@Inject
@@ -61,17 +56,14 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 	private val orchestrator by lazy {
 		LicenseStateOrchestrator(
 			sharedPreferencesHandler, licenseEnforcer, { this },
-			target = object : LicenseStateOrchestrator.Target {
-				override fun onStateChanged(uiState: LicenseEnforcer.LicenseUiState) {
-					if (!this@WelcomeActivity::pagerAdapter.isInitialized) {
-						return
-					}
+			onStateChanged = { uiState ->
+				if (this::pagerAdapter.isInitialized) {
 					pagerAdapter.licenseFragment?.updateUnlocked(uiState.hasWriteAccess, uiState.hasPaidLicense)
 					pagerAdapter.licenseFragment?.updateTrialState(uiState.trialState.isActive, uiState.trialState.isExpired, uiState.trialExpirationText)
 				}
 			},
 			priceLoader = {
-				if (this@WelcomeActivity::pagerAdapter.isInitialized) {
+				if (this::pagerAdapter.isInitialized) {
 					pagerAdapter.licenseFragment?.loadAndBindPrices(application as CryptomatorApp)
 				}
 			}
@@ -127,7 +119,13 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 			return
 		}
 		orchestrator.onResume()
-		(application as CryptomatorApp).consumeLastRestoreOutcome()?.let { onRestoreOutcome(it) }
+		(application as CryptomatorApp).consumeLastRestoreOutcome()?.let { outcome ->
+			when (outcome) {
+				RestoreOutcome.RESTORED -> showDialog(RestoreSuccessfulDialog.newInstance())
+				RestoreOutcome.NOTHING_TO_RESTORE -> showDialog(NoFullVersionDialog.newInstance())
+				is RestoreOutcome.FAILED -> showDialog(RestoreFailedDialog.newInstance())
+			}
+		}
 		updateNotificationPermissionState()
 		updateScreenLockState()
 	}
@@ -271,20 +269,6 @@ class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>(ActivityWelcomeBind
 	override fun onLicenseEntered(license: String) {
 		welcomePresenter.validateDialogAware(license)
 	}
-
-	// RestoreOutcomeHandler
-
-	override fun onRestoreOutcome(outcome: RestoreOutcome) {
-		when (outcome) {
-			RestoreOutcome.RESTORED -> showDialog(RestoreSuccessfulDialog.newInstance())
-			RestoreOutcome.NOTHING_TO_RESTORE -> showDialog(NoFullVersionDialog.newInstance())
-			is RestoreOutcome.FAILED -> showDialog(RestoreFailedDialog.newInstance())
-		}
-	}
-
-	override fun onRestoreSuccessfulDialogFinished() = Unit
-	override fun onNoFullVersionDialogFinished() = Unit
-	override fun onRestoreFailedDialogFinished() = Unit
 
 	// WelcomeNotificationsFragment.Listener
 

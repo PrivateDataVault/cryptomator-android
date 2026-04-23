@@ -9,13 +9,9 @@ class LicenseStateOrchestrator(
 	private val sharedPreferencesHandler: SharedPreferencesHandler,
 	private val licenseEnforcer: LicenseEnforcer,
 	private val contextProvider: () -> Context,
-	private val target: Target,
+	private val onStateChanged: (LicenseEnforcer.LicenseUiState) -> Unit,
 	private val priceLoader: (() -> Unit)? = null
 ) {
-
-	interface Target {
-		fun onStateChanged(uiState: LicenseEnforcer.LicenseUiState)
-	}
 
 	private val licenseChangeListener = Consumer<String> { _ -> updateState() }
 
@@ -32,6 +28,6 @@ class LicenseStateOrchestrator(
 	}
 
 	fun updateState() {
-		target.onStateChanged(licenseEnforcer.evaluateUiState(contextProvider()))
+		onStateChanged(licenseEnforcer.evaluateUiState(contextProvider()))
 	}
 }

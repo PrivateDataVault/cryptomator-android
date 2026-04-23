@@ -10,7 +10,6 @@ class PurchaseManager(
 
 	fun handleInAppPurchases(purchases: List<Purchase>, clearIfNotFound: Boolean = false, acknowledgePurchase: (String) -> Unit): PurchaseFieldChange {
 		val tokenBefore = sharedPreferencesHandler.licenseToken()
-		val before = tokenBefore.isNotEmpty()
 		for (purchase in purchases) {
 			if (!purchase.products.contains(ProductInfo.PRODUCT_FULL_VERSION)) {
 				continue
@@ -27,19 +26,19 @@ class PurchaseManager(
 				if (!purchase.isAcknowledged) {
 					acknowledgePurchase(purchase.purchaseToken)
 				}
-				return PurchaseFieldChange(before = before, after = true, cleared = false)
+				return PurchaseFieldChange(cleared = false)
 			}
 		}
-		if (clearIfNotFound && before) {
+		if (clearIfNotFound && tokenBefore.isNotEmpty()) {
 			Timber.tag("PurchaseManager").i("Remove license, purchase does not exist anymore")
 			sharedPreferencesHandler.setLicenseToken("")
-			return PurchaseFieldChange(before = true, after = false, cleared = true)
+			return PurchaseFieldChange(cleared = true)
 		}
-		return PurchaseFieldChange(before = before, after = before, cleared = false)
+		return PurchaseFieldChange(cleared = false)
 	}
 
 	fun handleSubscriptionPurchases(purchases: List<Purchase>, clearIfNotFound: Boolean = false, acknowledgePurchase: (String) -> Unit): PurchaseFieldChange {
-		val before = sharedPreferencesHandler.hasRunningSubscription()
+		val hadSubscription = sharedPreferencesHandler.hasRunningSubscription()
 		for (purchase in purchases) {
 			if (!purchase.products.contains(ProductInfo.PRODUCT_YEARLY_SUBSCRIPTION)) {
 				continue
@@ -54,13 +53,13 @@ class PurchaseManager(
 				if (!purchase.isAcknowledged) {
 					acknowledgePurchase(purchase.purchaseToken)
 				}
-				return PurchaseFieldChange(before = before, after = true, cleared = false)
+				return PurchaseFieldChange(cleared = false)
 			}
 		}
 		if (clearIfNotFound) {
 			sharedPreferencesHandler.setHasRunningSubscription(false)
-			return PurchaseFieldChange(before = before, after = false, cleared = before)
+			return PurchaseFieldChange(cleared = hadSubscription)
 		}
-		return PurchaseFieldChange(before = before, after = before, cleared = false)
+		return PurchaseFieldChange(cleared = false)
 	}
 }

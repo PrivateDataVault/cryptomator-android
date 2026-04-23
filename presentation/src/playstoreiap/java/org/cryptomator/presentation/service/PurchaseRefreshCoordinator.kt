@@ -60,12 +60,8 @@ class PurchaseRefreshCoordinator(
 					}
 					sharedPreferencesHandler.setPurchaseRevokedState(pending = true, reason = reason.name)
 				}
-				val outcome = if (localInapp.after || localSubs.after) {
-					RestoreOutcome.RESTORED
-				} else {
-					RestoreOutcome.NOTHING_TO_RESTORE
-				}
-				complete(outcome)
+				val hasActivePurchase = sharedPreferencesHandler.licenseToken().isNotEmpty() || sharedPreferencesHandler.hasRunningSubscription()
+				complete(if (hasActivePurchase) RestoreOutcome.RESTORED else RestoreOutcome.NOTHING_TO_RESTORE)
 			}
 
 			fun onQueryComplete() {
