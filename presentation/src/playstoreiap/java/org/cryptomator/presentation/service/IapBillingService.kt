@@ -17,7 +17,6 @@ import com.android.billingclient.api.ProductDetails
 import com.android.billingclient.api.Purchase
 import com.android.billingclient.api.PurchasesUpdatedListener
 import com.android.billingclient.api.QueryProductDetailsParams
-import com.android.billingclient.api.QueryPurchasesParams
 import org.cryptomator.presentation.R
 import org.cryptomator.presentation.licensing.LicenseEnforcer
 import org.cryptomator.util.SharedPreferencesHandler
@@ -169,7 +168,7 @@ class IapBillingService : Service(), PurchasesUpdatedListener {
 		val details = productDetailsMap[productId]
 		if (details == null) {
 			Timber.tag("IapBillingService").w("Product details not loaded for %s", productId)
-			Toast.makeText(act, R.string.error_purchase_not_available, Toast.LENGTH_SHORT).show()
+			activity.get()?.let { Toast.makeText(it, R.string.error_purchase_not_available, Toast.LENGTH_SHORT).show() }
 			return
 		}
 		val paramsBuilder = ProductDetailsParams.newBuilder().setProductDetails(details)
