@@ -10,7 +10,8 @@ import org.cryptomator.util.SharedPreferencesHandler
 internal class LicenseKeyValidator(
 	private val doLicenseCheckUseCase: DoLicenseCheckUseCase,
 	private val sharedPreferencesHandler: SharedPreferencesHandler,
-	private val getView: () -> LicenseView?
+	private val getView: () -> LicenseView?,
+	private val onError: (Throwable) -> Unit
 ) {
 	fun validate(data: Uri?, onLicenseExtracted: ((String) -> Unit)? = null) {
 		data?.let {
@@ -37,7 +38,7 @@ internal class LicenseKeyValidator(
 
 		override fun onError(t: Throwable) {
 			super.onError(t)
-			onError(t)
+			this@LicenseKeyValidator.onError(t)
 		}
 	}
 }
