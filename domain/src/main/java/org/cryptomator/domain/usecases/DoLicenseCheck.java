@@ -6,7 +6,6 @@ import com.auth0.jwt.exceptions.JWTDecodeException;
 import com.auth0.jwt.exceptions.SignatureVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.auth0.jwt.interfaces.JWTVerifier;
-import com.google.common.base.CharMatcher;
 import com.google.common.io.BaseEncoding;
 
 import org.cryptomator.domain.exception.BackendException;
@@ -14,9 +13,9 @@ import org.cryptomator.domain.exception.FatalBackendException;
 import org.cryptomator.domain.exception.license.DesktopSupporterCertificateException;
 import org.cryptomator.domain.exception.license.LicenseNotValidException;
 import org.cryptomator.domain.exception.license.NoLicenseAvailableException;
-import org.cryptomator.domain.repository.UpdateCheckRepository;
 import org.cryptomator.generator.Parameter;
 import org.cryptomator.generator.UseCase;
+import org.cryptomator.util.SharedPreferencesHandler;
 
 import java.security.Key;
 import java.security.KeyFactory;
@@ -36,21 +35,21 @@ public class DoLicenseCheck {
 			"fmnV2yv3eDjlDfGruBrqz9TtXBZV/eYWt31xu1osIqaT12lKBvZ511aaAkIBeOEV" + //
 			"gwcBIlJr6kUw7NKzeJt7r2rrsOyQoOG2nWc/Of/NBqA3mIZRHk5Aq1YupFdD26QE" + //
 			"r0DzRyj4ixPIt38CQB8=";
-	private final UpdateCheckRepository updateCheckRepository;
+	private final SharedPreferencesHandler sharedPreferencesHandler;
 	private String license;
 
-	DoLicenseCheck(final UpdateCheckRepository updateCheckRepository, @Parameter final String license) {
-		this.updateCheckRepository = updateCheckRepository;
+	DoLicenseCheck(final SharedPreferencesHandler sharedPreferencesHandler, @Parameter final String license) {
+		this.sharedPreferencesHandler = sharedPreferencesHandler;
 		this.license = license;
 	}
 
 	public LicenseCheck execute() throws BackendException {
-		license = useLicenseOrRetrieveFromDb(license);
-		license = CharMatcher.whitespace().removeFrom(license);
+		license = useLicenseOrRetrieveFromPreferences(license);
 		try {
 			Algorithm algorithm = Algorithm.ECDSA512(getPublicKey(ANDROID_PUB_KEY), null);
 			JWTVerifier verifier = JWT.require(algorithm).build();
 			DecodedJWT jwt = verifier.verify(license);
+			sharedPreferencesHandler.setLicenseToken(license);
 			return jwt::getSubject;
 		} catch (SignatureVerificationException | JWTDecodeException | FatalBackendException e) {
 			if (e instanceof SignatureVerificationException && isDesktopSupporterCertificate(license)) {
@@ -62,16 +61,15 @@ public class DoLicenseCheck {
 		}
 	}
 
-	private String useLicenseOrRetrieveFromDb(String license) throws NoLicenseAvailableException {
+	private String useLicenseOrRetrieveFromPreferences(String license) throws NoLicenseAvailableException {
 		if (!license.isEmpty()) {
-			updateCheckRepository.setLicense(license);
-		} else {
-			license = updateCheckRepository.getLicense();
-			if (license == null) {
-				throw new NoLicenseAvailableException();
-			}
+			return license;
 		}
-		return license;
+		String stored = sharedPreferencesHandler.licenseToken();
+		if (stored.isEmpty()) {
+			throw new NoLicenseAvailableException();
+		}
+		return stored;
 	}
 
 	private ECPublicKey getPublicKey(String publicKey) throws NoSuchAlgorithmException, InvalidKeySpecException {

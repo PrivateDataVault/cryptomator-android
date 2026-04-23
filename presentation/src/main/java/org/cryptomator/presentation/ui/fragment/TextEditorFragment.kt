@@ -35,6 +35,12 @@ class TextEditorFragment : BaseFragment<FragmentTextEditorBinding>(FragmentTextE
 		binding.textEditor.setText(textFileContent)
 	}
 
+	fun setReadOnly() {
+		binding.textEditor.isFocusable = false
+		binding.textEditor.isFocusableInTouchMode = false
+		binding.textEditor.isCursorVisible = false
+	}
+
 	fun onQueryText(query: String) {
 		textEditorPresenter.query = query
 

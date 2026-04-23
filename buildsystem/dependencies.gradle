@@ -105,6 +105,8 @@ ext {
 
 	recyclerViewFastScrollVersion = '2.0.1'
 
+	billingclientVersion = '8.2.1'
+
 	// testing dependencies
 
 	jUnitVersion = '5.11.4'
@@ -202,7 +204,8 @@ ext {
 			zxcvbn                         : "com.nulab-inc:zxcvbn:${zxcvbnVersion}",
 			scaleImageView                 : "com.github.cryptomator:subsampling-scale-image-view:${scaleImageViewVersion}",
 			lruFileCache                   : "com.github.solkin:disk-lru-cache:${lruFileCacheVersion}",
-			jsonWebToken                   : "com.auth0:java-jwt:${jsonWebTokenVersion}"
+			jsonWebToken                   : "com.auth0:java-jwt:${jsonWebTokenVersion}",
+			billing                        : "com.android.billingclient:billing:${billingclientVersion}"
 	]
 
 }

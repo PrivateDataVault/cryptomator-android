@@ -55,7 +55,7 @@ public class HubRepositoryImpl implements HubRepository {
 	}
 
 	@Override
-	public String getVaultKeyJwe(UnverifiedHubVaultConfig unverifiedHubVaultConfig, String accessToken) throws BackendException {
+	public HubRepository.VaultAccess getVaultAccess(UnverifiedHubVaultConfig unverifiedHubVaultConfig, String accessToken) throws BackendException {
 		var request = new Request.Builder().get() //
 				.header("Authorization", "Bearer " + accessToken) //
 				.header("Hub-Device-ID", getHubDeviceCryptor().getDeviceId()) //
@@ -65,7 +65,9 @@ public class HubRepositoryImpl implements HubRepository {
 			switch (response.code()) {
 				case HttpURLConnection.HTTP_OK:
 					if (response.body() != null) {
-						return response.body().string();
+						String subscriptionHeader = response.header("Hub-Subscription-State");
+						HubRepository.SubscriptionState state = "ACTIVE".equalsIgnoreCase(subscriptionHeader) ? HubRepository.SubscriptionState.ACTIVE : HubRepository.SubscriptionState.INACTIVE;
+						return new HubRepository.VaultAccess(response.body().string(), state);
 					} else {
 						throw new FatalBackendException("Failed to load JWE, response code good but no body");
 					}
