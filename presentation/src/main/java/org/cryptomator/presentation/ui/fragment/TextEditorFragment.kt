@@ -146,8 +146,8 @@ class TextEditorFragment : BaseFragment<FragmentTextEditorBinding>(FragmentTextE
 		val scroll = binding.textViewWrapper
 		val layout = editor.layout ?: return
 		val line = layout.getLineForOffset(editor.selectionEnd)
-		val lineTop = layout.getLineTop(line)
-		val lineBottom = layout.getLineBottom(line)
+		val lineTop = editor.paddingTop + layout.getLineTop(line)
+		val lineBottom = editor.paddingTop + layout.getLineBottom(line)
 		val visibleHeight = scroll.height - scroll.paddingTop - scroll.paddingBottom
 		when {
 			lineTop < scroll.scrollY -> scroll.smoothScrollTo(0, lineTop)
