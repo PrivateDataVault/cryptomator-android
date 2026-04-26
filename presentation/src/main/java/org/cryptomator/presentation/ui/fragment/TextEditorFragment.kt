@@ -2,6 +2,7 @@ package org.cryptomator.presentation.ui.fragment
 
 import android.os.Bundle
 import android.text.Spannable
+import android.text.TextWatcher
 import android.text.style.BackgroundColorSpan
 import android.view.View
 import androidx.annotation.NonNull
@@ -24,6 +25,7 @@ class TextEditorFragment : BaseFragment<FragmentTextEditorBinding>(FragmentTextE
 	lateinit var textEditorPresenter: TextEditorPresenter
 
 	private var fastScrollCleanup: (() -> Unit)? = null
+	private var caretAutoScrollWatcher: TextWatcher? = null
 
 	val textFileContent: String
 		get() = binding.textEditor.text.toString()
@@ -132,11 +134,13 @@ class TextEditorFragment : BaseFragment<FragmentTextEditorBinding>(FragmentTextE
 	override fun onDestroyView() {
 		fastScrollCleanup?.invoke()
 		fastScrollCleanup = null
+		caretAutoScrollWatcher?.let { binding.textEditor.removeTextChangedListener(it) }
+		caretAutoScrollWatcher = null
 		super.onDestroyView()
 	}
 
 	private fun setupCaretAutoScroll() {
-		binding.textEditor.doAfterTextChanged {
+		caretAutoScrollWatcher = binding.textEditor.doAfterTextChanged {
 			binding.textEditor.post { scrollCaretIntoView() }
 		}
 	}
