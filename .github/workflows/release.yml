@@ -7,12 +7,6 @@ on:
   schedule:
     - cron: '0 0 * * 0' # Every Sunday at midnight
   workflow_dispatch:
-    inputs:
-      force_build:
-        description: 'Force build and release even if up to date'
-        required: false
-        type: boolean
-        default: false
 
 env:
   PARENT_REPO: 'https://github.com/cryptomator/android.git'
@@ -69,7 +63,7 @@ jobs:
           fi
 
       - name: Replace Public Keys
-        if: steps.sync_main.outputs.updated == 'true' || github.event_name == 'push' || inputs.force_build == true
+        if: steps.sync_main.outputs.updated == 'true' || github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         env:
           CUSTOM_ANDROID_PUB_KEY: ${{ secrets.CUSTOM_ANDROID_PUB_KEY }}
           CUSTOM_DESKTOP_PUB_KEY: ${{ secrets.CUSTOM_DESKTOP_PUB_KEY }}
@@ -124,24 +118,24 @@ jobs:
           PYTHON_SCRIPT
 
       - name: Set up JDK 17
-        if: steps.sync_main.outputs.updated == 'true' || github.event_name == 'push' || inputs.force_build == true
+        if: steps.sync_main.outputs.updated == 'true' || github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
 
       - name: Setup Gradle
-        if: steps.sync_main.outputs.updated == 'true' || github.event_name == 'push' || inputs.force_build == true
+        if: steps.sync_main.outputs.updated == 'true' || github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         uses: gradle/actions/setup-gradle@v4
 
       - name: Build Release APKs
-        if: steps.sync_main.outputs.updated == 'true' || github.event_name == 'push' || inputs.force_build == true
+        if: steps.sync_main.outputs.updated == 'true' || github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         run: |
           chmod +x gradlew
           ./gradlew assembleRelease
 
       - name: Extract Version
-        if: steps.sync_main.outputs.updated == 'true' || github.event_name == 'push' || inputs.force_build == true
+        if: steps.sync_main.outputs.updated == 'true' || github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         id: version
         run: |
           VERSION=$(grep -oP "androidVersionName\s*=\s*'\K[^']+" build.gradle)
@@ -150,7 +144,7 @@ jobs:
           echo "Detected version: $VERSION"
 
       - name: Sign and Rename APKs
-        if: steps.sync_main.outputs.updated == 'true' || github.event_name == 'push' || inputs.force_build == true
+        if: steps.sync_main.outputs.updated == 'true' || github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
@@ -159,6 +153,12 @@ jobs:
           APP_VERSION: ${{ steps.version.outputs.name }}
         run: |
           mkdir -p release-apks
+
+          # Strip any trailing whitespace/newlines from secrets
+          KEYSTORE_BASE64=$(echo "$KEYSTORE_BASE64" | tr -d '\n\r ')
+          KEYSTORE_PASSWORD=$(echo "$KEYSTORE_PASSWORD" | tr -d '\n\r')
+          KEY_ALIAS=$(echo "$KEY_ALIAS" | tr -d '\n\r ')
+          KEY_PASSWORD=$(echo "$KEY_PASSWORD" | tr -d '\n\r')
 
           if [ -n "$KEYSTORE_BASE64" ]; then
             echo "$KEYSTORE_BASE64" | base64 -d > /tmp/release.keystore
@@ -170,7 +170,6 @@ jobs:
           fi
 
           for apk in presentation/build/outputs/apk/*/release/*.apk; do
-            # Extract flavor from path: .../apk/<flavor>/release/...
             FLAVOR=$(echo "$apk" | sed 's|.*/apk/\([^/]*\)/release/.*|\1|')
             OUTPUT_NAME="cryptomator-${FLAVOR}-v${APP_VERSION}.apk"
 
@@ -197,7 +196,7 @@ jobs:
           rm -f /tmp/release.keystore
 
       - name: Create GitHub Release
-        if: steps.sync_main.outputs.updated == 'true' || github.event_name == 'push' || inputs.force_build == true
+        if: steps.sync_main.outputs.updated == 'true' || github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         uses: softprops/action-gh-release@v2
         with:
           files: release-apks/*.apk
