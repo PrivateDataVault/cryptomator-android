@@ -82,8 +82,8 @@ jobs:
           import re, os, sys
 
           file_path = os.environ['LICENSE_CHECK_FILE']
-          android_key = os.environ.get('CUSTOM_ANDROID_PUB_KEY', '')
-          desktop_key = os.environ.get('CUSTOM_DESKTOP_PUB_KEY', '')
+          android_key = os.environ.get('CUSTOM_ANDROID_PUB_KEY', '').replace('\n', '').replace('\r', '').strip()
+          desktop_key = os.environ.get('CUSTOM_DESKTOP_PUB_KEY', '').replace('\n', '').replace('\r', '').strip()
 
           if not android_key or not desktop_key:
               print("ERROR: CUSTOM_ANDROID_PUB_KEY and CUSTOM_DESKTOP_PUB_KEY secrets must be set.")
@@ -155,4 +155,3 @@ jobs:
           body: "Automated sync and release from parent main branch."
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
- 
