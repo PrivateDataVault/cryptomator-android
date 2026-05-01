@@ -1,0 +1,4 @@
+# Tell git to use the 'ours' merge driver for the release workflow.
+# This prevents it from being overwritten when syncing from the parent repo.
+# Note: You must also run `git config merge.ours.driver true` locally for this to work.
+.github/workflows/release.yml merge=ours

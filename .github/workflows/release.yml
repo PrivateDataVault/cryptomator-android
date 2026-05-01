@@ -1,0 +1,148 @@
+name: Sync from Parent and Release
+
+on:
+  schedule:
+    - cron: '0 0 * * 0' # Every Sunday at midnight
+  workflow_dispatch:
+
+env:
+  # IMPORTANT: Replace with the URL of your parent repository.
+  # If the parent repo is private, include a Personal Access Token (PAT): 
+  # PARENT_REPO: 'https://<YOUR_PAT>@github.com/username/parent-repo.git'
+  PARENT_REPO: 'https://github.com/cryptomator/android.git'
+  LICENSE_CHECK_FILE: 'domain/src/main/java/org/cryptomator/domain/usecases/DoLicenseCheck.java'
+
+jobs:
+  sync_and_release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Needed to push commits and create releases
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config merge.ours.driver true
+          git remote add parent ${{ env.PARENT_REPO }}
+
+      - name: Sync develop branch
+        run: |
+          # Checkout develop branch from origin
+          git checkout develop || git checkout -b develop origin/develop || echo "Skipping develop: not found"
+          
+          # Only proceed if we are successfully on develop
+          if [ "$(git branch --show-current)" = "develop" ]; then
+            git fetch parent develop || echo "Parent has no develop branch"
+            git merge parent/develop -m "Sync develop with parent" || echo "Merge conflict or already up to date"
+            git push origin develop
+          fi
+
+      - name: Sync main branch
+        id: sync_main
+        run: |
+          # Checkout main branch
+          git checkout main || git checkout -b main origin/main
+          
+          git fetch parent main
+          
+          # Count how many new commits parent/main has that we don't have
+          NEW_COMMITS=$(git rev-list HEAD..parent/main --count)
+          if [ "$NEW_COMMITS" -gt 0 ]; then
+            echo "Changes found in parent main branch."
+            git merge parent/main -m "Sync main with parent"
+            git push origin main
+            echo "updated=true" >> $GITHUB_OUTPUT
+          else
+            echo "Main branch is up to date."
+            echo "updated=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Replace Public Keys
+        if: steps.sync_main.outputs.updated == 'true'
+        env:
+          CUSTOM_ANDROID_PUB_KEY: ${{ secrets.CUSTOM_ANDROID_PUB_KEY }}
+          CUSTOM_DESKTOP_PUB_KEY: ${{ secrets.CUSTOM_DESKTOP_PUB_KEY }}
+        run: |
+          python3 << 'PYTHON_SCRIPT'
+          import re, os, sys
+
+          file_path = os.environ['LICENSE_CHECK_FILE']
+          android_key = os.environ.get('CUSTOM_ANDROID_PUB_KEY', '')
+          desktop_key = os.environ.get('CUSTOM_DESKTOP_PUB_KEY', '')
+
+          if not android_key or not desktop_key:
+              print("ERROR: CUSTOM_ANDROID_PUB_KEY and CUSTOM_DESKTOP_PUB_KEY secrets must be set.")
+              sys.exit(1)
+
+          with open(file_path, 'r') as f:
+              content = f.read()
+
+          # Helper: split a base64 key into ~64-char chunks for Java string concat
+          def java_key_lines(key, var_name):
+              chunks = [key[i:i+64] for i in range(0, len(key), 64)]
+              lines = []
+              indent = '\t' if var_name == 'ANDROID_PUB_KEY' else '\t'
+              continuation_indent = '\t\t\t'
+              for idx, chunk in enumerate(chunks):
+                  if idx == 0:
+                      lines.append(f'"{chunk}"')
+                  else:
+                      lines.append(f'{continuation_indent}"{chunk}"')
+              return ' + //\n'.join(lines)
+
+          # Replace ANDROID_PUB_KEY
+          pattern_android = r'(private static final String ANDROID_PUB_KEY = )(".*?");'
+          replacement_android = java_key_lines(android_key, 'ANDROID_PUB_KEY')
+          content = re.sub(
+              pattern_android,
+              lambda m: f'{m.group(1)}{replacement_android};',
+              content,
+              flags=re.DOTALL
+          )
+
+          # Replace DESKTOP_SUPPORTER_CERTIFICATE_PUB_KEY
+          pattern_desktop = r'(private static final String DESKTOP_SUPPORTER_CERTIFICATE_PUB_KEY = )(".*?");'
+          replacement_desktop = java_key_lines(desktop_key, 'DESKTOP_SUPPORTER_CERTIFICATE_PUB_KEY')
+          content = re.sub(
+              pattern_desktop,
+              lambda m: f'{m.group(1)}{replacement_desktop};',
+              content,
+              flags=re.DOTALL
+          )
+
+          with open(file_path, 'w') as f:
+              f.write(content)
+
+          print(f"Successfully replaced public keys in {file_path}")
+          PYTHON_SCRIPT
+
+      - name: Set up JDK 17
+        if: steps.sync_main.outputs.updated == 'true'
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Build Release APKs
+        if: steps.sync_main.outputs.updated == 'true'
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease
+
+      - name: Create GitHub Release
+        if: steps.sync_main.outputs.updated == 'true'
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            presentation/build/outputs/apk/*/release/*.apk
+          tag_name: "release-${{ github.run_number }}-$(date +'%Y%m%d')"
+          name: "Automated Release - ${{ github.run_number }}"
+          body: "Automated sync and release from parent main branch."
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
