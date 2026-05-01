@@ -15,17 +15,17 @@ on:
         default: false
 
 env:
-  # IMPORTANT: Replace with the URL of your parent repository.
-  # If the parent repo is private, include a Personal Access Token (PAT): 
-  # PARENT_REPO: 'https://<YOUR_PAT>@github.com/username/parent-repo.git'
   PARENT_REPO: 'https://github.com/cryptomator/android.git'
   LICENSE_CHECK_FILE: 'domain/src/main/java/org/cryptomator/domain/usecases/DoLicenseCheck.java'
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   sync_and_release:
     runs-on: ubuntu-latest
+    # Skip runs triggered by the bot's own pushes
+    if: github.actor != 'github-actions[bot]'
     permissions:
-      contents: write # Needed to push commits and create releases
+      contents: write
 
     steps:
       - name: Checkout Code
@@ -42,10 +42,8 @@ jobs:
 
       - name: Sync develop branch
         run: |
-          # Checkout develop branch from origin
           git checkout develop || git checkout -b develop origin/develop || echo "Skipping develop: not found"
-          
-          # Only proceed if we are successfully on develop
+
           if [ "$(git branch --show-current)" = "develop" ]; then
             git fetch parent develop || echo "Parent has no develop branch"
             git merge parent/develop -m "Sync develop with parent" || echo "Merge conflict or already up to date"
@@ -55,12 +53,10 @@ jobs:
       - name: Sync main branch
         id: sync_main
         run: |
-          # Checkout main branch
           git checkout main || git checkout -b main origin/main
-          
+
           git fetch parent main
-          
-          # Count how many new commits parent/main has that we don't have
+
           NEW_COMMITS=$(git rev-list HEAD..parent/main --count)
           if [ "$NEW_COMMITS" -gt 0 ]; then
             echo "Changes found in parent main branch."
@@ -92,11 +88,9 @@ jobs:
           with open(file_path, 'r') as f:
               content = f.read()
 
-          # Helper: split a base64 key into ~64-char chunks for Java string concat
           def java_key_lines(key, var_name):
               chunks = [key[i:i+64] for i in range(0, len(key), 64)]
               lines = []
-              indent = '\t' if var_name == 'ANDROID_PUB_KEY' else '\t'
               continuation_indent = '\t\t\t'
               for idx, chunk in enumerate(chunks):
                   if idx == 0:
@@ -105,7 +99,6 @@ jobs:
                       lines.append(f'{continuation_indent}"{chunk}"')
               return ' + //\n'.join(lines)
 
-          # Replace ANDROID_PUB_KEY
           pattern_android = r'(private static final String ANDROID_PUB_KEY = )(".*?");'
           replacement_android = java_key_lines(android_key, 'ANDROID_PUB_KEY')
           content = re.sub(
@@ -115,7 +108,6 @@ jobs:
               flags=re.DOTALL
           )
 
-          # Replace DESKTOP_SUPPORTER_CERTIFICATE_PUB_KEY
           pattern_desktop = r'(private static final String DESKTOP_SUPPORTER_CERTIFICATE_PUB_KEY = )(".*?");'
           replacement_desktop = java_key_lines(desktop_key, 'DESKTOP_SUPPORTER_CERTIFICATE_PUB_KEY')
           content = re.sub(
@@ -138,21 +130,93 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
+      - name: Setup Gradle
+        if: steps.sync_main.outputs.updated == 'true' || github.event_name == 'push' || inputs.force_build == true
+        uses: gradle/actions/setup-gradle@v4
+
       - name: Build Release APKs
         if: steps.sync_main.outputs.updated == 'true' || github.event_name == 'push' || inputs.force_build == true
         run: |
           chmod +x gradlew
           ./gradlew assembleRelease
 
+      - name: Extract Version
+        if: steps.sync_main.outputs.updated == 'true' || github.event_name == 'push' || inputs.force_build == true
+        id: version
+        run: |
+          VERSION=$(grep -oP "androidVersionName\s*=\s*'\K[^']+" build.gradle)
+          VERSION=${VERSION%-SNAPSHOT}
+          echo "name=$VERSION" >> $GITHUB_OUTPUT
+          echo "Detected version: $VERSION"
+
+      - name: Sign and Rename APKs
+        if: steps.sync_main.outputs.updated == 'true' || github.event_name == 'push' || inputs.force_build == true
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          APP_VERSION: ${{ steps.version.outputs.name }}
+        run: |
+          mkdir -p release-apks
+
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > /tmp/release.keystore
+            ANDROID_BUILD_TOOLS=$(find $ANDROID_HOME/build-tools -maxdepth 1 -type d | sort -V | tail -1)
+            SIGN=true
+          else
+            echo "WARNING: Signing secrets not configured. Releasing unsigned APKs."
+            SIGN=false
+          fi
+
+          for apk in presentation/build/outputs/apk/*/release/*.apk; do
+            # Extract flavor from path: .../apk/<flavor>/release/...
+            FLAVOR=$(echo "$apk" | sed 's|.*/apk/\([^/]*\)/release/.*|\1|')
+            OUTPUT_NAME="cryptomator-${FLAVOR}-v${APP_VERSION}.apk"
+
+            if [ "$SIGN" = "true" ]; then
+              "$ANDROID_BUILD_TOOLS/zipalign" -v -p 4 "$apk" "${apk}.aligned"
+
+              "$ANDROID_BUILD_TOOLS/apksigner" sign \
+                --ks /tmp/release.keystore \
+                --ks-pass "pass:$KEYSTORE_PASSWORD" \
+                --ks-key-alias "$KEY_ALIAS" \
+                --key-pass "pass:$KEY_PASSWORD" \
+                --out "release-apks/$OUTPUT_NAME" \
+                "${apk}.aligned"
+
+              "$ANDROID_BUILD_TOOLS/apksigner" verify "release-apks/$OUTPUT_NAME"
+              rm -f "${apk}.aligned"
+            else
+              cp "$apk" "release-apks/$OUTPUT_NAME"
+            fi
+
+            echo "Ready: $OUTPUT_NAME"
+          done
+
+          rm -f /tmp/release.keystore
+
       - name: Create GitHub Release
         if: steps.sync_main.outputs.updated == 'true' || github.event_name == 'push' || inputs.force_build == true
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            presentation/build/outputs/apk/*/release/*.apk
-          tag_name: "release-${{ github.run_number }}"
+          files: release-apks/*.apk
+          tag_name: "v${{ steps.version.outputs.name }}-${{ github.run_number }}"
           target_commitish: "main"
-          name: "Automated Release - ${{ github.run_number }}"
-          body: "Automated sync and release from parent main branch."
+          name: "Cryptomator Android v${{ steps.version.outputs.name }}"
+          body: |
+            Automated release synced from [cryptomator/android](https://github.com/cryptomator/android).
+
+            **Version:** ${{ steps.version.outputs.name }}
+            **Build:** ${{ github.run_number }}
+
+            ### APKs
+            | File | Description |
+            |------|-------------|
+            | `cryptomator-playstore-v${{ steps.version.outputs.name }}.apk` | Full version (Google Play equivalent) |
+            | `cryptomator-lite-v${{ steps.version.outputs.name }}.apk` | Lightweight version |
+            | `cryptomator-fdroid-v${{ steps.version.outputs.name }}.apk` | F-Droid compatible |
+            | `cryptomator-apkstore-v${{ steps.version.outputs.name }}.apk` | Generic APK store |
+            | `cryptomator-accrescent-v${{ steps.version.outputs.name }}.apk` | Accrescent store |
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
