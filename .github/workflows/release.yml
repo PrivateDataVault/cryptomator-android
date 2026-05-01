@@ -1,9 +1,18 @@
 name: Sync from Parent and Release
 
 on:
+  push:
+    branches:
+      - main
   schedule:
     - cron: '0 0 * * 0' # Every Sunday at midnight
   workflow_dispatch:
+    inputs:
+      force_build:
+        description: 'Force build and release even if up to date'
+        required: false
+        type: boolean
+        default: false
 
 env:
   # IMPORTANT: Replace with the URL of your parent repository.
@@ -64,7 +73,7 @@ jobs:
           fi
 
       - name: Replace Public Keys
-        if: steps.sync_main.outputs.updated == 'true'
+        if: steps.sync_main.outputs.updated == 'true' || github.event_name == 'push' || inputs.force_build == true
         env:
           CUSTOM_ANDROID_PUB_KEY: ${{ secrets.CUSTOM_ANDROID_PUB_KEY }}
           CUSTOM_DESKTOP_PUB_KEY: ${{ secrets.CUSTOM_DESKTOP_PUB_KEY }}
@@ -123,20 +132,20 @@ jobs:
           PYTHON_SCRIPT
 
       - name: Set up JDK 17
-        if: steps.sync_main.outputs.updated == 'true'
+        if: steps.sync_main.outputs.updated == 'true' || github.event_name == 'push' || inputs.force_build == true
         uses: actions/setup-java@v3
         with:
           java-version: '17'
           distribution: 'temurin'
 
       - name: Build Release APKs
-        if: steps.sync_main.outputs.updated == 'true'
+        if: steps.sync_main.outputs.updated == 'true' || github.event_name == 'push' || inputs.force_build == true
         run: |
           chmod +x gradlew
           ./gradlew assembleRelease
 
       - name: Create GitHub Release
-        if: steps.sync_main.outputs.updated == 'true'
+        if: steps.sync_main.outputs.updated == 'true' || github.event_name == 'push' || inputs.force_build == true
         uses: softprops/action-gh-release@v1
         with:
           files: |
