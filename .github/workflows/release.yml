@@ -39,9 +39,18 @@ jobs:
           git checkout develop || git checkout -b develop origin/develop || echo "Skipping develop: not found"
 
           if [ "$(git branch --show-current)" = "develop" ]; then
-            git fetch parent develop || echo "Parent has no develop branch"
-            git merge parent/develop -m "Sync develop with parent" || echo "Merge conflict or already up to date"
-            git push origin develop
+            git fetch parent develop || { echo "Parent has no develop branch"; exit 0; }
+            DEV_COMMITS=$(git rev-list HEAD..parent/develop --count 2>/dev/null || echo "0")
+            if [ "$DEV_COMMITS" -gt 0 ]; then
+              if git merge parent/develop -m "Sync develop with parent"; then
+                git push origin develop
+              else
+                echo "Merge conflict on develop, aborting."
+                git merge --abort
+              fi
+            else
+              echo "Develop branch is up to date."
+            fi
           fi
 
       - name: Sync main branch
@@ -128,11 +137,13 @@ jobs:
         if: steps.sync_main.outputs.updated == 'true' || github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Build Release APKs
+      - name: Build Release APK
         if: steps.sync_main.outputs.updated == 'true' || github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         run: |
           chmod +x gradlew
-          ./gradlew assembleRelease
+          ./gradlew assemblePlaystoreRelease \
+            -Dorg.gradle.jvmargs="-Xmx4g -XX:+UseG1GC" \
+            -Dorg.gradle.workers.max=2
 
       - name: Extract Version
         if: steps.sync_main.outputs.updated == 'true' || github.event_name == 'push' || github.event_name == 'workflow_dispatch'
@@ -143,7 +154,7 @@ jobs:
           echo "name=$VERSION" >> $GITHUB_OUTPUT
           echo "Detected version: $VERSION"
 
-      - name: Sign and Rename APKs
+      - name: Sign and Rename APK
         if: steps.sync_main.outputs.updated == 'true' || github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
@@ -160,46 +171,42 @@ jobs:
           KEY_ALIAS=$(echo "$KEY_ALIAS" | tr -d '\n\r ')
           KEY_PASSWORD=$(echo "$KEY_PASSWORD" | tr -d '\n\r')
 
-          if [ -n "$KEYSTORE_BASE64" ]; then
-            echo "$KEYSTORE_BASE64" | base64 -d > /tmp/release.keystore
-            ANDROID_BUILD_TOOLS=$(find $ANDROID_HOME/build-tools -maxdepth 1 -type d | sort -V | tail -1)
-            SIGN=true
-          else
-            echo "WARNING: Signing secrets not configured. Releasing unsigned APKs."
-            SIGN=false
+          APK_SOURCE="presentation/build/outputs/apk/playstore/release/presentation-playstore-release-unsigned.apk"
+          OUTPUT_NAME="cryptomator-v${APP_VERSION}.apk"
+
+          if [ ! -f "$APK_SOURCE" ]; then
+            echo "ERROR: APK not found at $APK_SOURCE"
+            exit 1
           fi
 
-          for apk in presentation/build/outputs/apk/*/release/*.apk; do
-            FLAVOR=$(echo "$apk" | sed 's|.*/apk/\([^/]*\)/release/.*|\1|')
-            OUTPUT_NAME="cryptomator-${FLAVOR}-v${APP_VERSION}.apk"
+          ANDROID_BUILD_TOOLS=$(find $ANDROID_HOME/build-tools -maxdepth 1 -type d | sort -V | tail -1)
 
-            if [ "$SIGN" = "true" ]; then
-              "$ANDROID_BUILD_TOOLS/zipalign" -v -p 4 "$apk" "${apk}.aligned"
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > /tmp/release.keystore
 
-              "$ANDROID_BUILD_TOOLS/apksigner" sign \
-                --ks /tmp/release.keystore \
-                --ks-pass "pass:$KEYSTORE_PASSWORD" \
-                --ks-key-alias "$KEY_ALIAS" \
-                --key-pass "pass:$KEY_PASSWORD" \
-                --out "release-apks/$OUTPUT_NAME" \
-                "${apk}.aligned"
+            "$ANDROID_BUILD_TOOLS/zipalign" -p 4 "$APK_SOURCE" "${APK_SOURCE}.aligned"
 
-              "$ANDROID_BUILD_TOOLS/apksigner" verify "release-apks/$OUTPUT_NAME"
-              rm -f "${apk}.aligned"
-            else
-              cp "$apk" "release-apks/$OUTPUT_NAME"
-            fi
+            "$ANDROID_BUILD_TOOLS/apksigner" sign \
+              --ks /tmp/release.keystore \
+              --ks-pass "pass:$KEYSTORE_PASSWORD" \
+              --ks-key-alias "$KEY_ALIAS" \
+              --key-pass "pass:$KEY_PASSWORD" \
+              --out "release-apks/$OUTPUT_NAME" \
+              "${APK_SOURCE}.aligned"
 
-            echo "Ready: $OUTPUT_NAME"
-          done
-
-          rm -f /tmp/release.keystore
+            "$ANDROID_BUILD_TOOLS/apksigner" verify "release-apks/$OUTPUT_NAME"
+            rm -f "${APK_SOURCE}.aligned" /tmp/release.keystore
+            echo "Signed: $OUTPUT_NAME"
+          else
+            cp "$APK_SOURCE" "release-apks/$OUTPUT_NAME"
+            echo "WARNING: Signing secrets not configured. Releasing unsigned APK."
+          fi
 
       - name: Create GitHub Release
         if: steps.sync_main.outputs.updated == 'true' || github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         uses: softprops/action-gh-release@v2
         with:
-          files: release-apks/*.apk
+          files: release-apks/cryptomator-v${{ steps.version.outputs.name }}.apk
           tag_name: "v${{ steps.version.outputs.name }}-${{ github.run_number }}"
           target_commitish: "main"
           name: "Cryptomator Android v${{ steps.version.outputs.name }}"
@@ -209,13 +216,6 @@ jobs:
             **Version:** ${{ steps.version.outputs.name }}
             **Build:** ${{ github.run_number }}
 
-            ### APKs
-            | File | Description |
-            |------|-------------|
-            | `cryptomator-playstore-v${{ steps.version.outputs.name }}.apk` | Full version (Google Play equivalent) |
-            | `cryptomator-lite-v${{ steps.version.outputs.name }}.apk` | Lightweight version |
-            | `cryptomator-fdroid-v${{ steps.version.outputs.name }}.apk` | F-Droid compatible |
-            | `cryptomator-apkstore-v${{ steps.version.outputs.name }}.apk` | Generic APK store |
-            | `cryptomator-accrescent-v${{ steps.version.outputs.name }}.apk` | Accrescent store |
+            Download `cryptomator-v${{ steps.version.outputs.name }}.apk` and install on your Android device.
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
