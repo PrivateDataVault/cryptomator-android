@@ -133,7 +133,7 @@ jobs:
 
       - name: Set up JDK 17
         if: steps.sync_main.outputs.updated == 'true' || github.event_name == 'push' || inputs.force_build == true
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
@@ -146,11 +146,12 @@ jobs:
 
       - name: Create GitHub Release
         if: steps.sync_main.outputs.updated == 'true' || github.event_name == 'push' || inputs.force_build == true
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: |
             presentation/build/outputs/apk/*/release/*.apk
-          tag_name: "release-${{ github.run_number }}-$(date +'%Y%m%d')"
+          tag_name: "release-${{ github.run_number }}"
+          target_commitish: "main"
           name: "Automated Release - ${{ github.run_number }}"
           body: "Automated sync and release from parent main branch."
         env:
