@@ -192,6 +192,7 @@ class LicenseContentViewBinder(
 		val text: String? = when {
 			lockedAction != null -> context.getString(lockedAction.headerMessageRes)
 			uiState.hasSubscriptionUpgradeHint -> context.getString(R.string.screen_license_check_subscription_upgrade_hint)
+			uiState.hasCancelSubscriptionHint -> context.getString(R.string.screen_license_check_cancel_subscription_hint, context.getString(R.string.screen_settings_manage_subscription))
 			uiState.trialState.isExpired && !uiState.hasPaidLicense -> context.getString(R.string.screen_license_check_trial_expired_info)
 			else -> null
 		}
@@ -202,3 +203,6 @@ class LicenseContentViewBinder(
 
 private val LicenseEnforcer.LicenseUiState.hasSubscriptionUpgradeHint: Boolean
 	get() = hasRunningSubscription && !hasLifetimeLicense
+
+private val LicenseEnforcer.LicenseUiState.hasCancelSubscriptionHint: Boolean
+	get() = hasRunningSubscription && hasLifetimeLicense

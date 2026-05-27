@@ -13,7 +13,6 @@ import org.cryptomator.presentation.licensing.LicenseEnforcer
 import org.cryptomator.presentation.licensing.LicenseStateOrchestrator
 import org.cryptomator.presentation.presenter.LicenseCheckPresenter
 import org.cryptomator.presentation.ui.activity.view.LicenseView
-import org.cryptomator.presentation.ui.dialog.CancelSubscriptionReminderDialog
 import org.cryptomator.presentation.ui.dialog.EnterLicenseDialog
 import org.cryptomator.presentation.ui.dialog.LicenseConfirmationDialog
 import org.cryptomator.presentation.ui.layout.LicenseContentViewBinder
@@ -51,10 +50,6 @@ class LicenseCheckActivity : BaseActivity<ActivityLicenseCheckBinding>(ActivityL
 
 				override fun onSubscriptionActivatedFirstTime() {
 					finish()
-				}
-
-				override fun onSubscriptionUpgradedToLifetime() {
-					showDialog(CancelSubscriptionReminderDialog.newInstance())
 				}
 			},
 			priceLoader = { licenseContentViewBinder.loadAndBindPrices(application as CryptomatorApp) }
