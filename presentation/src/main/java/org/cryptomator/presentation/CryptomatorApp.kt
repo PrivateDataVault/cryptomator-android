@@ -30,7 +30,6 @@ import org.cryptomator.presentation.service.PendingCallbackQueue
 import org.cryptomator.presentation.service.ProductInfo
 import org.cryptomator.presentation.service.PurchaseRevokedToastObserver
 import org.cryptomator.presentation.service.RestoreOutcome
-import org.cryptomator.presentation.service.RestoreOutcomeDialogObserver
 import org.cryptomator.util.FlavorConfig
 import org.cryptomator.util.NoOpActivityLifecycleCallbacks
 import org.cryptomator.util.SharedPreferencesHandler
@@ -52,11 +51,6 @@ class CryptomatorApp : MultiDexApplication(), HasComponent<ApplicationComponent>
 
 	@Volatile
 	private var iapBillingServiceBinder: IapBillingService.Binder? = null
-
-	fun restorePurchasesAndStore() {
-		val handler = SharedPreferencesHandler(applicationContext())
-		restorePurchases { outcome -> handler.setPendingRestoreOutcome(outcome.kind.name) }
-	}
 
 	private val pendingProductDetailsCallbacks = PendingCallbackQueue<List<ProductInfo>>()
 
@@ -87,7 +81,6 @@ class CryptomatorApp : MultiDexApplication(), HasComponent<ApplicationComponent>
 		registerActivityLifecycleCallbacks(serviceNotifier)
 		if (FlavorConfig.isFreemiumFlavor) {
 			registerActivityLifecycleCallbacks(PurchaseRevokedToastObserver(sharedPreferencesHandler))
-			registerActivityLifecycleCallbacks(RestoreOutcomeDialogObserver(sharedPreferencesHandler))
 		}
 		AppCompatDelegate.setDefaultNightMode(sharedPreferencesHandler.screenStyleMode)
 		cleanupCache()

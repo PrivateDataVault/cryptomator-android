@@ -246,18 +246,6 @@ constructor(context: Context) : SharedPreferences.OnSharedPreferenceChangeListen
 		setPurchaseRevokedState(pending = false, reason = "")
 	}
 
-	fun pendingRestoreOutcome(): String {
-		return defaultSharedPreferences.getValue(PENDING_RESTORE_OUTCOME, "")
-	}
-
-	fun setPendingRestoreOutcome(kind: String) {
-		defaultSharedPreferences.setValue(PENDING_RESTORE_OUTCOME, kind)
-	}
-
-	fun clearPendingRestoreOutcome() {
-		defaultSharedPreferences.setValue(PENDING_RESTORE_OUTCOME, "")
-	}
-
 	fun hasRunningSubscription(): Boolean {
 		return defaultSharedPreferences.getValue(HAS_RUNNING_SUBSCRIPTION, false)
 	}
@@ -415,7 +403,6 @@ constructor(context: Context) : SharedPreferences.OnSharedPreferenceChangeListen
 		private const val HAS_RUNNING_SUBSCRIPTION = "hasRunningSubscription"
 		private const val PURCHASE_REVOKED_PENDING = "purchaseRevokedPending"
 		private const val PURCHASE_REVOKED_REASON = "purchaseRevokedReason"
-		private const val PENDING_RESTORE_OUTCOME = "pendingRestoreOutcome"
 		const val DEBUG_MODE = "debugMode"
 		const val DISABLE_APP_WHEN_OBSCURED = "disableAppWhenObscured"
 		const val SECURE_SCREEN = "secureScreen"
