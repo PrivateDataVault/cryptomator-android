@@ -1,6 +1,5 @@
 package org.cryptomator.presentation.ui.layout
 
-import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.view.View
@@ -9,7 +8,10 @@ import org.cryptomator.presentation.R
 import org.cryptomator.presentation.databinding.ViewLicenseCheckContentBinding
 import org.cryptomator.presentation.licensing.LicenseEnforcer
 import org.cryptomator.presentation.service.ProductInfo
+import org.cryptomator.presentation.service.RestoreOutcome
 import org.cryptomator.presentation.service.resolveProductPrices
+import org.cryptomator.presentation.service.toDialogFragment
+import org.cryptomator.presentation.ui.activity.BaseActivity
 import java.lang.ref.WeakReference
 
 /** Shared visibility-toggling logic for the license check content included layout. */
@@ -78,7 +80,7 @@ class LicenseContentViewBinder(
 
 	/** Wires trial, subscription, lifetime, and restore button click listeners. */
 	fun bindPurchaseButtons(
-		activity: Activity,
+		activity: BaseActivity<*>,
 		app: CryptomatorApp,
 		onTrialClicked: () -> Unit
 	) {
@@ -90,8 +92,18 @@ class LicenseContentViewBinder(
 			app.launchPurchaseFlow(WeakReference(activity), ProductInfo.PRODUCT_FULL_VERSION)
 		}
 		binding.tvRestorePurchase.setOnClickListener {
-			app.restorePurchasesAndStore()
+			binding.tvRestorePurchase.isEnabled = false
+			app.restorePurchases { outcome ->
+				binding.root.post {
+					binding.tvRestorePurchase.isEnabled = true
+					showRestoreOutcome(activity, outcome)
+				}
+			}
 		}
+	}
+
+	private fun showRestoreOutcome(activity: BaseActivity<*>, outcome: RestoreOutcome) {
+		activity.showDialog(outcome.toDialogFragment())
 	}
 
 	/** Queries product details and updates price buttons on the UI thread. */
@@ -180,6 +192,7 @@ class LicenseContentViewBinder(
 		val text: String? = when {
 			lockedAction != null -> context.getString(lockedAction.headerMessageRes)
 			uiState.hasSubscriptionUpgradeHint -> context.getString(R.string.screen_license_check_subscription_upgrade_hint)
+			uiState.hasCancelSubscriptionHint -> context.getString(R.string.screen_license_check_cancel_subscription_hint, context.getString(R.string.screen_settings_manage_subscription))
 			uiState.trialState.isExpired && !uiState.hasPaidLicense -> context.getString(R.string.screen_license_check_trial_expired_info)
 			else -> null
 		}
@@ -190,3 +203,6 @@ class LicenseContentViewBinder(
 
 private val LicenseEnforcer.LicenseUiState.hasSubscriptionUpgradeHint: Boolean
 	get() = hasRunningSubscription && !hasLifetimeLicense
+
+private val LicenseEnforcer.LicenseUiState.hasCancelSubscriptionHint: Boolean
+	get() = hasRunningSubscription && hasLifetimeLicense

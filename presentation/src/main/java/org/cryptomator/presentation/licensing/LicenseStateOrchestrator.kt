@@ -14,7 +14,6 @@ class LicenseStateOrchestrator(
 	interface Callback {
 		fun onLicenseStateChanged(uiState: LicenseEnforcer.LicenseUiState)
 		fun onSubscriptionActivatedFirstTime() {}
-		fun onSubscriptionUpgradedToLifetime() {}
 	}
 
 	private val licenseChangeListener = Consumer<String> { _ -> updateState() }
@@ -41,9 +40,6 @@ class LicenseStateOrchestrator(
 		val wasSubOnly = wasSubscriptionOnly
 		wasSubscriptionOnly = nowSubOnly
 
-		if (wasSubOnly && uiState.hasLifetimeLicense && uiState.hasRunningSubscription) {
-			callback.onSubscriptionUpgradedToLifetime()
-		}
 		if (!wasSubOnly && nowSubOnly) {
 			callback.onSubscriptionActivatedFirstTime()
 		}

@@ -6,6 +6,7 @@ import org.cryptomator.presentation.CryptomatorApp
 import org.cryptomator.presentation.R
 import org.cryptomator.presentation.databinding.FragmentWelcomeLicenseBinding
 import org.cryptomator.presentation.licensing.LicenseEnforcer
+import org.cryptomator.presentation.ui.activity.WelcomeActivity
 import org.cryptomator.presentation.ui.layout.LicenseContentViewBinder
 import org.cryptomator.util.FlavorConfig
 
@@ -45,7 +46,7 @@ class WelcomeLicenseFragment : BaseFragment<FragmentWelcomeLicenseBinding>(Fragm
 		licenseContentViewBinder.bindInitialIapLayout()
 		licenseContentViewBinder.bindLegalLinks()
 		licenseContentViewBinder.bindPurchaseButtons(
-			activity = requireActivity(),
+			activity = activity(),
 			app = app,
 			onTrialClicked = { listener?.onStartTrial() }
 		)
@@ -81,4 +82,7 @@ class WelcomeLicenseFragment : BaseFragment<FragmentWelcomeLicenseBinding>(Fragm
 		}
 		listener?.onLicenseTextChanged(license)
 	}
+
+	private fun activity(): WelcomeActivity = this.activity as WelcomeActivity
+
 }
